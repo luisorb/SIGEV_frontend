@@ -6,7 +6,7 @@ import { OffersPage } from '../features/offers/pages/OffersPage'
 import { MatrixPage } from '../features/matrix/pages/MatrixPage'
 import { KanbanPage } from '../features/kanban/pages/KanbanPage'
 import { MapPage } from '../features/map/pages/MapPage'
-import { AdminParamsPage } from '../pages/AdminParamsPage'
+import { ParametersPage } from '../features/parameters/pages/ParametersPage'
 import { AdminUsersPage } from '../pages/AdminUsersPage'
 import { AuditPage } from '../pages/AuditPage'
 
@@ -21,7 +21,7 @@ export const router = createBrowserRouter([
       { path: 'matriz', element: <MatrixPage /> },
       { path: 'tablero', element: <KanbanPage /> },
       { path: 'mapa', element: <MapPage /> },
-      { path: 'parametros', element: <AdminParamsPage /> },
+      { path: 'parametros', element: <ParametersPage /> },
       { path: 'usuarios', element: <AdminUsersPage /> },
       { path: 'auditoria', element: <AuditPage /> },
     ],
