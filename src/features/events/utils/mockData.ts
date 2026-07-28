@@ -2,7 +2,7 @@ import type { Ally, Disbursement, Municipality, Event, Item } from '../../../typ
 
 export const mockAliados: Ally[] = [
   { id: '1', nombre: 'Fundación Social', nit: '900.123.456-7', contacto: 'Carlos Pérez', email: 'carlos@fsocial.org', telefono: '3001234567', color: '#EAB308', activo: true },
-  { id: '2', nombre: 'Corporación Desarrollo', nit: '900.789.012-3', contacto: 'Ana Gómez', email: 'ana@codesarrollo.org', telefono: '3007890123', color: '#3B82F6', activo: true },
+  { id: '2', nombre: 'Corporación Desarrollo', nit: '900.789.012-3', contacto: 'Ana Gómez', email: 'ana@codesarrollo.org', telefono: '3007890123', color: '#f43340', activo: true },
   { id: '3', nombre: 'Asociación Cultural', nit: '900.345.678-9', contacto: 'Luis Rojas', email: 'luis@acultural.org', telefono: '3003456789', color: '#22C55E', activo: true },
 ]
 

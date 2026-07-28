@@ -48,10 +48,10 @@ export function ParameterHistoryTable({ versions, activeVersionId, onLoadVersion
               return (
                 <tr
                   key={v.id}
-                  className={`hover:bg-slate-50 transition-colors ${isActive ? 'bg-blue-50/50' : ''}`}
+                  className={`hover:bg-slate-50 transition-colors ${isActive ? 'bg-red-50/50' : ''}`}
                 >
                   <td className="px-4 py-2.5">
-                    <span className={`font-mono text-sm font-medium ${isActive ? 'text-blue-700' : 'text-slate-900'}`}>
+                    <span className={`font-mono text-sm font-medium ${isActive ? 'text-red-700' : 'text-slate-900'}`}>
                       v{v.version}
                     </span>
                   </td>

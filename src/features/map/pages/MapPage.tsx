@@ -43,7 +43,7 @@ export function MapPage() {
         <select
           value={selectedDesembolso}
           onChange={(e) => setSelectedDesembolso(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los desembolsos</option>
           {mockDesembolsos.map((d) => (
@@ -53,7 +53,7 @@ export function MapPage() {
         <select
           value={selectedAliado}
           onChange={(e) => setSelectedAliado(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los aliados</option>
           {mockAliados.map((a) => (
@@ -63,7 +63,7 @@ export function MapPage() {
         <select
           value={selectedEstado}
           onChange={(e) => setSelectedEstado(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los estados</option>
           <option value="Abierto">Abierto</option>
@@ -84,7 +84,7 @@ export function MapPage() {
           <span className="w-3 h-3 rounded-full bg-yellow-500" /> Abierto
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-blue-500" /> En ejecución
+          <span className="w-3 h-3 rounded-full bg-primary" /> En ejecución
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-green-500" /> Ejecutado

@@ -10,7 +10,7 @@ interface MetricCardProps {
 }
 
 const accentStyles: Record<string, { bg: string; icon: string; border: string }> = {
-  blue: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-200' },
+  blue: { bg: 'bg-red-50', icon: 'text-primary', border: 'border-red-200' },
   emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', border: 'border-emerald-200' },
   amber: { bg: 'bg-amber-50', icon: 'text-amber-600', border: 'border-amber-200' },
   purple: { bg: 'bg-purple-50', icon: 'text-purple-600', border: 'border-purple-200' },

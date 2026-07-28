@@ -63,7 +63,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               } ${collapsed ? 'justify-center' : ''}`
             }

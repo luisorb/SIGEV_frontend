@@ -54,7 +54,7 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
         </div>
         <button
           onClick={onCreate}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nueva Oferta
@@ -69,13 +69,13 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
             placeholder="Buscar por código, nombre o cliente..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
         <select
           value={filterEstado}
           onChange={(e) => setFilterEstado(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los estados</option>
           {OFFER_STATES.map((s) => (
@@ -166,7 +166,7 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => onView(offer.id)}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-primary transition-colors"
                           title="Ver detalle"
                         >
                           <Eye className="w-4 h-4" />

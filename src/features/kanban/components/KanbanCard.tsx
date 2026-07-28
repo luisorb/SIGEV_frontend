@@ -30,7 +30,7 @@ export function KanbanCard({ card, aliadoNombre, municipioNombre }: KanbanCardPr
       style={style}
       className={`bg-white rounded-lg border border-slate-200 p-4 space-y-2.5 shadow-sm transition-shadow ${
         isDragging
-          ? 'opacity-50 shadow-lg ring-2 ring-blue-400'
+          ? 'opacity-50 shadow-lg ring-2 ring-primary'
           : 'hover:shadow-md hover:border-slate-300'
       }`}
     >

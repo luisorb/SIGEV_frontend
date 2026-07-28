@@ -38,7 +38,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
           onClick={() => setMenuOpen(!menuOpen)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
         >
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
             <User className="w-4 h-4 text-white" />
           </div>
           <div className="hidden md:block text-left">

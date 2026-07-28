@@ -146,7 +146,7 @@ export function EventDetailModal({ isOpen, mode, eventId, events, onClose, onSav
                   <select
                     value={event.estado}
                     onChange={(e) => handleStateChange(e.target.value)}
-                    className="text-sm font-medium border border-slate-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                    className="text-sm font-medium border border-slate-300 rounded px-2 py-1 focus:ring-2 focus:ring-primary"
                   >
                     {EVENT_STATES.map((s) => (
                       <option key={s} value={s}>{s}</option>
@@ -155,7 +155,7 @@ export function EventDetailModal({ isOpen, mode, eventId, events, onClose, onSav
                   {stateHistory.length > 0 && (
                     <button
                       onClick={() => setShowHistory(!showHistory)}
-                      className="text-xs text-blue-600 hover:text-blue-700 underline shrink-0"
+                      className="text-xs text-primary hover:text-primary-dark underline shrink-0"
                     >
                       {showHistory ? 'Ocultar historial' : 'Ver historial'}
                     </button>

@@ -38,7 +38,7 @@ export function MatrixPage() {
         <select
           value={selectedDesembolso}
           onChange={(e) => setSelectedDesembolso(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los desembolsos</option>
           {Object.entries(desembolsosMap).map(([id, nombre]) => (
@@ -48,7 +48,7 @@ export function MatrixPage() {
         <select
           value={selectedAliado}
           onChange={(e) => setSelectedAliado(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los aliados</option>
           {Object.entries(aliadosMap).map(([id, nombre]) => (

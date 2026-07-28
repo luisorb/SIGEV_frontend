@@ -37,7 +37,7 @@ function PercentField({ label, description, value, onChange }: PercentFieldProps
           max={100}
           step={0.01}
           onChange={(e) => onChange(Number(e.target.value) / 100)}
-          className="w-full px-3 py-1.5 pr-8 border border-slate-300 rounded-lg text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-1.5 pr-8 border border-slate-300 rounded-lg text-sm text-right focus:ring-2 focus:ring-primary focus:border-transparent"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
       </div>
@@ -121,7 +121,7 @@ export function ParameterForm({
               onChange={(e) => onUpdateParam('applyFeeOnBase', e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600" />
+            <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
           </label>
         </div>
       </div>
@@ -134,7 +134,7 @@ export function ParameterForm({
               type="text"
               value={aprobadoPor}
               onChange={(e) => onAprobadoPorChange(e.target.value)}
-              className="flex-1 max-w-xs px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 max-w-xs px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Nombre de quien aprueba"
             />
           </div>
@@ -151,7 +151,7 @@ export function ParameterForm({
             <button
               onClick={onSave}
               disabled={!isDirty}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Save className="w-3.5 h-3.5" />
               Guardar Cambios

@@ -8,7 +8,7 @@ import { EVENT_STATES } from '../../../config/constants'
 
 const stateColors: Record<string, string> = {
   Abierto: 'bg-yellow-100 text-yellow-800',
-  'En ejecucion': 'bg-blue-100 text-blue-800',
+  'En ejecucion': 'bg-red-100 text-red-800',
   Ejecutado: 'bg-green-100 text-green-800',
   Cerrado: 'bg-slate-100 text-slate-800',
   Legalizado: 'bg-purple-100 text-purple-800',
@@ -96,7 +96,7 @@ export function EventList({
         </div>
         <button
           onClick={onCreate}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nueva Orden
@@ -111,14 +111,14 @@ export function EventList({
             placeholder="Buscar por número de evento o responsable..."
             value={filters.search}
             onChange={(e) => onFilterChange('search', e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
             showFilters || filters.estado || filters.aliadoId || filters.desembolsoId || filters.municipioId
-              ? 'bg-blue-50 border-blue-300 text-blue-700'
+              ? 'bg-red-50 border-red-300 text-red-700'
               : 'border-slate-300 text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -131,7 +131,7 @@ export function EventList({
           <select
             value={filters.estado}
             onChange={(e) => onFilterChange('estado', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los estados</option>
             {EVENT_STATES.map((s) => (
@@ -141,7 +141,7 @@ export function EventList({
           <select
             value={filters.municipioId}
             onChange={(e) => onFilterChange('municipioId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los municipios</option>
             {municipios.map((m) => (
@@ -151,7 +151,7 @@ export function EventList({
           <select
             value={filters.aliadoId}
             onChange={(e) => onFilterChange('aliadoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los aliados</option>
             {aliados.map((a) => (
@@ -161,7 +161,7 @@ export function EventList({
           <select
             value={filters.desembolsoId}
             onChange={(e) => onFilterChange('desembolsoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los desembolsos</option>
             {desembolsos.map((d) => (
@@ -227,7 +227,7 @@ export function EventList({
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => onView(event.id)}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-primary transition-colors"
                             title="Ver detalle"
                           >
                             <Eye className="w-4 h-4" />
@@ -292,7 +292,7 @@ export function EventList({
                   onClick={() => onPageChange(p)}
                   className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                     p === meta.page
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary text-white'
                       : 'border border-slate-300 hover:bg-slate-100'
                   }`}
                 >

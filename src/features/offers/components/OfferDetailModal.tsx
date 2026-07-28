@@ -93,7 +93,7 @@ export function OfferDetailModal({
                       type="text"
                       value={item.descripcion}
                       onChange={(e) => onUpdateItem(offer.id, item.id, { descripcion: e.target.value })}
-                      className="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 text-sm text-slate-900 outline-none"
+                      className="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary text-sm text-slate-900 outline-none"
                     />
                   ) : (
                     <span className="text-slate-900">{item.descripcion}</span>
@@ -106,7 +106,7 @@ export function OfferDetailModal({
                       min={1}
                       value={item.cantidad}
                       onChange={(e) => onUpdateItem(offer.id, item.id, { cantidad: Number(e.target.value) || 0 })}
-                      className="w-16 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 text-sm text-slate-900 outline-none"
+                      className="w-16 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary text-sm text-slate-900 outline-none"
                     />
                   ) : (
                     <span className="text-slate-600 text-right block">{item.cantidad}</span>
@@ -119,7 +119,7 @@ export function OfferDetailModal({
                       min={0}
                       value={item.valorUnitario}
                       onChange={(e) => onUpdateItem(offer.id, item.id, { valorUnitario: Number(e.target.value) || 0 })}
-                      className="w-24 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 text-sm text-slate-900 outline-none"
+                      className="w-24 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary text-sm text-slate-900 outline-none"
                     />
                   ) : (
                     <span className="text-slate-600 text-right block">{formatCurrencyCO(item.valorUnitario)}</span>
@@ -191,7 +191,7 @@ export function OfferDetailModal({
                 <select
                   value={offer.estado}
                   onChange={(e) => onChangeState(offer.id, e.target.value as OfferState)}
-                  className="text-xs border border-slate-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                  className="text-xs border border-slate-300 rounded px-2 py-1 focus:ring-2 focus:ring-primary"
                 >
                   {OFFER_STATES.map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -251,7 +251,7 @@ export function OfferDetailModal({
                     type="text"
                     value={newItem.descripcion}
                     onChange={(e) => setNewItem((p) => ({ ...p, descripcion: e.target.value }))}
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
                     placeholder="Nuevo ítem"
                   />
                 </div>
@@ -262,7 +262,7 @@ export function OfferDetailModal({
                     min={1}
                     value={newItem.cantidad}
                     onChange={(e) => setNewItem((p) => ({ ...p, cantidad: Number(e.target.value) || 0 }))}
-                    className="w-16 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500"
+                    className="w-16 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
@@ -272,7 +272,7 @@ export function OfferDetailModal({
                     min={0}
                     value={newItem.valorUnitario}
                     onChange={(e) => setNewItem((p) => ({ ...p, valorUnitario: Number(e.target.value) || 0 }))}
-                    className="w-24 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500"
+                    className="w-24 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
@@ -280,7 +280,7 @@ export function OfferDetailModal({
                   <select
                     value={newItem.categoriaTributaria}
                     onChange={(e) => setNewItem((p) => ({ ...p, categoriaTributaria: e.target.value as any }))}
-                    className="px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                    className="px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
                   >
                     {TAX_CATEGORIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
@@ -290,7 +290,7 @@ export function OfferDetailModal({
                 <button
                   onClick={handleAddItem}
                   disabled={!newItem.descripcion || newItem.cantidad < 1 || newItem.valorUnitario < 1}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

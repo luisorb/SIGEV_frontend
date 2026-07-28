@@ -23,7 +23,7 @@ export function ItemRow({ item, aliados, onUpdate, onRemove, readOnly = false }:
             type="text"
             value={item.descripcion}
             onChange={(e) => onUpdate?.(item.id, { descripcion: e.target.value })}
-            className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Descripción"
           />
         )}
@@ -38,7 +38,7 @@ export function ItemRow({ item, aliados, onUpdate, onRemove, readOnly = false }:
             min={0}
             step={1}
             onChange={(e) => onUpdate?.(item.id, { cantidad: Number(e.target.value) })}
-            className="w-20 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-20 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         )}
       </td>
@@ -52,7 +52,7 @@ export function ItemRow({ item, aliados, onUpdate, onRemove, readOnly = false }:
             min={0}
             step={1000}
             onChange={(e) => onUpdate?.(item.id, { valorUnitario: Number(e.target.value) })}
-            className="w-28 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-28 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         )}
       </td>
@@ -63,7 +63,7 @@ export function ItemRow({ item, aliados, onUpdate, onRemove, readOnly = false }:
           <select
             value={item.categoriaTributaria}
             onChange={(e) => onUpdate?.(item.id, { categoriaTributaria: e.target.value as ItemInput['categoriaTributaria'] })}
-            className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             {TAX_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
@@ -80,7 +80,7 @@ export function ItemRow({ item, aliados, onUpdate, onRemove, readOnly = false }:
           <select
             value={item.aliadoId ?? ''}
             onChange={(e) => onUpdate?.(item.id, { aliadoId: e.target.value || undefined })}
-            className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">(Aliado del evento)</option>
             {aliados?.map((a) => (

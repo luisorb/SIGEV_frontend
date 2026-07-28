@@ -37,7 +37,7 @@ export function ConsolidadoDesembolso({ rows }: ConsolidadoDesembolsoProps) {
               </div>
               <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                  className="h-full bg-primary rounded-full transition-all duration-500"
                   style={{ width: `${(row.valorTotal / maxValor) * 100}%` }}
                 />
               </div>

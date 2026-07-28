@@ -62,7 +62,7 @@ export function EventForm({
             </label>
             <input
               {...register('numeroEvento')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Ej: 2025-001"
             />
             {errors.numeroEvento && (
@@ -74,7 +74,7 @@ export function EventForm({
             <label className="block text-sm font-medium text-slate-700">Sufijo</label>
             <input
               {...register('sufijo')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Ej: A, B, C"
             />
           </div>
@@ -85,7 +85,7 @@ export function EventForm({
             </label>
             <input
               {...register('responsable')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Nombre del responsable"
             />
             {errors.responsable && (
@@ -97,7 +97,7 @@ export function EventForm({
             <label className="block text-sm font-medium text-slate-700">Dependencia</label>
             <input
               {...register('dependencia')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Ej: Secretaría de Cultura"
             />
           </div>
@@ -107,7 +107,7 @@ export function EventForm({
             <input
               type="date"
               {...register('fechaEvento')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
 
@@ -117,7 +117,7 @@ export function EventForm({
               type="number"
               min={0}
               {...register('asistentes', { valueAsNumber: true })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="0"
             />
           </div>
@@ -128,7 +128,7 @@ export function EventForm({
               type="number"
               min={0}
               {...register('dias', { valueAsNumber: true })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="0"
             />
           </div>
@@ -139,7 +139,7 @@ export function EventForm({
             </label>
             <select
               {...register('municipioId')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Seleccionar municipio</option>
               {municipios.map((m) => (
@@ -157,7 +157,7 @@ export function EventForm({
             <label className="block text-sm font-medium text-slate-700">Vereda</label>
             <input
               {...register('vereda')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Nombre de la vereda (opcional)"
             />
           </div>
@@ -168,7 +168,7 @@ export function EventForm({
               type="number"
               step="any"
               {...register('latitud', { valueAsNumber: true })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="4.7110"
             />
           </div>
@@ -179,7 +179,7 @@ export function EventForm({
               type="number"
               step="any"
               {...register('longitud', { valueAsNumber: true })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="-74.0721"
             />
           </div>
@@ -190,7 +190,7 @@ export function EventForm({
             </label>
             <select
               {...register('aliadoId')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Seleccionar aliado</option>
               {aliados.map((a) => (
@@ -208,7 +208,7 @@ export function EventForm({
             </label>
             <select
               {...register('desembolsoId')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Seleccionar desembolso</option>
               {desembolsos.map((d) => (
@@ -226,7 +226,7 @@ export function EventForm({
             </label>
             <select
               {...register('esquema')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="cotizacion">Cotización</option>
               <option value="detalle">Detalle</option>
@@ -242,7 +242,7 @@ export function EventForm({
           <textarea
             {...register('observaciones')}
             rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
             placeholder="Observaciones adicionales del evento..."
           />
         </div>
@@ -259,7 +259,7 @@ export function EventForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors"
         >
           {event ? 'Guardar Cambios' : 'Crear Orden'}
         </button>

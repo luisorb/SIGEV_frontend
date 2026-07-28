@@ -104,7 +104,7 @@ export function ImportExcelModal({ isOpen, onClose, onImport }: ImportExcelModal
       <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+             <FileSpreadsheet className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-slate-900">Importar desde Excel</h2>
           </div>
           <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
@@ -120,7 +120,7 @@ export function ImportExcelModal({ isOpen, onClose, onImport }: ImportExcelModal
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
                 dragOver
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-primary bg-red-50'
                   : 'border-slate-300 hover:border-slate-400'
               }`}
             >
@@ -131,7 +131,7 @@ export function ImportExcelModal({ isOpen, onClose, onImport }: ImportExcelModal
               <p className="text-xs text-slate-500 mb-4">
                 Formatos soportados: .xlsx, .xls
               </p>
-              <label className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer transition-colors">
+              <label className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark cursor-pointer transition-colors">
                 <FileSpreadsheet className="w-4 h-4" />
                 Seleccionar archivo
                 <input
@@ -146,7 +146,7 @@ export function ImportExcelModal({ isOpen, onClose, onImport }: ImportExcelModal
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-dark">
                     <CheckCircle2 className="w-4 h-4" />
                     {validRows.length} válidas
                   </span>
@@ -195,7 +195,7 @@ export function ImportExcelModal({ isOpen, onClose, onImport }: ImportExcelModal
                                 {row.errors.length} error(es)
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+                              <span className="inline-flex items-center gap-1 text-xs text-primary">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 Válida
                               </span>
@@ -240,7 +240,7 @@ export function ImportExcelModal({ isOpen, onClose, onImport }: ImportExcelModal
             <button
               onClick={handleImport}
               disabled={validRows.length === 0}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <CheckCircle2 className="w-4 h-4" />
               Importar {validRows.length} ítem(s)

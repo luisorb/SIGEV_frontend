@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 
 const stateColors: Record<string, string> = {
   Abierto: 'bg-yellow-100 text-yellow-800',
-  'En ejecucion': 'bg-blue-100 text-blue-800',
+  'En ejecucion': 'bg-red-100 text-red-800',
   Ejecutado: 'bg-green-100 text-green-800',
   Cerrado: 'bg-slate-100 text-slate-800',
   Legalizado: 'bg-purple-100 text-purple-800',
@@ -31,7 +31,7 @@ export function RecentOrders({ events, aliados, desembolsos }: RecentOrdersProps
         <h3 className="text-sm font-semibold text-slate-900">Órdenes Recientes</h3>
         <Link
           to="/ordenes"
-          className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="text-xs font-medium text-primary hover:text-primary-dark transition-colors"
         >
           Ver todas
         </Link>
@@ -58,7 +58,7 @@ export function RecentOrders({ events, aliados, desembolsos }: RecentOrdersProps
                 <span className="text-sm font-semibold text-slate-900">{formatCurrencyCO(total)}</span>
                 <Link
                   to="/ordenes"
-                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                 </Link>

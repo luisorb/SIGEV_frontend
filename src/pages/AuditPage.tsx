@@ -27,7 +27,7 @@ export function AuditPage() {
         <select
           value={filterEntidad}
           onChange={(e) => setFilterEntidad(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todas las entidades</option>
           {ENTIDADES.filter(Boolean).map((e) => (
@@ -37,7 +37,7 @@ export function AuditPage() {
         <select
           value={filterAccion}
           onChange={(e) => setFilterAccion(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todas las acciones</option>
           {ACCIONES.filter(Boolean).map((a) => (

@@ -5,7 +5,7 @@ import { KanbanCard, KanbanCardSkeleton } from './KanbanCard'
 
 const columnStyles: Record<string, { header: string; dot: string; bg: string }> = {
   Abierto: { header: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-500', bg: 'bg-yellow-50/50' },
-  'En ejecucion': { header: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500', bg: 'bg-blue-50/50' },
+  'En ejecucion': { header: 'bg-red-50 border-red-200', dot: 'bg-primary', bg: 'bg-red-50/50' },
   Ejecutado: { header: 'bg-green-50 border-green-200', dot: 'bg-green-500', bg: 'bg-green-50/50' },
   Cerrado: { header: 'bg-slate-50 border-slate-200', dot: 'bg-slate-500', bg: 'bg-slate-50/50' },
   Legalizado: { header: 'bg-purple-50 border-purple-200', dot: 'bg-purple-500', bg: 'bg-purple-50/50' },
@@ -41,7 +41,7 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={`flex flex-col rounded-lg border min-w-[280px] w-[280px] flex-shrink-0 ${
-        isOver ? 'ring-2 ring-blue-400 border-blue-300' : 'border-slate-200'
+        isOver ? 'ring-2 ring-primary border-red-300' : 'border-slate-200'
       } ${styles.bg}`}
     >
       <div className={`flex items-center gap-2 px-4 py-3 border-b rounded-t-lg ${styles.header}`}>

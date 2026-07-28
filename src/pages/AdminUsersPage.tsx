@@ -57,7 +57,7 @@ export function AdminUsersPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nuevo Usuario
@@ -73,7 +73,7 @@ export function AdminUsersPage() {
                 type="text"
                 value={newUser.nombre}
                 onChange={(e) => setNewUser((p) => ({ ...p, nombre: e.target.value }))}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
                 placeholder="Nombre completo"
               />
             </div>
@@ -83,7 +83,7 @@ export function AdminUsersPage() {
                 type="email"
                 value={newUser.email}
                 onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
                 placeholder="usuario@sigev.co"
               />
             </div>
@@ -92,7 +92,7 @@ export function AdminUsersPage() {
               <select
                 value={newUser.rol}
                 onChange={(e) => setNewUser((p) => ({ ...p, rol: e.target.value as User['rol'] }))}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
               >
                 {ROLES.map((r) => (
                   <option key={r} value={r}>{r}</option>
@@ -110,7 +110,7 @@ export function AdminUsersPage() {
             <button
               onClick={handleAdd}
               disabled={!newUser.nombre || !newUser.email}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Crear Usuario
             </button>
@@ -138,7 +138,7 @@ export function AdminUsersPage() {
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       user.rol === 'Administrador' ? 'bg-purple-100 text-purple-700' :
-                      user.rol === 'Operador' ? 'bg-blue-100 text-blue-700' :
+                      user.rol === 'Operador' ? 'bg-red-100 text-red-700' :
                       'bg-slate-100 text-slate-700'
                     }`}>
                       {user.rol === 'Administrador' ? <ShieldCheck className="w-3 h-3" /> : <Shield className="w-3 h-3" />}

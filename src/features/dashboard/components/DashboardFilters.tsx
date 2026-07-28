@@ -31,7 +31,7 @@ export function DashboardFilters({
             type="date"
             value={filters.periodoInicio}
             onChange={(e) => onFilterChange('periodoInicio', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
@@ -43,7 +43,7 @@ export function DashboardFilters({
             type="date"
             value={filters.periodoFin}
             onChange={(e) => onFilterChange('periodoFin', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
@@ -54,7 +54,7 @@ export function DashboardFilters({
           <select
             value={filters.desembolsoId}
             onChange={(e) => onFilterChange('desembolsoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Todos</option>
             {desembolsos.map((d) => (
@@ -70,7 +70,7 @@ export function DashboardFilters({
           <select
             value={filters.aliadoId}
             onChange={(e) => onFilterChange('aliadoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Todos</option>
             {aliados.map((a) => (
@@ -86,7 +86,7 @@ export function DashboardFilters({
           <select
             value={filters.estado}
             onChange={(e) => onFilterChange('estado', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Todos</option>
             {EVENT_STATES.map((s) => (

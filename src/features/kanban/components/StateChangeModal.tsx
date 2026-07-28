@@ -38,7 +38,7 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
               {stateLabels[pendingChange.from]}
             </span>
             <span className="text-slate-400 text-lg">→</span>
-            <span className="px-3 py-1.5 rounded-lg bg-blue-100 font-medium text-blue-700">
+            <span className="px-3 py-1.5 rounded-lg bg-red-100 font-medium text-red-700">
               {stateLabels[pendingChange.to]}
             </span>
           </div>
@@ -52,7 +52,7 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
               onChange={(e) => setReason(e.target.value)}
               placeholder="Opcional: describe el motivo del cambio de estado..."
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
             />
           </div>
         </div>
@@ -66,7 +66,7 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
           </button>
           <button
             onClick={() => onConfirm(reason)}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
           >
             Confirmar Cambio
           </button>

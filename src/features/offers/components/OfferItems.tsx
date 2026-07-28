@@ -40,7 +40,7 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
                       type="text"
                       value={item.descripcion}
                       onChange={(e) => onUpdateItem(item.id, { descripcion: e.target.value })}
-                      className="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 text-sm text-slate-900 outline-none"
+                      className="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary text-sm text-slate-900 outline-none"
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -49,7 +49,7 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
                       min={1}
                       value={item.cantidad}
                       onChange={(e) => onUpdateItem(item.id, { cantidad: Number(e.target.value) || 0 })}
-                      className="w-16 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 text-sm text-slate-900 outline-none"
+                      className="w-16 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary text-sm text-slate-900 outline-none"
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -58,7 +58,7 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
                       min={0}
                       value={item.valorUnitario}
                       onChange={(e) => onUpdateItem(item.id, { valorUnitario: Number(e.target.value) || 0 })}
-                      className="w-24 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 text-sm text-slate-900 outline-none"
+                      className="w-24 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary text-sm text-slate-900 outline-none"
                     />
                   </td>
                   <td className="px-4 py-2 text-sm text-right text-slate-600">{formatCurrencyCO(item.base)}</td>
@@ -87,7 +87,7 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
               type="text"
               value={newItem.descripcion}
               onChange={(e) => onNewItemChange({ ...newItem, descripcion: e.target.value })}
-              className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Nuevo ítem"
             />
           </div>
@@ -98,7 +98,7 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
               min={1}
               value={newItem.cantidad}
               onChange={(e) => onNewItemChange({ ...newItem, cantidad: Number(e.target.value) || 0 })}
-              className="w-16 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-16 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
           <div>
@@ -108,13 +108,13 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
               min={0}
               value={newItem.valorUnitario}
               onChange={(e) => onNewItemChange({ ...newItem, valorUnitario: Number(e.target.value) || 0 })}
-              className="w-24 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-24 px-2 py-1.5 border border-slate-300 rounded text-sm text-right focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
           <button
             onClick={onAddItem}
             disabled={!newItem.descripcion || newItem.cantidad < 1 || newItem.valorUnitario < 1}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Plus className="w-4 h-4" />
             Agregar
