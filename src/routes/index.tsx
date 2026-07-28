@@ -1,0 +1,38 @@
+import { createBrowserRouter } from 'react-router-dom'
+import { AppLayout } from '../layout/AppLayout'
+import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
+import { EventsListPage } from '../features/events/pages/EventsListPage'
+import { EventDetailPage } from '../features/events/pages/EventDetailPage'
+import { OffersPage } from '../features/offers/pages/OffersPage'
+import { MatrixPage } from '../features/matrix/pages/MatrixPage'
+import { KanbanPage } from '../features/kanban/pages/KanbanPage'
+import { MapPage } from '../features/map/pages/MapPage'
+import { AdminParamsPage } from '../pages/AdminParamsPage'
+import { AdminUsersPage } from '../pages/AdminUsersPage'
+import { AuditPage } from '../pages/AuditPage'
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppLayout />,
+    children: [
+      { index: true, element: <DashboardPage /> },
+      {
+        path: 'ordenes',
+        children: [
+          { index: true, element: <EventsListPage /> },
+          { path: 'nueva', element: <EventDetailPage /> },
+          { path: ':id', element: <EventDetailPage /> },
+          { path: ':id/editar', element: <EventDetailPage /> },
+        ],
+      },
+      { path: 'ofertas', element: <OffersPage /> },
+      { path: 'matriz', element: <MatrixPage /> },
+      { path: 'tablero', element: <KanbanPage /> },
+      { path: 'mapa', element: <MapPage /> },
+      { path: 'parametros', element: <AdminParamsPage /> },
+      { path: 'usuarios', element: <AdminUsersPage /> },
+      { path: 'auditoria', element: <AuditPage /> },
+    ],
+  },
+])

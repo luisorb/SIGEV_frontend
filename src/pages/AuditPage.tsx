@@ -1,0 +1,8 @@
+export function AuditPage() {
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-slate-900 mb-1">Auditoría</h1>
+      <p className="text-slate-500">Registro de actividades y trazabilidad</p>
+    </div>
+  )
+}
