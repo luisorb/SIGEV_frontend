@@ -19,6 +19,12 @@ interface KanbanColumnProps {
   municipiosMap: Record<string, string>
 }
 
+function formatCompactCO(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
+  return `$${value}`
+}
+
 export function KanbanColumn({
   estado,
   cards,
@@ -29,6 +35,7 @@ export function KanbanColumn({
   const { setNodeRef, isOver } = useDroppable({ id: estado })
 
   const styles = columnStyles[estado] ?? columnStyles.Abierto
+  const totalValor = cards.reduce((s, c) => s + c.totalEconomico, 0)
 
   return (
     <div
@@ -39,7 +46,10 @@ export function KanbanColumn({
     >
       <div className={`flex items-center gap-2 px-4 py-3 border-b rounded-t-lg ${styles.header}`}>
         <span className={`w-2.5 h-2.5 rounded-full ${styles.dot}`} />
-        <span className="text-sm font-semibold text-slate-800">{estado}</span>
+        <div className="min-w-0">
+          <span className="text-sm font-semibold text-slate-800">{estado}</span>
+          <p className="text-[11px] text-slate-500 leading-tight">{formatCompactCO(totalValor)}</p>
+        </div>
         <span className="ml-auto text-xs font-medium text-slate-500 bg-white/80 px-2 py-0.5 rounded-full">
           {count}
         </span>
