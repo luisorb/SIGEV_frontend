@@ -2,7 +2,6 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '../layout/AppLayout'
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
 import { EventsListPage } from '../features/events/pages/EventsListPage'
-import { EventDetailPage } from '../features/events/pages/EventDetailPage'
 import { OffersPage } from '../features/offers/pages/OffersPage'
 import { MatrixPage } from '../features/matrix/pages/MatrixPage'
 import { KanbanPage } from '../features/kanban/pages/KanbanPage'
@@ -17,15 +16,7 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <DashboardPage /> },
-      {
-        path: 'ordenes',
-        children: [
-          { index: true, element: <EventsListPage /> },
-          { path: 'nueva', element: <EventDetailPage /> },
-          { path: ':id', element: <EventDetailPage /> },
-          { path: ':id/editar', element: <EventDetailPage /> },
-        ],
-      },
+      { path: 'ordenes', element: <EventsListPage /> },
       { path: 'ofertas', element: <OffersPage /> },
       { path: 'matriz', element: <MatrixPage /> },
       { path: 'tablero', element: <KanbanPage /> },
