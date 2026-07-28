@@ -13,6 +13,7 @@ export interface Ally {
   contacto: string
   email: string
   telefono: string
+  color: string
   activo: boolean
 }
 
@@ -21,6 +22,8 @@ export interface Disbursement {
   nombre: string
   codigo: string
   porcentajeParticipacion: number
+  vigencia: string
+  valorReferencia: number
   activo: boolean
 }
 
@@ -28,6 +31,7 @@ export interface Municipality {
   id: string
   nombre: string
   departamento: string
+  vereda?: string
 }
 
 export interface Item {
@@ -37,6 +41,7 @@ export interface Item {
   cantidad: number
   valorUnitario: number
   categoriaTributaria: TaxCategory
+  aliadoId?: string
   base: number
   iva: number
   impuestoConsumo: number
@@ -51,6 +56,18 @@ export interface ItemInput {
   cantidad: number
   valorUnitario: number
   categoriaTributaria: TaxCategory
+  aliadoId?: string
+}
+
+export interface CalculationParam {
+  id: string
+  tipo: 'iva' | 'consumo' | 'feeTarifado' | 'feeTerceros' | 'ivaFee'
+  valor: number
+  vigenciaInicio: string
+  vigenciaFin: string
+  version: number
+  aprobadoPor: string
+  activo: boolean
 }
 
 export interface CalculationParams {
@@ -60,6 +77,7 @@ export interface CalculationParams {
   feeTercerosRate: number
   ivaFeeRate: number
   applyFeeOnBase: boolean
+  paramsVersion?: string
 }
 
 export interface FeeCalculation {
@@ -106,12 +124,22 @@ export interface Event {
   numeroEvento: string
   sufijo: string
   responsable: string
+  dependencia: string
+  fechaEvento: string
+  asistentes: number
+  dias: number
   municipioId: string
+  vereda: string
+  latitud?: number
+  longitud?: number
+  observaciones: string
   aliadoId: string
   desembolsoId: string
   esquema: SchemaType
   estado: EventState
   items: Item[]
+  activo?: boolean
+  eliminadoAt?: string
   createdAt: string
   updatedAt: string
 }
@@ -120,8 +148,40 @@ export interface EventInput {
   numeroEvento: string
   sufijo?: string
   responsable: string
+  dependencia?: string
+  fechaEvento?: string
+  asistentes?: number
+  dias?: number
   municipioId: string
+  vereda?: string
+  latitud?: number
+  longitud?: number
+  observaciones?: string
   aliadoId: string
   desembolsoId: string
   esquema: SchemaType
+  estado?: EventState
+}
+
+export interface AuditEntry {
+  id: string
+  usuario: string
+  accion: string
+  entidad: string
+  entidadId: string
+  detalle: string
+  valorAnterior?: string
+  valorNuevo?: string
+  fecha: string
+  origen?: string
+}
+
+export interface StateHistoryEntry {
+  id: string
+  eventoId: string
+  estadoAnterior: EventState
+  estadoNuevo: EventState
+  usuario: string
+  fecha: string
+  motivo: string
 }

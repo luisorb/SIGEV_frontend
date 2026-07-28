@@ -7,6 +7,7 @@ export const DEFAULT_CALCULATION_PARAMS: CalculationParams = {
   feeTercerosRate: 0.10,
   ivaFeeRate: 0.19,
   applyFeeOnBase: true,
+  paramsVersion: '1.0',
 }
 
 export const TAX_CATEGORIES = ['IVA', 'Consumo', 'Tercero', 'Reembolso'] as const
@@ -22,3 +23,5 @@ export const LOCAL_CONFIG = {
   timeZone: 'America/Bogota',
   currency: 'COP',
 } as const
+
+export const CURRENT_USER = 'Admin SIGEV'
