@@ -4,12 +4,20 @@ import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 
 const ITEMS_PER_PAGE = 10
 
+const SORTABLE_TEXT_COLUMNS = [
+  'numeroEvento', 'responsable', 'estado', 'municipioId',
+  'fechaEvento', 'esquema', 'aliadoId', 'desembolsoId',
+] as const
+
+const SORTABLE_NUMERIC_COLUMNS = ['itemsCount'] as const
+
 export function useEventList(events: Event[]) {
   const [filters, setFilters] = useState<EventListFilters>({
     search: '',
     estado: '',
     aliadoId: '',
     desembolsoId: '',
+    municipioId: '',
   })
 
   const [sort, setSort] = useState<EventListSort>({
@@ -27,7 +35,10 @@ export function useEventList(events: Event[]) {
       result = result.filter(
         (e) =>
           e.numeroEvento.toLowerCase().includes(q) ||
-          e.responsable.toLowerCase().includes(q),
+          e.responsable.toLowerCase().includes(q) ||
+          e.municipioId.toLowerCase().includes(q) ||
+          e.aliadoId.toLowerCase().includes(q) ||
+          e.desembolsoId.toLowerCase().includes(q),
       )
     }
 
@@ -43,10 +54,26 @@ export function useEventList(events: Event[]) {
       result = result.filter((e) => e.desembolsoId === filters.desembolsoId)
     }
 
+    if (filters.municipioId) {
+      result = result.filter((e) => e.municipioId === filters.municipioId)
+    }
+
+    const sortColumn = sort.column
     result.sort((a, b) => {
-      const aVal = String(a[sort.column as keyof Event] ?? '')
-      const bVal = String(b[sort.column as keyof Event] ?? '')
-      const cmp = aVal.localeCompare(bVal)
+      let cmp = 0
+      if (sortColumn === 'totalCalculado') {
+        const totalA = a.items.reduce((s, i) => s + i.total, 0)
+        const totalB = b.items.reduce((s, i) => s + i.total, 0)
+        cmp = totalA - totalB
+      } else if ((SORTABLE_NUMERIC_COLUMNS as readonly string[]).includes(sortColumn)) {
+        const aVal = sortColumn === 'itemsCount' ? a.items.length : Number(a[sortColumn as keyof Event] ?? 0)
+        const bVal = sortColumn === 'itemsCount' ? b.items.length : Number(b[sortColumn as keyof Event] ?? 0)
+        cmp = aVal - bVal
+      } else if ((SORTABLE_TEXT_COLUMNS as readonly string[]).includes(sortColumn)) {
+        const aVal = String(a[sortColumn as keyof Event] ?? '')
+        const bVal = String(b[sortColumn as keyof Event] ?? '')
+        cmp = aVal.localeCompare(bVal)
+      }
       return sort.direction === 'asc' ? cmp : -cmp
     })
 

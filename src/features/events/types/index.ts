@@ -5,6 +5,7 @@ export interface EventListFilters {
   estado: string
   aliadoId: string
   desembolsoId: string
+  municipioId: string
 }
 
 export interface EventListSort {

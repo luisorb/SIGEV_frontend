@@ -14,7 +14,7 @@ export function EventDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isNew = id === 'nueva'
-  const isView = id && id !== 'nueva' && !window.location.pathname.endsWith('/editar')
+  const isView = !!(id && id !== 'nueva' && !window.location.pathname.endsWith('/editar'))
 
   const event = !isNew ? mockEvents.find((e) => e.id === id) : undefined
 
@@ -32,7 +32,9 @@ export function EventDetailPage() {
       cantidad: i.cantidad,
       valorUnitario: i.valorUnitario,
       categoriaTributaria: i.categoriaTributaria,
+      aliadoId: i.aliadoId,
     })),
+    event?.aliadoId,
   )
 
   function handleSave(data: EventFormValues) {
@@ -114,11 +116,13 @@ export function EventDetailPage() {
 
       <ItemManager
         items={items}
-        onAddItem={addItem}
-        onUpdateItem={updateItem}
-        onRemoveItem={removeItem}
+        aliados={mockAliados}
+        onAddItem={isView ? undefined : addItem}
+        onUpdateItem={isView ? undefined : updateItem}
+        onRemoveItem={isView ? undefined : removeItem}
         eventTotals={eventTotals}
-        onOpenImport={() => setShowImport(true)}
+        onOpenImport={isView ? undefined : () => setShowImport(true)}
+        readOnly={isView}
       />
 
       <ImportExcelModal

@@ -16,6 +16,9 @@ export const itemSchema = z.object({
     .enum(TAX_CATEGORIES, {
       errorMap: () => ({ message: 'Seleccione una categoría tributaria válida' }),
     }),
+  aliadoId: z
+    .string()
+    .optional(),
 })
 
 export const itemFormSchema = itemSchema.extend({

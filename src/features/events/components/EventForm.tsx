@@ -94,6 +94,46 @@ export function EventForm({
           </div>
 
           <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">Dependencia</label>
+            <input
+              {...register('dependencia')}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Ej: Secretaría de Cultura"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">Fecha del Evento</label>
+            <input
+              type="date"
+              {...register('fechaEvento')}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">Asistentes</label>
+            <input
+              type="number"
+              min={0}
+              {...register('asistentes', { valueAsNumber: true })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="0"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">Días</label>
+            <input
+              type="number"
+              min={0}
+              {...register('dias', { valueAsNumber: true })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="0"
+            />
+          </div>
+
+          <div className="space-y-1.5">
             <label className="block text-sm font-medium text-slate-700">
               Municipio <span className="text-red-500">*</span>
             </label>
@@ -111,6 +151,37 @@ export function EventForm({
             {errors.municipioId && (
               <p className="text-xs text-red-500">{errors.municipioId.message}</p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">Vereda</label>
+            <input
+              {...register('vereda')}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Nombre de la vereda (opcional)"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">Latitud</label>
+            <input
+              type="number"
+              step="any"
+              {...register('latitud', { valueAsNumber: true })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="4.7110"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">Longitud</label>
+            <input
+              type="number"
+              step="any"
+              {...register('longitud', { valueAsNumber: true })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="-74.0721"
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -164,6 +235,16 @@ export function EventForm({
               <p className="text-xs text-red-500">{errors.esquema.message}</p>
             )}
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-slate-700">Observaciones</label>
+          <textarea
+            {...register('observaciones')}
+            rows={3}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            placeholder="Observaciones adicionales del evento..."
+          />
         </div>
       </div>
 

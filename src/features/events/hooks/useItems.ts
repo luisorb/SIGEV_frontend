@@ -12,7 +12,7 @@ function generateId() {
   return `item-${nextId++}`
 }
 
-export function useItems(initialItems?: ItemInput[]) {
+export function useItems(initialItems?: ItemInput[], _eventAliadoId?: string) {
   const [items, setItems] = useState<ManagedItem[]>(
     () =>
       initialItems?.map((item) => ({
@@ -50,6 +50,7 @@ export function useItems(initialItems?: ItemInput[]) {
         cantidad: item.cantidad,
         valorUnitario: item.valorUnitario,
         categoriaTributaria: item.categoriaTributaria,
+        aliadoId: item.aliadoId,
       })),
     [items],
   )
