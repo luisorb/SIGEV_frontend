@@ -1,3 +1,5 @@
+import type { TaxCategory } from '../../../types'
+
 export type OfferState = 'Borrador' | 'Enviada' | 'Aprobada' | 'Rechazada'
 
 export interface OfferItem {
@@ -6,8 +8,13 @@ export interface OfferItem {
   descripcion: string
   cantidad: number
   valorUnitario: number
+  categoriaTributaria: TaxCategory
   base: number
   iva: number
+  impuestoConsumo: number
+  feeTarifado: number
+  feeTerceros: number
+  ivaFee: number
   total: number
 }
 
@@ -15,6 +22,7 @@ export interface OfferItemInput {
   descripcion: string
   cantidad: number
   valorUnitario: number
+  categoriaTributaria: TaxCategory
 }
 
 export interface Offer {
@@ -27,6 +35,10 @@ export interface Offer {
   items: OfferItem[]
   subtotal: number
   ivaTotal: number
+  impuestoConsumoTotal: number
+  feeTarifadoTotal: number
+  feeTercerosTotal: number
+  ivaFeeTotal: number
   total: number
   createdAt: string
   updatedAt: string

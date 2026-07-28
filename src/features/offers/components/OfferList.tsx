@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Plus, Eye, ArrowUpDown } from 'lucide-react'
+import { Search, Plus, Eye, Pencil, ArrowUpDown } from 'lucide-react'
 import type { Offer } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -13,10 +13,11 @@ interface OfferListProps {
   search: string
   onSearchChange: (value: string) => void
   onView: (id: string) => void
+  onEdit: (id: string) => void
   onCreate: () => void
 }
 
-export function OfferList({ offers, search, onSearchChange, onView, onCreate }: OfferListProps) {
+export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCreate }: OfferListProps) {
   const [filterEstado, setFilterEstado] = useState('')
   const [sortColumn, setSortColumn] = useState<string>('createdAt')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -162,13 +163,22 @@ export function OfferList({ offers, search, onSearchChange, onView, onCreate }: 
                       {formatDateCO(offer.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => onView(offer.id)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => onView(offer.id)}
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                          title="Ver detalle"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onEdit(offer.id)}
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

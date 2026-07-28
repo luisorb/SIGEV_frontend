@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from 'react'
 import type { Offer, OfferInput, OfferItemInput, OfferState } from '../types'
 import { mockOffers } from '../utils/mockOffers'
+import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
 
 export function useOffers() {
   const [offers, setOffers] = useState<Offer[]>(mockOffers)
@@ -35,6 +36,10 @@ export function useOffers() {
       items: [],
       subtotal: 0,
       ivaTotal: 0,
+      impuestoConsumoTotal: 0,
+      feeTarifadoTotal: 0,
+      feeTercerosTotal: 0,
+      ivaFeeTotal: 0,
       total: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -58,16 +63,18 @@ export function useOffers() {
   }
 
   function addItem(offerId: string, input: OfferItemInput) {
-    const base = input.cantidad * input.valorUnitario
-    const iva = base * 0.19
-    const total = base + iva
+    const totals = calculateItemPreview(input)
     const newItem = {
       id: `OFR-${offerId}-item-${nextId()}`,
       ofertaId: offerId,
       ...input,
-      base,
-      iva,
-      total,
+      base: totals.base,
+      iva: totals.iva,
+      impuestoConsumo: totals.impuestoConsumo,
+      feeTarifado: totals.feeTarifado,
+      feeTerceros: totals.feeTerceros,
+      ivaFee: totals.ivaFee,
+      total: totals.total,
     }
     setOffers((prev) =>
       prev.map((o) =>
@@ -86,10 +93,22 @@ export function useOffers() {
         const updatedItems = o.items.map((it) => {
           if (it.id !== itemId) return it
           const merged = { ...it, ...input }
-          merged.base = merged.cantidad * merged.valorUnitario
-          merged.iva = merged.base * 0.19
-          merged.total = merged.base + merged.iva
-          return merged
+          const totals = calculateItemPreview({
+            descripcion: merged.descripcion,
+            cantidad: merged.cantidad,
+            valorUnitario: merged.valorUnitario,
+            categoriaTributaria: merged.categoriaTributaria,
+          })
+          return {
+            ...merged,
+            base: totals.base,
+            iva: totals.iva,
+            impuestoConsumo: totals.impuestoConsumo,
+            feeTarifado: totals.feeTarifado,
+            feeTerceros: totals.feeTerceros,
+            ivaFee: totals.ivaFee,
+            total: totals.total,
+          }
         })
         return { ...o, items: updatedItems, updatedAt: new Date().toISOString() }
       })
@@ -112,10 +131,24 @@ export function useOffers() {
     setOffers((prev) =>
       prev.map((o) => {
         if (o.id !== offerId) return o
-        const subtotal = o.items.reduce((s, it) => s + it.base, 0)
-        const ivaTotal = o.items.reduce((s, it) => s + it.iva, 0)
-        const total = o.items.reduce((s, it) => s + it.total, 0)
-        return { ...o, subtotal, ivaTotal, total }
+        const { eventTotals } = calculateEventSummary(
+          o.items.map((it) => ({
+            descripcion: it.descripcion,
+            cantidad: it.cantidad,
+            valorUnitario: it.valorUnitario,
+            categoriaTributaria: it.categoriaTributaria,
+          }))
+        )
+        return {
+          ...o,
+          subtotal: eventTotals.baseTotal,
+          ivaTotal: eventTotals.ivaTotal,
+          impuestoConsumoTotal: eventTotals.impuestoConsumoTotal,
+          feeTarifadoTotal: eventTotals.feeTarifadoTotal,
+          feeTercerosTotal: eventTotals.feeTercerosTotal,
+          ivaFeeTotal: eventTotals.ivaFeeTotal,
+          total: eventTotals.granTotal,
+        }
       })
     )
   }
