@@ -94,7 +94,7 @@ export function EventViewPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="text-slate-500 text-lg">Evento no encontrado</p>
-        <Link to="/ordenes" className="inline-flex items-center gap-1.5 text-primary hover:text-primary-dark text-sm mt-3 transition-colors">
+        <Link to="/ordenes" className="inline-flex items-center gap-1.5 text-primary hover:text-primary-dark text-sm font-medium mt-3 transition-colors">
           <ChevronLeft className="w-4 h-4" />
           Volver a órdenes
         </Link>
@@ -120,7 +120,7 @@ export function EventViewPage() {
         <div className="min-w-0">
           <Link
             to="/ordenes"
-            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 mb-3 transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium mb-3 transition-colors"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             Volver a órdenes

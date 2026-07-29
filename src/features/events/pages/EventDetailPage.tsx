@@ -1,3 +1,4 @@
+import { ChevronLeft } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { EventForm } from '../components/EventForm'
@@ -60,7 +61,8 @@ export function EventDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-slate-500">Evento no encontrado</p>
-        <Link to="/ordenes" className="text-primary hover:text-primary-dark text-sm mt-2 inline-block">
+        <Link to="/ordenes" className="inline-flex items-center gap-1.5 text-primary hover:text-primary-dark text-sm font-medium mt-2 transition-colors">
+          <ChevronLeft className="w-4 h-4" />
           Volver a órdenes
         </Link>
       </div>
@@ -75,9 +77,9 @@ export function EventDetailPage() {
       <div>
         <Link
           to="/ordenes"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-2 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary-dark font-medium mb-2 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          <ChevronLeft className="w-4 h-4" />
           Volver a órdenes
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">Editar {event.numeroEvento}</h1>
