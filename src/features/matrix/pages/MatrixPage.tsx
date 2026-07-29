@@ -1,7 +1,7 @@
 import { useMatrix } from '../hooks/useMatrix'
 import { MatrixTable } from '../components/MatrixTable'
 import { MatrixExcelExport } from '../components/MatrixExcelExport'
-import { mockEvents, mockAliados, mockDesembolsos } from '../../events/utils/mockData'
+import { mockEvents, getMockAliados, getMockDesembolsos } from '../../events/utils/mockData'
 import { formatCurrencyCO } from '../../../utils/formatters'
 
 export function MatrixPage() {
@@ -15,7 +15,7 @@ export function MatrixPage() {
     selectedAliado,
     setSelectedDesembolso,
     setSelectedAliado,
-  } = useMatrix(mockEvents, mockAliados, mockDesembolsos)
+  } = useMatrix(mockEvents, getMockAliados(), getMockDesembolsos())
 
   return (
     <div className="space-y-6">

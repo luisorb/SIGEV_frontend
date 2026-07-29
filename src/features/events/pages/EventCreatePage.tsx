@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { EventForm } from '../components/EventForm'
-import { mockEvents, mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
+import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { CURRENT_USER } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
@@ -85,8 +85,8 @@ export function EventCreatePage() {
       </div>
 
       <EventForm
-        aliados={mockAliados}
-        desembolsos={mockDesembolsos}
+        aliados={getMockAliados()}
+        desembolsos={getMockDesembolsos()}
         municipios={mockMunicipios}
         events={activeEvents}
         onSave={handleSave}

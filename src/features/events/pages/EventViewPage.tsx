@@ -8,7 +8,7 @@ import { SupportDocuments } from '../components/SupportDocuments'
 import { useItems } from '../hooks/useItems'
 import { useStateMachine } from '../hooks/useStateMachine'
 import { useOffers } from '../../offers/hooks/useOffers'
-import { mockEvents, mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
+import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { CURRENT_USER } from '../../../config/constants'
 import { addAuditEntry } from '../../../lib/auditStore'
@@ -232,9 +232,9 @@ export function EventViewPage() {
     )
   }
 
-  const aliado = mockAliados.find((a) => a.id === event.aliadoId)
+  const aliado = getMockAliados().find((a) => a.id === event.aliadoId)
   const municipio = mockMunicipios.find((m) => m.id === event.municipioId)
-  const desembolso = mockDesembolsos.find((d) => d.id === event.desembolsoId)
+  const desembolso = getMockDesembolsos().find((d) => d.id === event.desembolsoId)
   const isDevolucionActive = event.motivoDevolucion && event.estado === 'Ejecutado'
 
   const label = (text: string) => (
@@ -452,7 +452,7 @@ export function EventViewPage() {
 
       <ItemManager
         items={items}
-        aliados={mockAliados}
+        aliados={getMockAliados()}
         onAddItem={addItem}
         onUpdateItem={updateItem}
         onRemoveItem={removeItem}

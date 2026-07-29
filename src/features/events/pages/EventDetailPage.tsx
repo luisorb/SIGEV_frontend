@@ -2,7 +2,7 @@ import { ChevronLeft } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { EventForm } from '../components/EventForm'
-import { mockEvents, mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
+import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { CURRENT_USER } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
@@ -72,7 +72,7 @@ export function EventDetailPage() {
     )
   }
 
-  const aliadoName = mockAliados.find((a) => a.id === event.aliadoId)?.nombre
+  const aliadoName = getMockAliados().find((a) => a.id === event.aliadoId)?.nombre
   const municipioName = mockMunicipios.find((m) => m.id === event.municipioId)?.nombre
 
   return (
@@ -95,8 +95,8 @@ export function EventDetailPage() {
 
       <EventForm
         event={event}
-        aliados={mockAliados}
-        desembolsos={mockDesembolsos}
+        aliados={getMockAliados()}
+        desembolsos={getMockDesembolsos()}
         municipios={mockMunicipios}
         events={activeEvents}
         onSave={handleSave}

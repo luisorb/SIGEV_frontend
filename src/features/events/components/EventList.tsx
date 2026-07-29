@@ -5,7 +5,7 @@ import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { EVENT_STATES } from '../../../config/constants'
-import { mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
+import { getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
 import type { PageSize } from '../hooks/useEventList'
 
 const stateColors: Record<string, string> = {
@@ -146,7 +146,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los aliados</option>
-            {mockAliados.map((a) => (
+            {getMockAliados().map((a) => (
               <option key={a.id} value={a.id}>{a.nombre}</option>
             ))}
           </select>
@@ -156,7 +156,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los desembolsos</option>
-            {mockDesembolsos.map((d) => (
+            {getMockDesembolsos().map((d) => (
               <option key={d.id} value={d.id}>{d.nombre}</option>
             ))}
           </select>
@@ -191,8 +191,8 @@ export function EventList({
               ) : (
                 _events.map((event) => {
                   const eventTotal = event.items.reduce((s, i) => s + i.total, 0)
-                  const aliado = mockAliados.find((a) => a.id === event.aliadoId)
-                  const desembolso = mockDesembolsos.find((d) => d.id === event.desembolsoId)
+                  const aliado = getMockAliados().find((a) => a.id === event.aliadoId)
+                  const desembolso = getMockDesembolsos().find((d) => d.id === event.desembolsoId)
                   return (
                     <tr key={event.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">

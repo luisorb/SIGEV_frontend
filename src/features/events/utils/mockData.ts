@@ -1,16 +1,35 @@
 import type { Ally, Disbursement, Municipality, Event, Item } from '../../../types'
 
-export const mockAliados: Ally[] = [
+const defaultAliados: Ally[] = [
   { id: '1', nombre: 'Fundación Social', nit: '900.123.456-7', contacto: 'Carlos Pérez', email: 'carlos@fsocial.org', telefono: '3001234567', color: '#EAB308', activo: true },
   { id: '2', nombre: 'Corporación Desarrollo', nit: '900.789.012-3', contacto: 'Ana Gómez', email: 'ana@codesarrollo.org', telefono: '3007890123', color: '#f43340', activo: true },
   { id: '3', nombre: 'Asociación Cultural', nit: '900.345.678-9', contacto: 'Luis Rojas', email: 'luis@acultural.org', telefono: '3003456789', color: '#22C55E', activo: true },
 ]
 
-export const mockDesembolsos: Disbursement[] = [
+const defaultDesembolsos: Disbursement[] = [
   { id: '1', nombre: 'Desembolso 2025-01', codigo: 'D2025-01', porcentajeParticipacion: 40, vigencia: '2025-01-01', valorReferencia: 500_000_000, activo: true },
   { id: '2', nombre: 'Desembolso 2025-02', codigo: 'D2025-02', porcentajeParticipacion: 35, vigencia: '2025-06-01', valorReferencia: 400_000_000, activo: true },
   { id: '3', nombre: 'Desembolso 2025-03', codigo: 'D2025-03', porcentajeParticipacion: 25, vigencia: '2025-01-01', valorReferencia: 300_000_000, activo: true },
 ]
+
+function loadFromStorage<T>(key: string, fallback: T[]): T[] {
+  try {
+    const saved = localStorage.getItem(key)
+    if (saved) {
+      const parsed = JSON.parse(saved) as T[]
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+  } catch { /* ignore */ }
+  return fallback
+}
+
+export function getMockAliados(): Ally[] {
+  return loadFromStorage('sigev-aliados', defaultAliados)
+}
+
+export function getMockDesembolsos(): Disbursement[] {
+  return loadFromStorage('sigev-desembolsos', defaultDesembolsos)
+}
 
 export const mockMunicipios: Municipality[] = [
   { id: '1', nombre: 'Bogotá D.C.', departamento: 'Cundinamarca' },

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Save, X, FileSpreadsheet } from 'lucide-react'
 import { useOfferForm } from '../hooks/useOfferForm'
-import { mockEvents, mockMunicipios, mockAliados, mockDesembolsos } from '../../events/utils/mockData'
+import { mockEvents, mockMunicipios, getMockAliados, getMockDesembolsos } from '../../events/utils/mockData'
 import type { Offer } from '../types'
 import type { Event } from '../../../types'
 
@@ -68,9 +68,9 @@ export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormPro
     if (!ev) return
     const m = mockMunicipios.find((m) => m.id === ev.municipioId)
     const municipio = m ? m.nombre : ev.municipioId
-    const a = mockAliados.find((a) => a.id === ev.aliadoId)
+    const a = getMockAliados().find((a) => a.id === ev.aliadoId)
     const aliado = a ? a.nombre : ev.aliadoId
-    const d = mockDesembolsos.find((d) => d.id === ev.desembolsoId)
+    const d = getMockDesembolsos().find((d) => d.id === ev.desembolsoId)
     const desembolso = d ? d.nombre : ev.desembolsoId
     form.setValue('eventoId', ev.id)
     form.setValue('numeroEvento', `${ev.numeroEvento}${ev.sufijo ? `-${ev.sufijo}` : ''}`)

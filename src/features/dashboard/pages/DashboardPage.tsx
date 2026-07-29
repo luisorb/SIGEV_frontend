@@ -6,7 +6,7 @@ import { DashboardExport } from '../components/DashboardExport'
 import { RecentOrders } from '../components/RecentOrders'
 import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
-import { mockEvents, mockAliados, mockDesembolsos } from '../../events/utils/mockData'
+import { mockEvents, getMockAliados, getMockDesembolsos } from '../../events/utils/mockData'
 
 export function DashboardPage() {
   const {
@@ -17,7 +17,7 @@ export function DashboardPage() {
     metrics,
     consolidadoDesembolso,
     consolidadoAliado,
-  } = useDashboard(mockEvents, mockAliados, mockDesembolsos)
+  } = useDashboard(mockEvents, getMockAliados(), getMockDesembolsos())
 
   const totalEvents = useMemo(() => mockEvents.length, [])
 
@@ -32,15 +32,15 @@ export function DashboardPage() {
         </div>
         <DashboardExport
           events={mockEvents}
-          aliados={mockAliados}
-          desembolsos={mockDesembolsos}
+          aliados={getMockAliados()}
+          desembolsos={getMockDesembolsos()}
         />
       </div>
 
       <DashboardFilters
         filters={filters}
-        aliados={mockAliados}
-        desembolsos={mockDesembolsos}
+        aliados={getMockAliados()}
+        desembolsos={getMockDesembolsos()}
         hasActiveFilters={hasActiveFilters}
         onFilterChange={updateFilter}
         onReset={resetFilters}
@@ -58,8 +58,8 @@ export function DashboardPage() {
         <div>
           <RecentOrders
             events={mockEvents}
-            aliados={mockAliados}
-            desembolsos={mockDesembolsos}
+            aliados={getMockAliados()}
+            desembolsos={getMockDesembolsos()}
           />
         </div>
       </div>

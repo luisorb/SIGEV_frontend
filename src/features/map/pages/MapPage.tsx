@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useMapMarkers } from '../hooks/useMapMarkers'
 import { ExecutionMap } from '../components/ExecutionMap'
 import { mockCoordenadas } from '../utils/coordinates'
-import { mockEvents, mockAliados, mockDesembolsos } from '../../events/utils/mockData'
+import { mockEvents, getMockAliados, getMockDesembolsos } from '../../events/utils/mockData'
 import { formatCurrencyCO } from '../../../utils/formatters'
 
 export function MapPage() {
@@ -46,7 +46,7 @@ export function MapPage() {
           className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los desembolsos</option>
-          {mockDesembolsos.map((d) => (
+          {getMockDesembolsos().map((d) => (
             <option key={d.id} value={d.id}>{d.nombre}</option>
           ))}
         </select>
@@ -56,7 +56,7 @@ export function MapPage() {
           className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
         >
           <option value="">Todos los aliados</option>
-          {mockAliados.map((a) => (
+          {getMockAliados().map((a) => (
             <option key={a.id} value={a.id}>{a.nombre}</option>
           ))}
         </select>

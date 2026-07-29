@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { useKanban } from '../hooks/useKanban'
-import { mockEvents, mockAliados, mockMunicipios } from '../../events/utils/mockData'
+import { mockEvents, getMockAliados, mockMunicipios } from '../../events/utils/mockData'
 
 export function KanbanPage() {
   const {
@@ -15,7 +15,7 @@ export function KanbanPage() {
 
   const aliadosMap = useMemo(() => {
     const m: Record<string, string> = {}
-    for (const a of mockAliados) m[a.id] = a.nombre
+    for (const a of getMockAliados()) m[a.id] = a.nombre
     return m
   }, [])
 
