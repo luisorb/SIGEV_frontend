@@ -1,6 +1,9 @@
-import { Save, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Save, X, FileSpreadsheet } from 'lucide-react'
 import { useOfferForm } from '../hooks/useOfferForm'
+import { mockEvents, mockMunicipios, mockAliados, mockDesembolsos } from '../../events/utils/mockData'
 import type { Offer } from '../types'
+import type { Event } from '../../../types'
 
 interface OfferFormProps {
   offer?: Offer
@@ -32,7 +35,52 @@ interface OfferFormProps {
 }
 
 export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormProps) {
-  const { register, handleSubmit, errors, isSubmitting } = useOfferForm({ offer, initialData, onSave })
+  const { register, handleSubmit, errors, isSubmitting, form } = useOfferForm({ offer, initialData, onSave })
+  const [events, setEvents] = useState<Event[]>([])
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('sigev-events')
+      if (saved) {
+        const parsed = JSON.parse(saved) as Event[]
+        setEvents(parsed.filter((e) => e.activo !== false))
+      } else {
+        setEvents(mockEvents.filter((e) => e.activo !== false))
+      }
+    } catch {
+      setEvents(mockEvents.filter((e) => e.activo !== false))
+    }
+  }, [])
+
+  function handleEventSelect(eventId: string) {
+    if (!eventId) {
+      form.setValue('eventoId', '')
+      form.setValue('numeroEvento', '')
+      form.setValue('responsable', '')
+      form.setValue('dependencia', '')
+      form.setValue('municipio', '')
+      form.setValue('aliado', '')
+      form.setValue('desembolso', '')
+      form.setValue('esquema', '')
+      return
+    }
+    const ev = events.find((e) => e.id === eventId)
+    if (!ev) return
+    const m = mockMunicipios.find((m) => m.id === ev.municipioId)
+    const municipio = m ? m.nombre : ev.municipioId
+    const a = mockAliados.find((a) => a.id === ev.aliadoId)
+    const aliado = a ? a.nombre : ev.aliadoId
+    const d = mockDesembolsos.find((d) => d.id === ev.desembolsoId)
+    const desembolso = d ? d.nombre : ev.desembolsoId
+    form.setValue('eventoId', ev.id)
+    form.setValue('numeroEvento', `${ev.numeroEvento}${ev.sufijo ? `-${ev.sufijo}` : ''}`)
+    form.setValue('responsable', ev.responsable)
+    form.setValue('dependencia', ev.dependencia || '')
+    form.setValue('municipio', municipio)
+    form.setValue('aliado', aliado)
+    form.setValue('desembolso', desembolso)
+    form.setValue('esquema', ev.esquema)
+  }
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
@@ -111,45 +159,52 @@ export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormPro
         />
       </div>
 
-      <details className="border border-slate-200 rounded-lg">
-        <summary className="px-4 py-2.5 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 select-none rounded-lg">
-          Datos del evento asociado (opcional)
-        </summary>
-        <div className="p-4 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-500">N° Evento</label>
-            <input type="text" {...register('numeroEvento')} className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary" placeholder="EV-2025-XXX" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-500">Responsable</label>
-            <input type="text" {...register('responsable')} className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary" placeholder="Nombre del responsable" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-500">Dependencia</label>
-            <input type="text" {...register('dependencia')} className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary" placeholder="Dependencia" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-500">Municipio</label>
-            <input type="text" {...register('municipio')} className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary" placeholder="Municipio" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-500">Aliado</label>
-            <input type="text" {...register('aliado')} className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary" placeholder="Aliado" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-500">Desembolso</label>
-            <input type="text" {...register('desembolso')} className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary" placeholder="Desembolso" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-500">Esquema</label>
-            <select {...register('esquema')} className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary">
-              <option value="">Seleccionar</option>
-              <option value="cotizacion">Cotización</option>
-              <option value="detalle">Detalle</option>
-            </select>
-          </div>
+      <div className="border border-slate-200 rounded-lg p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+          <label className="text-sm font-medium text-slate-700">Evento asociado (opcional)</label>
         </div>
-      </details>
+        <select
+          value={form.watch('eventoId') || ''}
+          onChange={(e) => handleEventSelect(e.target.value)}
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+        >
+          <option value="">Sin evento asociado</option>
+          {events.map((ev) => (
+            <option key={ev.id} value={ev.id}>
+              {ev.numeroEvento}{ev.sufijo ? `-${ev.sufijo}` : ''} - {ev.responsable} ({ev.estado})
+            </option>
+          ))}
+        </select>
+        {form.watch('eventoId') && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-sm">
+            <div>
+              <span className="text-xs text-slate-400">Responsable</span>
+              <p className="font-medium text-slate-800">{form.watch('responsable')}</p>
+            </div>
+            <div>
+              <span className="text-xs text-slate-400">Municipio</span>
+              <p className="font-medium text-slate-800">{form.watch('municipio')}</p>
+            </div>
+            <div>
+              <span className="text-xs text-slate-400">Aliado</span>
+              <p className="font-medium text-slate-800">{form.watch('aliado')}</p>
+            </div>
+            <div>
+              <span className="text-xs text-slate-400">Esquema</span>
+              <p className="font-medium text-slate-800 capitalize">{form.watch('esquema')}</p>
+            </div>
+          </div>
+        )}
+        <input type="hidden" {...register('eventoId')} />
+        <input type="hidden" {...register('numeroEvento')} />
+        <input type="hidden" {...register('responsable')} />
+        <input type="hidden" {...register('dependencia')} />
+        <input type="hidden" {...register('municipio')} />
+        <input type="hidden" {...register('aliado')} />
+        <input type="hidden" {...register('desembolso')} />
+        <input type="hidden" {...register('esquema')} />
+      </div>
 
       <div className="flex justify-end gap-3 pt-2">
         <button
