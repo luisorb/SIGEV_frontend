@@ -1,74 +1,41 @@
-import { useState } from 'react'
-import { useOffers } from '../hooks/useOffers'
+import { useOffers, usePermissions } from '../hooks/useOffers'
 import { OfferList } from '../components/OfferList'
-import { OfferDetailModal } from '../components/OfferDetailModal'
-
-type ModalMode = 'create' | 'view' | 'edit'
+import { exportOfferToExcel } from '../utils/excelExport'
+import { addAuditEntry } from '../../../lib/auditStore'
+import { CURRENT_USER } from '../../../config/constants'
 
 export function OffersPage() {
   const {
     offers,
     search,
     setSearch,
-    getOffer,
-    createOffer,
-    updateOffer,
-    changeState,
-    addItem,
-    updateItem,
-    removeItem: removeItemFromOffer,
   } = useOffers()
 
-  const [modalMode, setModalMode] = useState<ModalMode | null>(null)
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
+  const { can } = usePermissions()
 
-  function openCreate() {
-    setSelectedId(undefined)
-    setModalMode('create')
+  function handleExport(id: string) {
+    const offer = offers.find((o) => o.id === id)
+    if (!offer) return
+    exportOfferToExcel(offer)
+    addAuditEntry({
+      accion: 'Exportación de oferta',
+      entidad: 'Offer',
+      entidadId: id,
+      usuario: CURRENT_USER,
+      fecha: new Date().toISOString(),
+      detalle: `Oferta ${offer.codigo} exportada a Excel`,
+    })
   }
-
-  function openView(id: string) {
-    setSelectedId(id)
-    setModalMode('view')
-  }
-
-  function openEdit(id: string) {
-    setSelectedId(id)
-    setModalMode('edit')
-  }
-
-  function closeModal() {
-    setModalMode(null)
-    setSelectedId(undefined)
-  }
-
-  const selectedOffer = selectedId ? getOffer(selectedId) : undefined
 
   return (
-    <>
-      <OfferList
-        offers={offers}
-        search={search}
-        onSearchChange={setSearch}
-        onView={openView}
-        onEdit={openEdit}
-        onCreate={openCreate}
-      />
-
-      {modalMode && (
-        <OfferDetailModal
-          isOpen
-          mode={modalMode}
-          offer={selectedOffer}
-          onClose={closeModal}
-          onCreate={createOffer}
-          onUpdate={updateOffer}
-          onChangeState={changeState}
-          onAddItem={addItem}
-          onUpdateItem={updateItem}
-          onRemoveItem={removeItemFromOffer}
-        />
-      )}
-    </>
+    <OfferList
+      offers={offers}
+      search={search}
+      onSearchChange={setSearch}
+      onExport={handleExport}
+      canExport={can('export')}
+      canCreate={can('create')}
+      canEdit={can('edit')}
+    />
   )
 }

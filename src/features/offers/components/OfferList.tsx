@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Search, Plus, Eye, Pencil, ArrowUpDown } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Search, Plus, Eye, Pencil, FileDown, ArrowUpDown } from 'lucide-react'
 import type { Offer } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -12,12 +13,21 @@ interface OfferListProps {
   offers: Offer[]
   search: string
   onSearchChange: (value: string) => void
-  onView: (id: string) => void
-  onEdit: (id: string) => void
-  onCreate: () => void
+  onExport: (id: string) => void
+  canExport?: boolean
+  canCreate?: boolean
+  canEdit?: boolean
 }
 
-export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCreate }: OfferListProps) {
+export function OfferList({
+  offers,
+  search,
+  onSearchChange,
+  onExport,
+  canExport = true,
+  canCreate = true,
+  canEdit = true,
+}: OfferListProps) {
   const [filterEstado, setFilterEstado] = useState('')
   const [sortColumn, setSortColumn] = useState<string>('createdAt')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -37,11 +47,15 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
   }
 
   const sorted = [...filtered].sort((a, b) => {
-    const cmp = sortColumn === 'codigo' ? a.codigo.localeCompare(b.codigo)
-      : sortColumn === 'nombre' ? a.nombre.localeCompare(b.nombre)
-      : sortColumn === 'cliente' ? a.cliente.localeCompare(b.cliente)
-      : sortColumn === 'total' ? a.total - b.total
-      : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    const cmp = sortColumn === 'codigo'
+      ? a.codigo.localeCompare(b.codigo)
+      : sortColumn === 'nombre'
+        ? a.nombre.localeCompare(b.nombre)
+        : sortColumn === 'cliente'
+          ? a.cliente.localeCompare(b.cliente)
+          : sortColumn === 'total'
+            ? a.total - b.total
+            : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     return sortDir === 'asc' ? cmp : -cmp
   })
 
@@ -52,13 +66,15 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
           <h1 className="text-2xl font-bold text-slate-900">Ofertas Económicas</h1>
           <p className="text-sm text-slate-500">{offers.length} ofertas registradas</p>
         </div>
-        <button
-          onClick={onCreate}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva Oferta
-        </button>
+        {canCreate && (
+          <Link
+            to="/ofertas/nueva"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Oferta
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -66,7 +82,7 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar por código, nombre o cliente..."
+            placeholder="Buscar por código, nombre, cliente, evento o responsable..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -98,6 +114,9 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
                     <SortIcon />
                   </div>
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  N° Evento
+                </th>
                 <th
                   onClick={() => handleSort('nombre')}
                   className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
@@ -120,7 +139,7 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
                   Estado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Ítems
+                  Items
                 </th>
                 <th
                   onClick={() => handleSort('total')}
@@ -134,13 +153,13 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Fecha
                 </th>
-                <th className="px-4 py-3 w-16" />
+                <th className="px-4 py-3 w-24" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-400">
+                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-400">
                     No hay ofertas para mostrar.
                   </td>
                 </tr>
@@ -148,7 +167,8 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
                 sorted.map((offer) => (
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{offer.codigo}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{offer.nombre}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{offer.numeroEvento || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px] truncate" title={offer.nombre}>{offer.nombre}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{offer.cliente}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${OFFER_STATE_COLORS[offer.estado]}`}>
@@ -164,20 +184,31 @@ export function OfferList({ offers, search, onSearchChange, onView, onEdit, onCr
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => onView(offer.id)}
+                        <Link
+                          to={`/ofertas/${offer.id}`}
                           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-primary transition-colors"
                           title="Ver detalle"
                         >
                           <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onEdit(offer.id)}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
-                          title="Editar"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
+                        </Link>
+                        {canEdit && (
+                          <Link
+                            to={`/ofertas/${offer.id}/editar`}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Link>
+                        )}
+                        {canExport && (
+                          <button
+                            onClick={() => onExport(offer.id)}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-green-600 transition-colors"
+                            title="Exportar a Excel"
+                          >
+                            <FileDown className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

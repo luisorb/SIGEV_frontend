@@ -2,6 +2,26 @@ import { useState, useMemo, useRef } from 'react'
 import type { Offer, OfferInput, OfferItemInput, OfferState } from '../types'
 import { mockOffers } from '../utils/mockOffers'
 import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
+import { addAuditEntry } from '../../../lib/auditStore'
+import { CURRENT_USER } from '../../../config/constants'
+import { exportOfferToExcel } from '../utils/excelExport'
+
+export type UserPermission = 'create' | 'edit' | 'delete' | 'changeState' | 'export'
+
+const ROLE_PERMISSIONS: Record<string, UserPermission[]> = {
+  Administrador: ['create', 'edit', 'delete', 'changeState', 'export'],
+  Operador: ['create', 'edit', 'export'],
+  Supervisor: ['edit', 'changeState', 'export'],
+  Consulta: ['export'],
+  Auditor: [],
+}
+
+export function usePermissions(currentRole: string = 'Administrador'): {
+  can: (perm: UserPermission) => boolean
+} {
+  const perms = ROLE_PERMISSIONS[currentRole] ?? []
+  return { can: (perm: UserPermission) => perms.includes(perm) }
+}
 
 export function useOffers() {
   const [offers, setOffers] = useState<Offer[]>(mockOffers)
@@ -20,7 +40,10 @@ export function useOffers() {
       (o) =>
         o.codigo.toLowerCase().includes(q) ||
         o.nombre.toLowerCase().includes(q) ||
-        o.cliente.toLowerCase().includes(q)
+        o.cliente.toLowerCase().includes(q) ||
+        (o.numeroEvento ?? '').toLowerCase().includes(q) ||
+        (o.responsable ?? '').toLowerCase().includes(q) ||
+        (o.municipio ?? '').toLowerCase().includes(q)
     )
   }, [offers, search])
 
@@ -45,21 +68,51 @@ export function useOffers() {
       updatedAt: new Date().toISOString(),
     }
     setOffers((prev) => [newOffer, ...prev])
+    addAuditEntry({
+      accion: 'Creación de oferta',
+      entidad: 'Offer',
+      entidadId: newOffer.id,
+      usuario: CURRENT_USER,
+      fecha: new Date().toISOString(),
+      detalle: `Oferta ${newOffer.codigo} creada para cliente ${newOffer.cliente}`,
+    })
     return newOffer
   }
 
   function updateOffer(id: string, input: Partial<OfferInput>) {
-    setOffers((prev) =>
-      prev.map((o) =>
+    const prev = offers.find((o) => o.id === id)
+    setOffers((prevOffers) =>
+      prevOffers.map((o) =>
         o.id === id ? { ...o, ...input, updatedAt: new Date().toISOString() } : o
       )
     )
+    if (prev) {
+      addAuditEntry({
+        accion: 'Edición de oferta',
+        entidad: 'Offer',
+        entidadId: id,
+        usuario: CURRENT_USER,
+        fecha: new Date().toISOString(),
+        detalle: `Oferta ${prev.codigo} actualizada`,
+      })
+    }
   }
 
   function changeState(id: string, estado: OfferState) {
-    setOffers((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, estado, updatedAt: new Date().toISOString() } : o))
+    const prev = offers.find((o) => o.id === id)
+    setOffers((prevOffers) =>
+      prevOffers.map((o) => (o.id === id ? { ...o, estado, updatedAt: new Date().toISOString() } : o))
     )
+    if (prev) {
+      addAuditEntry({
+        accion: 'Cambio de estado de oferta',
+        entidad: 'Offer',
+        entidadId: id,
+        usuario: CURRENT_USER,
+        fecha: new Date().toISOString(),
+        detalle: `Oferta ${prev.codigo}: ${prev.estado} → ${estado}`,
+      })
+    }
   }
 
   function addItem(offerId: string, input: OfferItemInput) {
@@ -84,6 +137,17 @@ export function useOffers() {
       )
     )
     recalcTotals(offerId)
+    const offer = offers.find((o) => o.id === offerId)
+    if (offer) {
+      addAuditEntry({
+        accion: 'Adición de ítem',
+        entidad: 'OfferItem',
+        entidadId: newItem.id,
+        usuario: CURRENT_USER,
+        fecha: new Date().toISOString(),
+        detalle: `Ítem "${newItem.descripcion}" agregado a oferta ${offer.codigo}`,
+      })
+    }
   }
 
   function updateItem(offerId: string, itemId: string, input: Partial<OfferItemInput>) {
@@ -117,6 +181,8 @@ export function useOffers() {
   }
 
   function removeItem(offerId: string, itemId: string) {
+    const offer = offers.find((o) => o.id === offerId)
+    const item = offer?.items.find((it) => it.id === itemId)
     setOffers((prev) =>
       prev.map((o) =>
         o.id === offerId
@@ -125,6 +191,16 @@ export function useOffers() {
       )
     )
     recalcTotals(offerId)
+    if (offer && item) {
+      addAuditEntry({
+        accion: 'Eliminación de ítem',
+        entidad: 'OfferItem',
+        entidadId: itemId,
+        usuario: CURRENT_USER,
+        fecha: new Date().toISOString(),
+        detalle: `Ítem "${item.descripcion}" eliminado de oferta ${offer.codigo}`,
+      })
+    }
   }
 
   function recalcTotals(offerId: string) {
@@ -153,6 +229,20 @@ export function useOffers() {
     )
   }
 
+  function handleExport(offerId: string) {
+    const offer = offers.find((o) => o.id === offerId)
+    if (!offer) return
+    exportOfferToExcel(offer)
+    addAuditEntry({
+      accion: 'Exportación de oferta',
+      entidad: 'Offer',
+      entidadId: offerId,
+      usuario: CURRENT_USER,
+      fecha: new Date().toISOString(),
+      detalle: `Oferta ${offer.codigo} exportada a Excel`,
+    })
+  }
+
   return {
     offers: filteredOffers,
     allOffers: offers,
@@ -165,5 +255,6 @@ export function useOffers() {
     addItem,
     updateItem,
     removeItem,
+    exportOffer: handleExport,
   }
 }

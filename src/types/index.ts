@@ -6,6 +6,38 @@ export type SchemaType = 'cotizacion' | 'detalle'
 
 export type UserRole = 'Administrador' | 'Operador' | 'Supervisor' | 'Consulta' | 'Auditor'
 
+export type TipoSoporte =
+  | 'Formato de requerimiento'
+  | 'Cotizaciones presentadas'
+  | 'Comunicado de aprobación'
+  | 'Presupuesto final'
+  | 'Facturas normalizadas'
+  | 'Registro fotográfico'
+  | 'Listado de asistencia'
+
+export const SOPORTES_REQUERIDOS: TipoSoporte[] = [
+  'Formato de requerimiento',
+  'Cotizaciones presentadas',
+  'Comunicado de aprobación',
+  'Presupuesto final',
+  'Facturas normalizadas',
+  'Registro fotográfico',
+  'Listado de asistencia',
+]
+
+export const SOPORTES_ESTATICOS: TipoSoporte[] = [
+  'Formato de requerimiento',
+  'Cotizaciones presentadas',
+  'Comunicado de aprobación',
+  'Presupuesto final',
+]
+
+export const SOPORTES_MODIFICABLES: TipoSoporte[] = [
+  'Facturas normalizadas',
+  'Registro fotográfico',
+  'Listado de asistencia',
+]
+
 export interface Ally {
   id: string
   nombre: string
@@ -174,6 +206,48 @@ export interface AuditEntry {
   valorNuevo?: string
   fecha: string
   origen?: string
+}
+
+export interface Soporte {
+  id: string
+  eventoId: string
+  tipo: TipoSoporte
+  nombre: string
+  archivo: string
+  tamanio: number
+  mimeType: string
+  version: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Event {
+  id: string
+  numeroEvento: string
+  sufijo: string
+  responsable: string
+  dependencia: string
+  fechaEvento: string
+  asistentes: number
+  dias: number
+  municipioId: string
+  vereda: string
+  latitud?: number
+  longitud?: number
+  observaciones: string
+  aliadoId: string
+  desembolsoId: string
+  esquema: SchemaType
+  estado: EventState
+  items: Item[]
+  asignadoA?: string
+  soportes?: Soporte[]
+  cotizacionSeleccionadaId?: string
+  motivoDevolucion?: string
+  activo?: boolean
+  eliminadoAt?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface StateHistoryEntry {
