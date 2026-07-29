@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useParameters } from '../hooks/useParameters'
 import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
@@ -14,8 +14,6 @@ const EMPTY_ALLY: AllyForm = { nombre: '', nit: '', contacto: '', email: '', tel
 
 type DesForm = Omit<Disbursement, 'id'>
 const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', valorReferencia: 0, activo: true }
-
-const PAGE_SIZE = 8
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
   if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1 shrink-0" />
@@ -42,6 +40,7 @@ function AliadosTab() {
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState<'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado'>('nombre')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [pageSize, setPageSize] = useState(8)
   const [page, setPage] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Ally | null>(null)
@@ -101,9 +100,9 @@ function AliadosTab() {
     })
   }, [aliados, search, sortColumn, sortDir])
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
   const safePage = Math.min(page, totalPages - 1)
-  const paged = sorted.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+  const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
   function sortHeader(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado', label: string, className = '') {
     return (
@@ -120,21 +119,20 @@ function AliadosTab() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">{sorted.length} registros</p>
+    <div className="flex flex-col min-h-0 gap-2">
+      <div className="flex items-center justify-end shrink-0">
         <button onClick={openCreate} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Aliado
         </button>
       </div>
-      <div className="relative w-full sm:w-72">
+      <div className="relative w-full sm:w-72 shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input type="text" placeholder="Buscar por nombre o NIT..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
       </div>
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 {sortHeader('nombre', 'Nombre')}
                 {sortHeader('nit', 'NIT')}
@@ -176,39 +174,63 @@ function AliadosTab() {
             </tbody>
           </table>
         </div>
-      </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-sm text-slate-500">
-            Mostrando {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, sorted.length)} de {sorted.length}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage(safePage - 1)}
-              disabled={safePage === 0}
-              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => setPage(i)}
-                className={`w-8 h-8 text-sm rounded-lg transition-colors ${i === safePage ? 'bg-primary text-white font-medium' : 'hover:bg-slate-100 text-slate-600'}`}
+        {sorted.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <span>Mostrando página {safePage + 1} de {totalPages} ({sorted.length} resultados)</span>
+              <span className="text-slate-300">|</span>
+              <label htmlFor="aliados-pageSize" className="sr-only">Filas por página</label>
+              <select
+                id="aliados-pageSize"
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}
+                className="px-2 py-1 border border-slate-300 rounded text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
               >
-                {i + 1}
+                {[5, 8, 10, 15, 20, 30, 50].map((size) => (
+                  <option key={size} value={size}>{size} filas</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage(0)}
+                disabled={safePage === 0}
+                className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+                title="Primera página"
+              >
+                <ChevronsLeft className="w-4 h-4 text-gray-600" />
               </button>
-            ))}
-            <button
-              onClick={() => setPage(safePage + 1)}
-              disabled={safePage === totalPages - 1}
-              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              <button
+                onClick={() => setPage(safePage - 1)}
+                disabled={safePage === 0}
+                className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+                title="Página anterior"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              </button>
+              <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+                Página <span className="text-primary font-semibold">{safePage + 1}</span> de <span className="font-semibold">{totalPages}</span>
+              </div>
+              <button
+                onClick={() => setPage(safePage + 1)}
+                disabled={safePage >= totalPages - 1}
+                className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+                title="Página siguiente"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              </button>
+              <button
+                onClick={() => setPage(totalPages - 1)}
+                disabled={safePage >= totalPages - 1}
+                className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+                title="Última página"
+              >
+                <ChevronsRight className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-[scaleIn_200ms_ease-out]">
@@ -468,8 +490,8 @@ export function ParametersPage() {
   } = useParameters()
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="flex flex-col min-h-0 h-full gap-6">
+      <div className="shrink-0">
         <div className="flex items-center gap-2 mb-1">
           <Settings className="w-5 h-5 text-slate-400" />
           <h1 className="text-2xl font-bold text-slate-900">Parámetros del Sistema</h1>
@@ -479,7 +501,7 @@ export function ParametersPage() {
         </p>
       </div>
 
-      <div className="border-b border-slate-200">
+      <div className="border-b border-slate-200 shrink-0">
         <nav className="flex gap-6">
           {TABS.map((tab) => (
             <button
@@ -543,7 +565,7 @@ export function ParametersPage() {
         </>
       )}
 
-      {activeTab === 'aliados' && <AliadosTab />}
+      {activeTab === 'aliados' && <div className="min-h-0 flex-1 flex flex-col"><AliadosTab /></div>}
       {activeTab === 'desembolsos' && <DesembolsosTab />}
     </div>
   )
