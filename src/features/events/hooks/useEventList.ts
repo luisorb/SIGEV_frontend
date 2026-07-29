@@ -22,8 +22,8 @@ export function useEventList(events: Event[]) {
   })
 
   const [sort, setSort] = useState<EventListSort>({
-    column: 'numeroEvento',
-    direction: 'asc',
+    column: '',
+    direction: null,
   })
 
   const [page, setPage] = useState(1)
@@ -60,24 +60,26 @@ export function useEventList(events: Event[]) {
       result = result.filter((e) => e.municipioId === filters.municipioId)
     }
 
-    const sortColumn = sort.column
-    result.sort((a, b) => {
-      let cmp = 0
-      if (sortColumn === 'totalCalculado') {
-        const totalA = a.items.reduce((s, i) => s + i.total, 0)
-        const totalB = b.items.reduce((s, i) => s + i.total, 0)
-        cmp = totalA - totalB
-      } else if ((SORTABLE_NUMERIC_COLUMNS as readonly string[]).includes(sortColumn)) {
-        const aVal = sortColumn === 'itemsCount' ? a.items.length : Number(a[sortColumn as keyof Event] ?? 0)
-        const bVal = sortColumn === 'itemsCount' ? b.items.length : Number(b[sortColumn as keyof Event] ?? 0)
-        cmp = aVal - bVal
-      } else if ((SORTABLE_TEXT_COLUMNS as readonly string[]).includes(sortColumn)) {
-        const aVal = String(a[sortColumn as keyof Event] ?? '')
-        const bVal = String(b[sortColumn as keyof Event] ?? '')
-        cmp = aVal.localeCompare(bVal)
-      }
-      return sort.direction === 'asc' ? cmp : -cmp
-    })
+    if (sort.direction) {
+      const sortColumn = sort.column
+      result.sort((a, b) => {
+        let cmp = 0
+        if (sortColumn === 'totalCalculado') {
+          const totalA = a.items.reduce((s, i) => s + i.total, 0)
+          const totalB = b.items.reduce((s, i) => s + i.total, 0)
+          cmp = totalA - totalB
+        } else if ((SORTABLE_NUMERIC_COLUMNS as readonly string[]).includes(sortColumn)) {
+          const aVal = sortColumn === 'itemsCount' ? a.items.length : Number(a[sortColumn as keyof Event] ?? 0)
+          const bVal = sortColumn === 'itemsCount' ? b.items.length : Number(b[sortColumn as keyof Event] ?? 0)
+          cmp = aVal - bVal
+        } else if ((SORTABLE_TEXT_COLUMNS as readonly string[]).includes(sortColumn)) {
+          const aVal = String(a[sortColumn as keyof Event] ?? '')
+          const bVal = String(b[sortColumn as keyof Event] ?? '')
+          cmp = aVal.localeCompare(bVal)
+        }
+        return sort.direction === 'asc' ? cmp : -cmp
+      })
+    }
 
     return result
   }, [events, filters, sort])
@@ -101,10 +103,11 @@ export function useEventList(events: Event[]) {
   }
 
   function toggleSort(column: string) {
-    setSort((prev) => ({
-      column,
-      direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc',
-    }))
+    setSort((prev) => {
+      if (prev.column !== column) return { column, direction: 'asc' }
+      if (prev.direction === 'asc') return { column, direction: 'desc' }
+      return { column: '', direction: null }
+    })
   }
 
   return {

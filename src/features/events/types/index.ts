@@ -10,7 +10,7 @@ export interface EventListFilters {
 
 export interface EventListSort {
   column: string
-  direction: 'asc' | 'desc'
+  direction: 'asc' | 'desc' | null
 }
 
 export interface EventListMeta {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, UserCog } from 'lucide-react'
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, UserCog } from 'lucide-react'
 import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -19,7 +19,7 @@ const stateColors: Record<string, string> = {
 interface SortHeaderProps {
   column: string
   sortColumn: string
-  sortDirection: 'asc' | 'desc'
+  sortDirection: 'asc' | 'desc' | null
   onSort: (column: string) => void
   children: React.ReactNode
 }
@@ -33,10 +33,12 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
     >
       <div className="flex items-center gap-1">
         {children}
-        {isActive && (
-          sortDirection === 'asc'
-            ? <ChevronUp className="w-3.5 h-3.5" />
-            : <ChevronDown className="w-3.5 h-3.5" />
+        {isActive && sortDirection === 'asc' ? (
+          <ArrowUp className="w-3 h-3" />
+        ) : isActive && sortDirection === 'desc' ? (
+          <ArrowDown className="w-3 h-3" />
+        ) : (
+          <ArrowUpDown className="w-3 h-3 opacity-40" />
         )}
       </div>
     </th>

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Eye, Pencil, FileDown, ArrowUpDown } from 'lucide-react'
+import { Search, Plus, Eye, Pencil, FileDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import type { Offer } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 
-function SortIcon() {
+function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
+  if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1" />
+  if (active && direction === 'desc') return <ArrowDown className="w-3 h-3 ml-1" />
   return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />
 }
 
@@ -29,15 +31,18 @@ export function OfferList({
   canEdit = true,
 }: OfferListProps) {
   const [filterEstado, setFilterEstado] = useState('')
-  const [sortColumn, setSortColumn] = useState<string>('createdAt')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [sortColumn, setSortColumn] = useState<string>('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null)
 
   function handleSort(column: string) {
-    if (sortColumn === column) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
+    if (sortColumn !== column) {
       setSortColumn(column)
+      setSortDir('asc')
+    } else if (sortDir === 'asc') {
       setSortDir('desc')
+    } else {
+      setSortColumn('')
+      setSortDir(null)
     }
   }
 
@@ -46,18 +51,28 @@ export function OfferList({
     filtered = filtered.filter((o) => o.estado === filterEstado)
   }
 
-  const sorted = [...filtered].sort((a, b) => {
-    const cmp = sortColumn === 'codigo'
-      ? a.codigo.localeCompare(b.codigo)
-      : sortColumn === 'nombre'
-        ? a.nombre.localeCompare(b.nombre)
-        : sortColumn === 'cliente'
-          ? a.cliente.localeCompare(b.cliente)
-          : sortColumn === 'total'
-            ? a.total - b.total
-            : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    return sortDir === 'asc' ? cmp : -cmp
-  })
+  const sorted = sortDir
+    ? [...filtered].sort((a, b) => {
+        const cmp = sortColumn === 'codigo'
+          ? a.codigo.localeCompare(b.codigo)
+          : sortColumn === 'nombre'
+            ? a.nombre.localeCompare(b.nombre)
+            : sortColumn === 'cliente'
+              ? a.cliente.localeCompare(b.cliente)
+              : sortColumn === 'total'
+                ? a.total - b.total
+                : sortColumn === 'numeroEvento'
+                  ? (a.numeroEvento ?? '').localeCompare(b.numeroEvento ?? '')
+                  : sortColumn === 'estado'
+                    ? a.estado.localeCompare(b.estado)
+                    : sortColumn === 'items'
+                      ? a.items.length - b.items.length
+                      : sortColumn === 'createdAt'
+                        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        return sortDir === 'asc' ? cmp : -cmp
+      })
+    : [...filtered]
 
   return (
     <div className="space-y-4">
@@ -111,11 +126,17 @@ export function OfferList({
                 >
                   <div className="flex items-center">
                     Código
-                    <SortIcon />
+                    <SortIcon active={sortColumn === 'codigo'} direction={sortDir} />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  N° Evento
+                <th
+                  onClick={() => handleSort('numeroEvento')}
+                  className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
+                >
+                  <div className="flex items-center">
+                    N° Evento
+                    <SortIcon active={sortColumn === 'numeroEvento'} direction={sortDir} />
+                  </div>
                 </th>
                 <th
                   onClick={() => handleSort('nombre')}
@@ -123,7 +144,7 @@ export function OfferList({
                 >
                   <div className="flex items-center">
                     Nombre
-                    <SortIcon />
+                    <SortIcon active={sortColumn === 'nombre'} direction={sortDir} />
                   </div>
                 </th>
                 <th
@@ -132,14 +153,26 @@ export function OfferList({
                 >
                   <div className="flex items-center">
                     Cliente
-                    <SortIcon />
+                    <SortIcon active={sortColumn === 'cliente'} direction={sortDir} />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Estado
+                <th
+                  onClick={() => handleSort('estado')}
+                  className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
+                >
+                  <div className="flex items-center">
+                    Estado
+                    <SortIcon active={sortColumn === 'estado'} direction={sortDir} />
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Items
+                <th
+                  onClick={() => handleSort('items')}
+                  className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
+                >
+                  <div className="flex items-center">
+                    Items
+                    <SortIcon active={sortColumn === 'items'} direction={sortDir} />
+                  </div>
                 </th>
                 <th
                   onClick={() => handleSort('total')}
@@ -147,11 +180,17 @@ export function OfferList({
                 >
                   <div className="flex items-center justify-end">
                     Total
-                    <SortIcon />
+                    <SortIcon active={sortColumn === 'total'} direction={sortDir} />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Fecha
+                <th
+                  onClick={() => handleSort('createdAt')}
+                  className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
+                >
+                  <div className="flex items-center justify-end">
+                    Fecha
+                    <SortIcon active={sortColumn === 'createdAt'} direction={sortDir} />
+                  </div>
                 </th>
                 <th className="px-4 py-3 w-24" />
               </tr>
