@@ -34,39 +34,39 @@ export function ItemManager({
   readOnly = false,
 }: ItemManagerProps) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200">
-      {!readOnly && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">
-              Ítems del Evento
-            </h3>
-            <p className="text-xs text-slate-500">
-              {items.length} ítem{items.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {onOpenImport && (
-              <button
-                onClick={onOpenImport}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                Importar Excel
-              </button>
-            )}
-            {onAddItem && (
-              <button
-                onClick={() => onAddItem(defaultItem)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Agregar Ítem
-              </button>
-            )}
+            <span className="text-slate-400">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </span>
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Ítems del Evento</h2>
           </div>
+          {!readOnly && (
+            <div className="flex items-center gap-2">
+              {onOpenImport && (
+                <button
+                  onClick={onOpenImport}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Importar Excel
+                </button>
+              )}
+              {onAddItem && (
+                <button
+                  onClick={() => onAddItem(defaultItem)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar Ítem
+                </button>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
