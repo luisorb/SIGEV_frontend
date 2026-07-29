@@ -26,30 +26,39 @@ function cloneParams(p: CalculationParams): CalculationParams {
   return { ...p, paramsVersion: p.paramsVersion }
 }
 
+function paramsEqual(a: CalculationParams, b: CalculationParams) {
+  return (
+    a.ivaRate === b.ivaRate &&
+    a.impuestoConsumoRate === b.impuestoConsumoRate &&
+    a.feeTarifadoRate === b.feeTarifadoRate &&
+    a.feeTercerosRate === b.feeTercerosRate &&
+    a.ivaFeeRate === b.ivaFeeRate &&
+    a.applyFeeOnBase === b.applyFeeOnBase
+  )
+}
+
 export function useParameters() {
   const [versions, setVersions] = useState<ParamVersion[]>(loadVersions)
-  const [editParams, setEditParams] = useState<CalculationParams>(() => {
+
+  const getActiveParams = () => {
     const active = loadVersions().find((v) => v.activo)
-    return cloneParams(active?.params ?? DEFAULT_CALCULATION_PARAMS)
-  })
+    return active?.params ?? DEFAULT_CALCULATION_PARAMS
+  }
+
+  const [editParams, setEditParams] = useState<CalculationParams>(() => cloneParams(getActiveParams()))
+  const [baseParams, setBaseParams] = useState<CalculationParams>(() => cloneParams(getActiveParams()))
+  const [loadedVersionId, setLoadedVersionId] = useState<string | null>(null)
   const [aprobadoPor, setAprobadoPor] = useState(CURRENT_USER)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const activeVersion = useMemo(() => versions.find((v) => v.activo) ?? null, [versions])
 
-  const isDirty = useMemo(() => {
-    if (!activeVersion) return true
-    const a = activeVersion.params
-    const b = editParams
-    return (
-      a.ivaRate !== b.ivaRate ||
-      a.impuestoConsumoRate !== b.impuestoConsumoRate ||
-      a.feeTarifadoRate !== b.feeTarifadoRate ||
-      a.feeTercerosRate !== b.feeTercerosRate ||
-      a.ivaFeeRate !== b.ivaFeeRate ||
-      a.applyFeeOnBase !== b.applyFeeOnBase
-    )
-  }, [activeVersion, editParams])
+  const currentVersion = useMemo(() => {
+    if (!loadedVersionId) return activeVersion
+    return versions.find((v) => v.id === loadedVersionId) ?? activeVersion
+  }, [versions, loadedVersionId, activeVersion])
+
+  const isDirty = useMemo(() => !paramsEqual(baseParams, editParams), [baseParams, editParams])
 
   const nextVersion = useMemo(() => {
     if (versions.length === 0) return 1
@@ -71,10 +80,18 @@ export function useParameters() {
       return
     }
 
+    const roundedParams: CalculationParams = {
+      ...editParams,
+      ivaRate: Math.round(editParams.ivaRate * 10000) / 10000,
+      impuestoConsumoRate: Math.round(editParams.impuestoConsumoRate * 10000) / 10000,
+      feeTarifadoRate: Math.round(editParams.feeTarifadoRate * 10000) / 10000,
+      feeTercerosRate: Math.round(editParams.feeTercerosRate * 10000) / 10000,
+      ivaFeeRate: Math.round(editParams.ivaFeeRate * 10000) / 10000,
+    }
     const newVersion: ParamVersion = {
       id: `pv-${String(nextVersion).padStart(3, '0')}`,
       version: nextVersion,
-      params: { ...editParams, paramsVersion: `${nextVersion}.0` },
+      params: { ...roundedParams, paramsVersion: `${nextVersion}.0` },
       aprobadoPor: aprobadoPor.trim(),
       fechaCreacion: new Date().toISOString(),
       activo: true,
@@ -84,6 +101,9 @@ export function useParameters() {
     updated.push(newVersion)
     setVersions(updated)
     persistVersions(updated)
+    setEditParams(cloneParams(roundedParams))
+    setBaseParams(cloneParams(roundedParams))
+    setLoadedVersionId(newVersion.id)
     setSaveMessage({ type: 'success', text: `Versión ${newVersion.version} guardada exitosamente.` })
 
     addAuditEntry({
@@ -99,20 +119,23 @@ export function useParameters() {
   function loadVersion(versionId: string) {
     const version = versions.find((v) => v.id === versionId)
     if (version) {
-      setEditParams(cloneParams(version.params))
+      const p = cloneParams(version.params)
+      setEditParams(p)
+      setBaseParams(p)
+      setLoadedVersionId(versionId)
       setAprobadoPor(version.aprobadoPor)
       setSaveMessage(null)
     }
   }
 
   function discardChanges() {
-    if (activeVersion) {
-      setEditParams(cloneParams(activeVersion.params))
-      setAprobadoPor(activeVersion.aprobadoPor)
-    } else {
-      setEditParams(cloneParams(DEFAULT_CALCULATION_PARAMS))
-      setAprobadoPor(CURRENT_USER)
-    }
+    const p = activeVersion
+      ? cloneParams(activeVersion.params)
+      : cloneParams(DEFAULT_CALCULATION_PARAMS)
+    setEditParams(p)
+    setBaseParams(p)
+    setLoadedVersionId(activeVersion?.id ?? null)
+    setAprobadoPor(activeVersion ? activeVersion.aprobadoPor : CURRENT_USER)
     setSaveMessage(null)
   }
 
@@ -121,6 +144,7 @@ export function useParameters() {
     updateParam,
     versions,
     activeVersion,
+    currentVersion,
     isDirty,
     nextVersion,
     aprobadoPor,

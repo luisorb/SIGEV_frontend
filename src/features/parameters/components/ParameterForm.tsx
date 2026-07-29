@@ -32,11 +32,15 @@ function PercentField({ label, description, value, onChange }: PercentFieldProps
       <div className="relative w-32">
         <input
           type="number"
-          value={Math.round(value * 10000) / 100}
+          value={value * 100}
           min={0}
           max={100}
-          step={0.01}
-          onChange={(e) => onChange(Number(e.target.value) / 100)}
+          step="any"
+          onChange={(e) => {
+            const raw = e.target.value
+            if (raw === '' || raw === '-') return
+            onChange(Math.round(parseFloat(raw) * 100) / 100 / 100)
+          }}
           className="w-full px-3 py-1.5 pr-8 border border-slate-300 rounded-lg text-sm text-right focus:ring-2 focus:ring-primary focus:border-transparent"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff } from 'lucide-react'
+import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock } from 'lucide-react'
 import { useParameters } from '../hooks/useParameters'
 import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
@@ -270,12 +270,13 @@ const TABS: { key: Tab; label: string; icon: typeof Calculator }[] = [
 
 export function ParametersPage() {
   const [activeTab, setActiveTab] = useState<Tab>('tasas')
+  const [historialOpen, setHistorialOpen] = useState(false)
 
   const {
     editParams,
     updateParam,
     versions,
-    activeVersion,
+    currentVersion,
     isDirty,
     nextVersion,
     aprobadoPor,
@@ -321,7 +322,7 @@ export function ParametersPage() {
         <>
           <ParameterForm
             editParams={editParams}
-            activeVersion={activeVersion ? { version: activeVersion.version } : null}
+            activeVersion={currentVersion ? { version: currentVersion.version } : null}
             isDirty={isDirty}
             nextVersion={nextVersion}
             aprobadoPor={aprobadoPor}
@@ -331,11 +332,34 @@ export function ParametersPage() {
             onSave={saveNewVersion}
             onDiscard={discardChanges}
           />
-          <ParameterHistoryTable
-            versions={versions}
-            activeVersionId={activeVersion?.id ?? null}
-            onLoadVersion={loadVersion}
-          />
+          <div className="flex justify-center">
+            <button
+              onClick={() => setHistorialOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+            >
+              <Clock className="w-4 h-4" />
+              Ver Historial de Versiones ({versions.length})
+            </button>
+          </div>
+          {historialOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full animate-[scaleIn_200ms_ease-out]">
+                <ParameterHistoryTable
+                  versions={versions}
+                  currentVersionId={currentVersion?.id ?? null}
+                  onLoadVersion={(id) => { loadVersion(id); setHistorialOpen(false) }}
+                />
+                <div className="flex justify-end px-5 py-3 border-t border-slate-200">
+                  <button
+                    onClick={() => setHistorialOpen(false)}
+                    className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
