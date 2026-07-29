@@ -5,6 +5,7 @@ import type { ItemInput, EventTotals, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'
 import { formatCurrencyCO } from '../../../utils/formatters'
 import { AddItemModal } from './AddItemModal'
+import { useToast } from '../../../components/ToastProvider'
 
 interface ItemManagerProps {
   items: ManagedItem[]
@@ -32,6 +33,25 @@ export function ItemManager({
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<ManagedItem | null>(null)
   const [deletingItem, setDeletingItem] = useState<ManagedItem | null>(null)
+  const toast = useToast()
+
+  function handleAddItem(item: ItemInput) {
+    try {
+      onAddItem?.(item)
+      toast.showToast('Ítem agregado correctamente')
+    } catch {
+      toast.showToast('No se pudo agregar el ítem', 'error')
+    }
+  }
+
+  function handleEditItem(id: string, updates: ItemInput) {
+    try {
+      onUpdateItem?.(id, updates)
+      toast.showToast('Ítem actualizado correctamente')
+    } catch {
+      toast.showToast('No se pudo actualizar el ítem', 'error')
+    }
+  }
 
   function handleDeleteRequest(id: string) {
     const item = items.find((i) => i.id === id)
@@ -40,7 +60,12 @@ export function ItemManager({
 
   function handleDeleteConfirm() {
     if (deletingItem) {
-      onRemoveItem?.(deletingItem.id)
+      try {
+        onRemoveItem?.(deletingItem.id)
+        toast.showToast('Ítem eliminado correctamente')
+      } catch {
+        toast.showToast('No se pudo eliminar el ítem', 'error')
+      }
       setDeletingItem(null)
     }
   }
@@ -50,7 +75,7 @@ export function ItemManager({
       <AddItemModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onAdd={(item) => onAddItem?.(item)}
+        onAdd={handleAddItem}
         aliados={aliados}
         eventAliadoId={eventAliadoId}
       />
@@ -58,7 +83,7 @@ export function ItemManager({
         open={!!editingItem}
         onClose={() => setEditingItem(null)}
         editItem={editingItem ?? undefined}
-        onEdit={(id, updates) => onUpdateItem?.(id, updates)}
+        onEdit={handleEditItem}
         aliados={aliados}
         eventAliadoId={eventAliadoId}
       />

@@ -4,6 +4,7 @@ import { useEventList } from '../hooks/useEventList'
 import { mockEvents } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { CURRENT_USER } from '../../../config/constants'
+import { useToast } from '../../../components/ToastProvider'
 import type { Event } from '../../../types'
 
 export function EventsListPage() {
@@ -34,6 +35,8 @@ export function EventsListPage() {
     paginatedEvents,
   } = useEventList(activeEvents)
 
+  const toast = useToast()
+
   function persistEvents(events: Event[]) {
     setLocalEvents(events)
     try {
@@ -56,6 +59,7 @@ export function EventsListPage() {
       fecha: new Date().toISOString(),
       detalle: `Evento ${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''} eliminado (anulación lógica)`,
     })
+    toast.showToast(`Orden ${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''} eliminada correctamente`)
   }, [localEvents])
 
   return (

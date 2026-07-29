@@ -5,12 +5,14 @@ import { EventForm } from '../components/EventForm'
 import { mockEvents, mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { CURRENT_USER } from '../../../config/constants'
+import { useToast } from '../../../components/ToastProvider'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Event } from '../../../types'
 
 export function EventDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const toast = useToast()
 
   const [localEvents, setLocalEvents] = useState<Event[]>(() => {
     try {
@@ -54,6 +56,7 @@ export function EventDetailPage() {
     })
 
     persistEvents(updated)
+    toast.showToast(`Orden ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} actualizada correctamente`)
     navigate('/ordenes')
   }
 

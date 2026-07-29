@@ -8,6 +8,7 @@ import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { EVENT_STATES, CURRENT_USER } from '../../../config/constants'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
+import { useToast } from '../../../components/ToastProvider'
 import type { Event, EventState } from '../../../types'
 
 export function EventViewPage() {
@@ -27,6 +28,7 @@ export function EventViewPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [currentEstado, setCurrentEstado] = useState<string>(event?.estado ?? '')
   const [pendingEstado, setPendingEstado] = useState<string | null>(null)
+  const toast = useToast()
 
   const {
     items,
@@ -114,6 +116,7 @@ export function EventViewPage() {
       valorAnterior: oldEstado,
       valorNuevo: newEstado,
     })
+    toast.showToast(`Estado cambiado de ${oldEstado} a ${newEstado}`)
   }
 
   if (!event) {
