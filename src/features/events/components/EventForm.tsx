@@ -70,9 +70,6 @@ export function EventForm({
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Identificación</h2>
-        </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
           <div className="space-y-1.5">
             <label className={labelBase}>Número de Evento {requiredMark}</label>
@@ -104,14 +101,6 @@ export function EventForm({
             <label className={labelBase}>Días</label>
             <input type="number" min={0} {...register('dias', { valueAsNumber: true })} className={inputBase} placeholder="0" />
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Ubicación</h2>
-        </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
           <div className="space-y-1.5">
             <label className={labelBase}>Municipio {requiredMark}</label>
             <select {...register('municipioId')} className={field('municipioId')}>
@@ -134,14 +123,6 @@ export function EventForm({
             <label className={labelBase}>Longitud</label>
             <input type="number" step="any" {...register('longitud', { valueAsNumber: true })} className={inputBase} placeholder="-74.0721" />
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Asignación</h2>
-        </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
           <div className="space-y-1.5">
             <label className={labelBase}>Aliado {requiredMark}</label>
             <select {...register('aliadoId')} className={field('aliadoId')}>
@@ -170,20 +151,15 @@ export function EventForm({
             </select>
             {errors.esquema && <p className="text-xs text-red-500">{errors.esquema.message}</p>}
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Observaciones</h2>
-        </div>
-        <div className="p-6">
-          <textarea
-            {...register('observaciones')}
-            rows={4}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 resize-none"
-            placeholder="Observaciones adicionales del evento..."
-          />
+          <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
+            <label className={labelBase}>Observaciones</label>
+            <textarea
+              {...register('observaciones')}
+              rows={4}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 resize-none"
+              placeholder="Observaciones adicionales del evento..."
+            />
+          </div>
         </div>
       </div>
 
