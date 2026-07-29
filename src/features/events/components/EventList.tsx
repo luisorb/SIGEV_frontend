@@ -168,7 +168,6 @@ export function EventList({
                 <SortHeader column="responsable" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Responsable</SortHeader>
                 <SortHeader column="fechaEvento" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Fecha</SortHeader>
                 <SortHeader column="estado" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Estado</SortHeader>
-                <SortHeader column="municipioId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Municipio</SortHeader>
                 <SortHeader column="aliadoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Aliado</SortHeader>
                 <SortHeader column="desembolsoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Desembolso</SortHeader>
                 <SortHeader column="esquema" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Esquema</SortHeader>
@@ -180,7 +179,7 @@ export function EventList({
             <tbody className="divide-y divide-slate-100">
               {_events.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
                     No hay órdenes registradas. Crea la primera orden.
                   </td>
                 </tr>
@@ -189,7 +188,6 @@ export function EventList({
                   const eventTotal = event.items.reduce((s, i) => s + i.total, 0)
                   const aliado = mockAliados.find((a) => a.id === event.aliadoId)
                   const desembolso = mockDesembolsos.find((d) => d.id === event.desembolsoId)
-                  const municipio = mockMunicipios.find((m) => m.id === event.municipioId)
                   return (
                     <tr key={event.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
@@ -204,7 +202,6 @@ export function EventList({
                           {event.estado}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{municipio?.nombre ?? event.municipioId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{aliado?.nombre ?? event.aliadoId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{desembolso?.nombre ?? event.desembolsoId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600 capitalize">{event.esquema}</td>
