@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { Pencil } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { useItems } from '../hooks/useItems'
@@ -12,7 +12,6 @@ import type { Event, EventState } from '../../../types'
 
 export function EventViewPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
 
   const [localEvents, setLocalEvents] = useState<Event[]>(() => {
     try {
