@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useParameters } from '../hooks/useParameters'
 import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
@@ -14,6 +14,14 @@ const EMPTY_ALLY: AllyForm = { nombre: '', nit: '', contacto: '', email: '', tel
 
 type DesForm = Omit<Disbursement, 'id'>
 const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', valorReferencia: 0, activo: true }
+
+const PAGE_SIZE = 8
+
+function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
+  if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1 shrink-0" />
+  if (active && direction === 'desc') return <ArrowDown className="w-3 h-3 ml-1 shrink-0" />
+  return <ArrowUpDown className="w-3 h-3 ml-1 shrink-0 opacity-40" />
+}
 
 const inputBase = [
   'w-full px-3 py-2.5',
@@ -32,14 +40,14 @@ const requiredMark = <span className="text-red-400 ml-0.5">*</span>
 function AliadosTab() {
   const { aliados, addAliado, updateAliado, toggleActivo } = useAliados()
   const [search, setSearch] = useState('')
+  const [sortColumn, setSortColumn] = useState<'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado'>('nombre')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [page, setPage] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Ally | null>(null)
   const [form, setForm] = useState<AllyForm>(EMPTY_ALLY)
   const [errors, setErrors] = useState<Partial<Record<keyof AllyForm, string>>>({})
-
-  const filtered = aliados.filter((a) =>
-    !search || a.nombre.toLowerCase().includes(search.toLowerCase()) || a.nit.includes(search)
-  )
+  const [confirmToggle, setConfirmToggle] = useState<Ally | null>(null)
 
   function openCreate() { setEditing(null); setForm(EMPTY_ALLY); setErrors({}); setModalOpen(true) }
 
@@ -58,35 +66,90 @@ function AliadosTab() {
     return errors[field] ? inputBase + ' ' + inputError : inputBase
   }
 
+  function toggleSort(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado') {
+    if (sortColumn === col) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortColumn(col)
+      setSortDir('asc')
+    }
+    setPage(0)
+  }
+
+  const sorted = useMemo(() => {
+    const q = search.toLowerCase()
+    return [...aliados].filter((a) =>
+      !search
+        || a.nombre.toLowerCase().includes(q)
+        || a.nit.toLowerCase().includes(q)
+        || (a.contacto ?? '').toLowerCase().includes(q)
+        || (a.email ?? '').toLowerCase().includes(q)
+        || (a.telefono ?? '').toLowerCase().includes(q)
+    ).sort((a, b) => {
+      const cmp = sortColumn === 'nombre'
+        ? a.nombre.localeCompare(b.nombre)
+        : sortColumn === 'nit'
+          ? a.nit.localeCompare(b.nit)
+          : sortColumn === 'contacto'
+            ? (a.contacto ?? '').localeCompare(b.contacto ?? '')
+            : sortColumn === 'email'
+              ? (a.email ?? '').localeCompare(b.email ?? '')
+              : sortColumn === 'telefono'
+                ? (a.telefono ?? '').localeCompare(b.telefono ?? '')
+                : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [aliados, search, sortColumn, sortDir])
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const paged = sorted.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+
+  function sortHeader(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado', label: string, className = '') {
+    return (
+      <th
+        onClick={() => toggleSort(col)}
+        className={`px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none ${className}`}
+      >
+        <div className="flex items-center gap-0.5">
+          {label}
+          <SortIcon active={sortColumn === col} direction={sortColumn === col ? sortDir : null} />
+        </div>
+      </th>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">{aliados.length} registros</p>
+        <p className="text-sm text-slate-500">{sorted.length} registros</p>
         <button onClick={openCreate} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Aliado
         </button>
       </div>
       <div className="relative w-full sm:w-72">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input type="text" placeholder="Buscar por nombre o NIT..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+        <input type="text" placeholder="Buscar por nombre o NIT..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
       </div>
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">NIT</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contacto</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                {sortHeader('nombre', 'Nombre')}
+                {sortHeader('nit', 'NIT')}
+                {sortHeader('contacto', 'Contacto')}
+                {sortHeader('email', 'Email')}
+                {sortHeader('telefono', 'Teléfono')}
+                {sortHeader('estado', 'Estado', 'text-center')}
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
+              {paged.length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
               ) : (
-                filtered.map((a) => (
+                paged.map((a) => (
                   <tr key={a.id} className={`hover:bg-slate-50 transition-colors ${!a.activo ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -95,14 +158,16 @@ function AliadosTab() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{a.nit}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{a.contacto} · {a.email} · {a.telefono}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{a.contacto || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{a.email || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{a.telefono || '-'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${a.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{a.activo ? 'Activo' : 'Inactivo'}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openEdit(a)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors" title="Editar"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => toggleActivo(a.id)} className={`p-1.5 rounded-lg transition-colors ${a.activo ? 'hover:bg-red-50 text-slate-500 hover:text-red-600' : 'hover:bg-green-50 text-slate-500 hover:text-green-600'}`} title={a.activo ? 'Inactivar' : 'Activar'}>{a.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}</button>
+                        <button onClick={() => setConfirmToggle(a)} className={`p-1.5 rounded-lg transition-colors ${a.activo ? 'hover:bg-red-50 text-slate-500 hover:text-red-600' : 'hover:bg-green-50 text-slate-500 hover:text-green-600'}`} title={a.activo ? 'Inactivar' : 'Activar'}>{a.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}</button>
                       </div>
                     </td>
                   </tr>
@@ -112,6 +177,38 @@ function AliadosTab() {
           </table>
         </div>
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-sm text-slate-500">
+            Mostrando {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, sorted.length)} de {sorted.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage === 0}
+              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className={`w-8 h-8 text-sm rounded-lg transition-colors ${i === safePage ? 'bg-primary text-white font-medium' : 'hover:bg-slate-100 text-slate-600'}`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage === totalPages - 1}
+              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-[scaleIn_200ms_ease-out]">
@@ -166,6 +263,38 @@ function AliadosTab() {
             <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
               <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
               <button onClick={handleSave} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Aliado'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {confirmToggle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3 mb-3">
+              <div className={`p-2 rounded-lg shrink-0 ${confirmToggle.activo ? 'bg-red-100' : 'bg-green-100'}`}>
+                {confirmToggle.activo ? <PowerOff className="w-5 h-5 text-red-600" /> : <Power className="w-5 h-5 text-green-600" />}
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">{confirmToggle.activo ? 'Inactivar Aliado' : 'Activar Aliado'}</h3>
+                <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del aliado.</p>
+              </div>
+            </div>
+            <p className="text-sm sm:text-base text-slate-700 mb-4">
+              ¿Estás seguro de {confirmToggle.activo ? 'inactivar' : 'activar'} <span className="font-semibold">{confirmToggle.nombre}</span>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmToggle(null)}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { toggleActivo(confirmToggle.id); setConfirmToggle(null) }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
+              </button>
             </div>
           </div>
         </div>
