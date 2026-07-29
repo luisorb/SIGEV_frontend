@@ -95,17 +95,25 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         {sidebarContent}
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={onMobileClose}
-          />
-          <aside className="relative flex flex-col w-64 bg-slate-900 text-white shrink-0">
-            {sidebarContent}
-          </aside>
-        </div>
-      )}
+      <div
+        className={`fixed inset-0 z-50 flex lg:hidden transition-all duration-300 ease-in-out ${
+          mobileOpen ? 'visible' : 'invisible'
+        }`}
+      >
+        <div
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ease-in-out ${
+            mobileOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={onMobileClose}
+        />
+        <aside
+          className={`relative flex flex-col w-64 bg-slate-900 text-white shrink-0 transition-all duration-300 ease-in-out ${
+            mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          {sidebarContent}
+        </aside>
+      </div>
     </>
   )
 }
