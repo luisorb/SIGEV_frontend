@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Plus, FileSpreadsheet } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { ItemInput, EventTotals, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'
 import { formatCurrencyCO } from '../../../utils/formatters'
+import { AddItemModal } from './AddItemModal'
 
 interface ItemManagerProps {
   items: ManagedItem[]
@@ -13,14 +15,7 @@ interface ItemManagerProps {
   eventTotals: EventTotals
   onOpenImport?: () => void
   readOnly?: boolean
-}
-
-const defaultItem: ItemInput = {
-  descripcion: '',
-  cantidad: 1,
-  valorUnitario: 0,
-  categoriaTributaria: 'IVA',
-  aliadoId: undefined,
+  eventAliadoId?: string
 }
 
 export function ItemManager({
@@ -32,9 +27,28 @@ export function ItemManager({
   eventTotals,
   onOpenImport,
   readOnly = false,
+  eventAliadoId,
 }: ItemManagerProps) {
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [editingItem, setEditingItem] = useState<ManagedItem | null>(null)
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <AddItemModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={(item) => onAddItem?.(item)}
+        aliados={aliados}
+        eventAliadoId={eventAliadoId}
+      />
+      <AddItemModal
+        open={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        editItem={editingItem ?? undefined}
+        onEdit={(id, updates) => onUpdateItem?.(id, updates)}
+        aliados={aliados}
+        eventAliadoId={eventAliadoId}
+      />
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -57,11 +71,11 @@ export function ItemManager({
               )}
               {onAddItem && (
                 <button
-                  onClick={() => onAddItem(defaultItem)}
+                  onClick={() => setShowAddModal(true)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
                 >
                   <Plus className="w-4 h-4" />
-                  Agregar Ítem
+                  Añadir Ítem
                 </button>
               )}
             </div>
@@ -82,7 +96,7 @@ export function ItemManager({
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Impuestos</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Fee</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Total</th>
-              {!readOnly && <th className="px-5 py-3.5 w-14" />}
+              {!readOnly && <th className="px-5 py-3.5 w-20" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -103,7 +117,7 @@ export function ItemManager({
                   key={item.id}
                   item={item}
                   aliados={aliados}
-                  onUpdate={onUpdateItem}
+                  onEdit={!readOnly ? setEditingItem : undefined}
                   onRemove={onRemoveItem}
                   readOnly={readOnly}
                   index={i}

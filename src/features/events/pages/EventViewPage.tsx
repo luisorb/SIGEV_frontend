@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Pencil, ChevronLeft, Tag, MapPin } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
@@ -30,6 +30,9 @@ export function EventViewPage() {
 
   const {
     items,
+    addItem,
+    updateItem,
+    removeItem,
     eventTotals,
   } = useItems(
     event?.items.map((i) => ({
@@ -41,6 +44,29 @@ export function EventViewPage() {
     })),
     event?.aliadoId,
   )
+
+  useEffect(() => {
+    if (!event || !items.length) return
+    const updated = localEvents.map((e) =>
+      e.id === event.id ? { ...e, items: items.map((i) => ({
+        id: i.id,
+        eventoId: event.id,
+        descripcion: i.descripcion,
+        cantidad: i.cantidad,
+        valorUnitario: i.valorUnitario,
+        categoriaTributaria: i.categoriaTributaria,
+        aliadoId: i.aliadoId,
+        base: i.totals.base,
+        iva: i.totals.iva,
+        impuestoConsumo: i.totals.impuestoConsumo,
+        feeTarifado: i.totals.feeTarifado,
+        feeTerceros: i.totals.feeTerceros,
+        ivaFee: i.totals.ivaFee,
+        total: i.totals.total,
+      })), updatedAt: new Date().toISOString() } : e,
+    )
+    persistEvents(updated)
+  }, [items])
 
   const stateHistory = event ? getStateHistory(event.id) : []
 
@@ -387,8 +413,10 @@ export function EventViewPage() {
       <ItemManager
         items={items}
         aliados={mockAliados}
+        onAddItem={addItem}
+        onUpdateItem={updateItem}
+        onRemoveItem={removeItem}
         eventTotals={eventTotals}
-        readOnly
       />
 
     </div>
