@@ -52,7 +52,7 @@ interface EventListProps {
   onSort: (column: string) => void
   onPageChange: (page: number) => void
   onPageSizeChange: (size: PageSize) => void
-  onDelete: (id: string) => void
+  onDeleteRequest: (id: string) => void
 }
 
 export function EventList({
@@ -64,11 +64,10 @@ export function EventList({
   onSort,
   onPageChange,
   onPageSizeChange,
-  onDelete,
+  onDeleteRequest,
 }: EventListProps) {
   const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const totalItems = _events.reduce((sum, e) => sum + e.items.length, 0)
   const totalValue = _events.reduce((sum, e) => {
@@ -229,30 +228,13 @@ export function EventList({
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
-                          {deleteConfirmId === event.id ? (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => { onDelete(event.id); setDeleteConfirmId(null) }}
-                                className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
-                              >
-                                Confirmar
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(null)}
-                                className="px-2 py-1 text-xs font-medium text-slate-600 border border-slate-300 rounded hover:bg-slate-50 transition-colors"
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setDeleteConfirmId(event.id)}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => onDeleteRequest(event.id)}
+                            className="p-1.5 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
