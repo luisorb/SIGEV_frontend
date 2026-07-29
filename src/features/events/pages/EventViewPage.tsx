@@ -26,6 +26,7 @@ export function EventViewPage() {
 
   const [showHistory, setShowHistory] = useState(false)
   const [currentEstado, setCurrentEstado] = useState<string>(event?.estado ?? '')
+  const [pendingEstado, setPendingEstado] = useState<string | null>(null)
 
   const {
     items,
@@ -217,29 +218,34 @@ export function EventViewPage() {
         </div>
 
         <div className="border-t border-slate-100">
-          <div className="px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-            <div className="flex items-center gap-2">
+          <div className="px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex items-center gap-3">
               <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Estado</span>
-              <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${estadoColors[currentEstado || event.estado] || 'bg-slate-100 text-slate-800'}`}>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold rounded-full ${estadoColors[currentEstado || event.estado] || 'bg-slate-100 text-slate-800'}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
                 {currentEstado || event.estado}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
               <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Cambiar a</span>
-              <select
-                value={currentEstado || event.estado}
-                onChange={(e) => handleStateChange(e.target.value)}
-                className="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150"
-              >
-                {EVENT_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={currentEstado || event.estado}
+                  onChange={(e) => setPendingEstado(e.target.value)}
+                  className="appearance-none text-sm border border-slate-300 rounded-lg pl-3 pr-8 py-1.5 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 cursor-pointer hover:border-slate-400"
+                >
+                  {EVENT_STATES.map((s) => (
+                    <option key={s} value={s} disabled={s === (currentEstado || event.estado)}>{s}</option>
+                  ))}
+                </select>
+                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </div>
               {stateHistory.length > 0 && (
                 <button
                   onClick={() => setShowHistory(!showHistory)}
-                  className="text-xs text-primary hover:text-primary-dark underline whitespace-nowrap"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
                 >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   {showHistory ? 'Ocultar historial' : 'Ver historial'}
                 </button>
               )}
@@ -264,17 +270,16 @@ export function EventViewPage() {
             </div>
           </div>
           {showHistory && stateHistory.length > 0 && (
-            <div className="mx-5 mb-3 bg-slate-50 rounded-lg p-3 space-y-1.5 border border-slate-100">
+            <div className="mx-5 mb-3 bg-slate-50 rounded-xl p-4 space-y-2 border border-slate-100">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Historial de cambios</p>
               {stateHistory.map((h) => (
-                <div key={h.id} className="text-xs text-slate-500 flex items-start gap-2">
-                  <span className="text-slate-300 mt-0.5">•</span>
-                  <span>
-                    <span className="font-medium">{formatDateCO(h.fecha)}</span>
-                    : <span className="text-slate-600">{h.estadoAnterior}</span>
-                    <span className="text-slate-300 mx-1">→</span>
-                    <span className="text-slate-600 font-medium">{h.estadoNuevo}</span>
-                    <span className="text-slate-400 ml-1">({h.usuario})</span>
-                  </span>
+                <div key={h.id} className="flex items-center gap-3 text-xs text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
+                  <span className="font-medium text-slate-600 min-w-[90px]">{formatDateCO(h.fecha)}</span>
+                  <span className="text-slate-500">{h.estadoAnterior}</span>
+                  <svg className="w-3.5 h-3.5 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  <span className="text-slate-700 font-medium">{h.estadoNuevo}</span>
+                  <span className="text-slate-400 ml-auto">({h.usuario})</span>
                 </div>
               ))}
             </div>
@@ -288,6 +293,48 @@ export function EventViewPage() {
           </div>
         )}
       </div>
+
+      {pendingEstado && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setPendingEstado(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div className="p-2 bg-amber-100 rounded-lg shrink-0">
+                <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Cambiar estado</h3>
+                <p className="text-xs sm:text-sm text-slate-500">Esta acción modificará el estado de seguimiento de la orden</p>
+              </div>
+            </div>
+
+            <p className="text-sm sm:text-base text-slate-700 mb-4">
+              ¿Estás seguro de cambiar la orden <span className="font-semibold">{event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}</span> de <span className="font-semibold">{currentEstado || event.estado}</span> a <span className="font-semibold">{pendingEstado}</span>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setPendingEstado(null)}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { handleStateChange(pendingEstado); setPendingEstado(null) }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                Cambiar a {pendingEstado}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ItemManager
         items={items}
