@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, ChevronUp, ChevronDown, Plus, Eye, Pencil, Trash2 } from 'lucide-react'
-import type { Event, Municipality } from '../../../types'
-import type { Ally, Disbursement } from '../../../types'
+import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { EVENT_STATES } from '../../../config/constants'
+import { mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
 
 const stateColors: Record<string, string> = {
   Abierto: 'bg-yellow-100 text-yellow-800',
@@ -43,41 +44,28 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
 
 interface EventListProps {
   events: Event[]
-  aliados: Ally[]
-  desembolsos: Disbursement[]
-  municipios: Municipality[]
   filters: EventListFilters
   sort: EventListSort
   meta: EventListMeta
   onFilterChange: (key: keyof EventListFilters, value: string) => void
   onSort: (column: string) => void
   onPageChange: (page: number) => void
-  onView: (id: string) => void
-  onEdit: (id: string) => void
   onDelete: (id: string) => void
-  onCreate: () => void
 }
 
 export function EventList({
   events: _events,
-  aliados,
-  desembolsos,
-  municipios,
   filters,
   sort,
   meta,
   onFilterChange,
   onSort,
   onPageChange,
-  onView,
-  onEdit,
   onDelete,
-  onCreate,
 }: EventListProps) {
+  const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-
-  const municipiosMap = Object.fromEntries(municipios.map((m) => [m.id, m.nombre]))
 
   const totalItems = _events.reduce((sum, e) => sum + e.items.length, 0)
   const totalValue = _events.reduce((sum, e) => {
@@ -95,7 +83,7 @@ export function EventList({
           </p>
         </div>
         <button
-          onClick={onCreate}
+          onClick={() => navigate('/ordenes/nueva')}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -144,7 +132,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los municipios</option>
-            {municipios.map((m) => (
+            {mockMunicipios.map((m) => (
               <option key={m.id} value={m.id}>{m.nombre}</option>
             ))}
           </select>
@@ -154,7 +142,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los aliados</option>
-            {aliados.map((a) => (
+            {mockAliados.map((a) => (
               <option key={a.id} value={a.id}>{a.nombre}</option>
             ))}
           </select>
@@ -164,7 +152,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los desembolsos</option>
-            {desembolsos.map((d) => (
+            {mockDesembolsos.map((d) => (
               <option key={d.id} value={d.id}>{d.nombre}</option>
             ))}
           </select>
@@ -199,8 +187,9 @@ export function EventList({
               ) : (
                 _events.map((event) => {
                   const eventTotal = event.items.reduce((s, i) => s + i.total, 0)
-                  const aliado = aliados.find((a) => a.id === event.aliadoId)
-                  const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
+                  const aliado = mockAliados.find((a) => a.id === event.aliadoId)
+                  const desembolso = mockDesembolsos.find((d) => d.id === event.desembolsoId)
+                  const municipio = mockMunicipios.find((m) => m.id === event.municipioId)
                   return (
                     <tr key={event.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
@@ -215,7 +204,7 @@ export function EventList({
                           {event.estado}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{municipiosMap[event.municipioId] ?? event.municipioId}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{municipio?.nombre ?? event.municipioId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{aliado?.nombre ?? event.aliadoId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{desembolso?.nombre ?? event.desembolsoId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600 capitalize">{event.esquema}</td>
@@ -226,14 +215,14 @@ export function EventList({
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={() => onView(event.id)}
+                            onClick={() => navigate(`/ordenes/${event.id}`)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-primary transition-colors"
                             title="Ver detalle"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => onEdit(event.id)}
+                            onClick={() => navigate(`/ordenes/${event.id}/editar`)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
                             title="Editar"
                           >

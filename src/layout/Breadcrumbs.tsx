@@ -4,6 +4,7 @@ import { ChevronRight, Home } from 'lucide-react'
 const routeLabels: Record<string, string> = {
   '/': 'Panel',
   '/ordenes': 'Órdenes',
+  '/ordenes/nueva': 'Nueva Orden',
   '/ofertas': 'Ofertas Económicas',
   '/matriz': 'Matriz de Ejecución',
   '/tablero': 'Tablero',
@@ -16,7 +17,8 @@ const routeLabels: Record<string, string> = {
 export function Breadcrumbs() {
   const { pathname } = useLocation()
 
-  const segments = pathname === '/' ? ['/'] : pathname.split('/').filter(Boolean).map((s) => `/${s}`)
+  const parts = pathname.split('/').filter(Boolean)
+  const segments = parts.map((_, i) => '/' + parts.slice(0, i + 1).join('/'))
 
   return (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-slate-500">
@@ -24,8 +26,12 @@ export function Breadcrumbs() {
         <Home className="w-4 h-4" />
       </Link>
       {segments.map((segment, idx) => {
-        const label = routeLabels[segment] || segment.replace('/', '').replace(/-/g, ' ')
         const isLast = idx === segments.length - 1
+        let label = routeLabels[segment]
+        if (!label) {
+          const lastPart = segment.split('/').pop() ?? ''
+          label = lastPart === 'editar' ? 'Editar' : lastPart
+        }
         return (
           <span key={segment} className="flex items-center gap-1">
             <ChevronRight className="w-3.5 h-3.5" />

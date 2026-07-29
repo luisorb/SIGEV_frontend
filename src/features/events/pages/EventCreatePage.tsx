@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { EventForm } from '../components/EventForm'
 import { mockEvents, mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
@@ -7,8 +8,7 @@ import { CURRENT_USER } from '../../../config/constants'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Event } from '../../../types'
 
-export function EventDetailPage() {
-  const { id } = useParams()
+export function EventCreatePage() {
   const navigate = useNavigate()
 
   const [localEvents, setLocalEvents] = useState<Event[]>(() => {
@@ -21,7 +21,6 @@ export function EventDetailPage() {
   })
 
   const activeEvents = useMemo(() => localEvents.filter((e) => e.activo !== false), [localEvents])
-  const event = localEvents.find((e) => e.id === id)
 
   function persistEvents(events: Event[]) {
     setLocalEvents(events)
@@ -31,44 +30,43 @@ export function EventDetailPage() {
   }
 
   function handleSave(data: EventFormValues) {
-    if (!event || !id) return
+    const newId = `EVT-${String(localEvents.length + 1).padStart(3, '0')}`
 
-    const updated = localEvents.map((e) =>
-      e.id === id
-        ? {
-            ...e,
-            ...data,
-            updatedAt: new Date().toISOString(),
-          }
-        : e,
-    )
+    const newEvent: Event = {
+      id: newId,
+      numeroEvento: data.numeroEvento,
+      sufijo: data.sufijo ?? '',
+      responsable: data.responsable,
+      dependencia: data.dependencia ?? '',
+      municipioId: data.municipioId,
+      aliadoId: data.aliadoId,
+      desembolsoId: data.desembolsoId,
+      esquema: data.esquema,
+      estado: 'Abierto',
+      fechaEvento: data.fechaEvento ?? '',
+      asistentes: data.asistentes ?? 0,
+      dias: data.dias ?? 0,
+      vereda: data.vereda ?? '',
+      latitud: data.latitud || undefined,
+      longitud: data.longitud || undefined,
+      observaciones: data.observaciones ?? '',
+      items: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
 
     addAuditEntry({
-      accion: 'Edición de evento',
+      accion: 'Creación de evento',
       entidad: 'Event',
-      entidadId: id,
+      entidadId: newEvent.id,
       usuario: CURRENT_USER,
       fecha: new Date().toISOString(),
-      detalle: `Evento ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} editado`,
+      detalle: `Evento ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creado`,
     })
 
-    persistEvents(updated)
+    persistEvents([newEvent, ...localEvents])
     navigate('/ordenes')
   }
-
-  if (!event) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-slate-500">Evento no encontrado</p>
-        <Link to="/ordenes" className="text-primary hover:text-primary-dark text-sm mt-2 inline-block">
-          Volver a órdenes
-        </Link>
-      </div>
-    )
-  }
-
-  const aliadoName = mockAliados.find((a) => a.id === event.aliadoId)?.nombre
-  const municipioName = mockMunicipios.find((m) => m.id === event.municipioId)?.nombre
 
   return (
     <div className="space-y-6">
@@ -77,19 +75,13 @@ export function EventDetailPage() {
           to="/ordenes"
           className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-2 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          <ArrowLeft className="w-4 h-4" />
           Volver a órdenes
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900">Editar {event.numeroEvento}</h1>
-        {event && (
-          <p className="text-sm text-slate-500">
-            {aliadoName} · {municipioName} · {event.items.length} ítems
-          </p>
-        )}
+        <h1 className="text-2xl font-bold text-slate-900">Nueva Orden</h1>
       </div>
 
       <EventForm
-        event={event}
         aliados={mockAliados}
         desembolsos={mockDesembolsos}
         municipios={mockMunicipios}
