@@ -46,7 +46,7 @@ export function EventViewPage() {
   )
 
   useEffect(() => {
-    if (!event || !items.length) return
+    if (!event) return
     const updated = localEvents.map((e) =>
       e.id === event.id ? { ...e, items: items.map((i) => ({
         id: i.id,

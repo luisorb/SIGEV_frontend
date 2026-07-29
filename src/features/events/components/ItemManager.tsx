@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, FileSpreadsheet } from 'lucide-react'
+import { Plus, FileSpreadsheet, Trash2, X } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { ItemInput, EventTotals, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'
@@ -31,6 +31,19 @@ export function ItemManager({
 }: ItemManagerProps) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<ManagedItem | null>(null)
+  const [deletingItem, setDeletingItem] = useState<ManagedItem | null>(null)
+
+  function handleDeleteRequest(id: string) {
+    const item = items.find((i) => i.id === id)
+    if (item) setDeletingItem(item)
+  }
+
+  function handleDeleteConfirm() {
+    if (deletingItem) {
+      onRemoveItem?.(deletingItem.id)
+      setDeletingItem(null)
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -118,7 +131,7 @@ export function ItemManager({
                   item={item}
                   aliados={aliados}
                   onEdit={!readOnly ? setEditingItem : undefined}
-                  onRemove={onRemoveItem}
+                  onRemove={!readOnly ? handleDeleteRequest : undefined}
                   readOnly={readOnly}
                   index={i}
                 />
@@ -149,6 +162,42 @@ export function ItemManager({
           )}
         </table>
       </div>
+
+      {deletingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3 mb-3">
+              <div className="p-2 bg-red-100 rounded-lg shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Eliminar ítem</h3>
+                <p className="text-xs sm:text-sm text-slate-500">Esta acción no se puede deshacer.</p>
+              </div>
+            </div>
+
+            <p className="text-sm sm:text-base text-slate-700 mb-4">
+              ¿Estás seguro de eliminar <span className="font-semibold">{deletingItem.descripcion}</span>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeletingItem(null)}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                <Trash2 className="w-4 h-4" />
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
