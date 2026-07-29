@@ -105,12 +105,13 @@ function AliadosTab() {
   const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
   function sortHeader(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado', label: string, className = '') {
+    const justify = className.includes('text-right') ? 'justify-end' : className.includes('text-center') ? 'justify-center' : ''
     return (
       <th
         onClick={() => toggleSort(col)}
         className={`px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none ${className}`}
       >
-        <div className="flex items-center gap-0.5">
+        <div className={`flex items-center gap-0.5 ${justify}`}>
           {label}
           <SortIcon active={sortColumn === col} direction={sortColumn === col ? sortDir : null} />
         </div>
@@ -328,15 +329,15 @@ function AliadosTab() {
 function DesembolsosTab() {
   const { desembolsos, addDesembolso, updateDesembolso, toggleActivo } = useDesembolsos()
   const [search, setSearch] = useState('')
+  const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'vigencia' | 'porcentajeParticipacion' | 'valorReferencia' | 'estado'>('codigo')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [pageSize, setPageSize] = useState(8)
+  const [page, setPage] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Disbursement | null>(null)
   const [form, setForm] = useState<DesForm>(EMPTY_DES)
   const [errors, setErrors] = useState<Partial<Record<keyof DesForm, string>>>({})
   const [confirmToggle, setConfirmToggle] = useState<Disbursement | null>(null)
-
-  const filtered = desembolsos.filter((d) =>
-    !search || d.nombre.toLowerCase().includes(search.toLowerCase()) || d.codigo.toLowerCase().includes(search.toLowerCase())
-  )
 
   function openCreate() { setEditing(null); setForm(EMPTY_DES); setErrors({}); setModalOpen(true) }
 
@@ -357,43 +358,96 @@ function DesembolsosTab() {
     return errors[field] ? inputBase + ' ' + inputError : inputBase
   }
 
+  function toggleSort(col: typeof sortColumn) {
+    if (sortColumn === col) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortColumn(col)
+      setSortDir('asc')
+    }
+    setPage(0)
+  }
+
+  const sorted = useMemo(() => {
+    const q = search.toLowerCase()
+    return [...desembolsos].filter((d) =>
+      !search
+        || d.nombre.toLowerCase().includes(q)
+        || d.codigo.toLowerCase().includes(q)
+        || (d.vigencia ?? '').toLowerCase().includes(q)
+        || String(d.porcentajeParticipacion).includes(q)
+        || String(d.valorReferencia).includes(q)
+    ).sort((a, b) => {
+      const cmp = sortColumn === 'codigo'
+        ? a.codigo.localeCompare(b.codigo)
+        : sortColumn === 'nombre'
+          ? a.nombre.localeCompare(b.nombre)
+          : sortColumn === 'vigencia'
+            ? (a.vigencia ?? '').localeCompare(b.vigencia ?? '')
+            : sortColumn === 'porcentajeParticipacion'
+              ? a.porcentajeParticipacion - b.porcentajeParticipacion
+              : sortColumn === 'valorReferencia'
+                ? a.valorReferencia - b.valorReferencia
+                : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [desembolsos, search, sortColumn, sortDir])
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const safePage = Math.min(page, totalPages - 1)
+  const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
+
+  function sortHeader(col: typeof sortColumn, label: string, className = '') {
+    const justify = className.includes('text-right') ? 'justify-end' : className.includes('text-center') ? 'justify-center' : ''
+    return (
+      <th
+        onClick={() => toggleSort(col)}
+        className={`px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none ${className}`}
+      >
+        <div className={`flex items-center gap-0.5 ${justify}`}>
+          {label}
+          <SortIcon active={sortColumn === col} direction={sortColumn === col ? sortDir : null} />
+        </div>
+      </th>
+    )
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">{desembolsos.length} registros</p>
+    <div className="flex flex-col min-h-0 gap-2">
+      <div className="flex items-center justify-end shrink-0">
         <button onClick={openCreate} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Desembolso
         </button>
       </div>
-      <div className="relative w-full sm:w-72">
+      <div className="relative w-full sm:w-72 shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input type="text" placeholder="Buscar por nombre o código..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+        <input type="text" placeholder="Buscar por código, nombre, vigencia..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
       </div>
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Código</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vigencia</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">% Participación</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor Referencia</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                {sortHeader('codigo', 'Código')}
+                {sortHeader('nombre', 'Nombre')}
+                {sortHeader('vigencia', 'Vigencia')}
+                {sortHeader('porcentajeParticipacion', '% Participación', 'text-center')}
+                {sortHeader('valorReferencia', 'Valor Referencia', 'text-center')}
+                {sortHeader('estado', 'Estado', 'text-center')}
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No hay desembolsos registrados</td></tr>
               ) : (
-                filtered.map((d) => (
+                paged.map((d) => (
                   <tr key={d.id} className={`hover:bg-slate-50 transition-colors ${!d.activo ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-3 font-medium text-slate-900">{d.codigo}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{d.nombre}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{d.vigencia ? formatDateCO(d.vigencia) : '-'}</td>
-                    <td className="px-4 py-3 text-sm text-right text-slate-600">{d.porcentajeParticipacion}%</td>
-                    <td className="px-4 py-3 text-sm text-right font-medium text-slate-900">{formatCurrencyCO(d.valorReferencia)}</td>
+                    <td className="px-4 py-3 text-sm text-center text-slate-600">{d.porcentajeParticipacion}%</td>
+                    <td className="px-4 py-3 text-sm text-center font-medium text-slate-900">{formatCurrencyCO(d.valorReferencia)}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${d.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{d.activo ? 'Activo' : 'Inactivo'}</span>
                     </td>
@@ -409,6 +463,62 @@ function DesembolsosTab() {
             </tbody>
           </table>
         </div>
+        {sorted.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span>Mostrando página {safePage + 1} de {totalPages} ({sorted.length} resultados)</span>
+            <span className="text-slate-300">|</span>
+            <label htmlFor="des-pageSize" className="sr-only">Filas por página</label>
+            <select
+              id="des-pageSize"
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}
+              className="px-2 py-1 border border-slate-300 rounded text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+            >
+              {[5, 8, 10, 15, 20, 30, 50].map((size) => (
+                <option key={size} value={size}>{size} filas</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(0)}
+              disabled={safePage === 0}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Primera página"
+            >
+              <ChevronsLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <button
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage === 0}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Página anterior"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+              Página <span className="text-primary font-semibold">{safePage + 1}</span> de <span className="font-semibold">{totalPages}</span>
+            </div>
+            <button
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage >= totalPages - 1}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Página siguiente"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-600" />
+            </button>
+            <button
+              onClick={() => setPage(totalPages - 1)}
+              disabled={safePage >= totalPages - 1}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Última página"
+            >
+              <ChevronsRight className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
+        </div>
+        )}
       </div>
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
