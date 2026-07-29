@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2 } from 'lucide-react'
+import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, UserCog } from 'lucide-react'
 import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -53,6 +53,7 @@ interface EventListProps {
   onPageChange: (page: number) => void
   onPageSizeChange: (size: PageSize) => void
   onDeleteRequest: (id: string) => void
+  onAssignOperatorClick?: (id: string) => void
 }
 
 export function EventList({
@@ -65,6 +66,7 @@ export function EventList({
   onPageChange,
   onPageSizeChange,
   onDeleteRequest,
+  onAssignOperatorClick,
 }: EventListProps) {
   const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
@@ -214,6 +216,15 @@ export function EventList({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {onAssignOperatorClick && (
+                            <button
+                              onClick={() => onAssignOperatorClick(event.id)}
+                              className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-500 hover:text-blue-600 transition-colors"
+                              title="Asignar operador logístico"
+                            >
+                              <UserCog className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => navigate(`/ordenes/${event.id}`)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-primary transition-colors"

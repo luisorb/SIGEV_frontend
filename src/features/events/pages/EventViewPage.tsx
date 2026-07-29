@@ -1,18 +1,27 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Pencil, ChevronLeft, Tag, MapPin } from 'lucide-react'
+import { Pencil, ChevronLeft, Tag, MapPin, ArrowLeftCircle } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
+
+import { AssociatedOffers } from '../components/AssociatedOffers'
+import { SupportDocuments } from '../components/SupportDocuments'
 import { useItems } from '../hooks/useItems'
+import { useStateMachine } from '../hooks/useStateMachine'
+import { useOffers } from '../../offers/hooks/useOffers'
 import { mockEvents, mockAliados, mockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
-import { EVENT_STATES, CURRENT_USER } from '../../../config/constants'
+import { CURRENT_USER } from '../../../config/constants'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
-import type { Event, EventState } from '../../../types'
+import { exportBudgetPDF } from '../../../utils/pdfExport'
+import type { Event, EventState, Soporte, TipoSoporte } from '../../../types'
 
 export function EventViewPage() {
   const { id } = useParams()
+  const toast = useToast()
+  const { validateTransition, isDevolucion, getAvailableTransitions } = useStateMachine()
+  const { allOffers: offers } = useOffers()
 
   const [localEvents, setLocalEvents] = useState<Event[]>(() => {
     try {
@@ -28,7 +37,8 @@ export function EventViewPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [currentEstado, setCurrentEstado] = useState<string>(event?.estado ?? '')
   const [pendingEstado, setPendingEstado] = useState<string | null>(null)
-  const toast = useToast()
+  const [transitionError, setTransitionError] = useState<string | null>(null)
+  const [devolucionMotivo, setDevolucionMotivo] = useState('')
 
   const {
     items,
@@ -71,6 +81,7 @@ export function EventViewPage() {
   }, [items])
 
   const stateHistory = event ? getStateHistory(event.id) : []
+  const eventOffers = offers.filter((o) => o.eventoId === id)
 
   const estadoColors: Record<string, string> = {
     Abierto: 'bg-yellow-100 text-yellow-800',
@@ -87,16 +98,106 @@ export function EventViewPage() {
     } catch { /* silent */ }
   }
 
-  function handleStateChange(newEstado: string) {
+  function updateEvent(partial: Partial<Event>) {
+    if (!event) return
+    const updated = localEvents.map((e) =>
+      e.id === event.id ? { ...e, ...partial, updatedAt: new Date().toISOString() } : e,
+    )
+    persistEvents(updated)
+  }
+
+  function handleSelectOffer(offerId: string) {
+    if (!event) return
+    updateEvent({ cotizacionSeleccionadaId: offerId })
+    addAuditEntry({
+      accion: 'Selección de oferta económica',
+      entidad: 'Event',
+      entidadId: event.id,
+      usuario: CURRENT_USER,
+      fecha: new Date().toISOString(),
+      detalle: `Oferta ${offerId} seleccionada como aprobada`,
+    })
+    toast.showToast('Oferta seleccionada')
+  }
+
+  function handleExportPDF(offerId: string) {
+    if (!event) return
+    const offer = offers.find((o) => o.id === offerId)
+    if (!offer) return
+    exportBudgetPDF(event, offer)
+    addAuditEntry({
+      accion: 'Exportación de presupuesto PDF',
+      entidad: 'Offer',
+      entidadId: offerId,
+      usuario: CURRENT_USER,
+      fecha: new Date().toISOString(),
+      detalle: `Presupuesto PDF generado para evento ${event.numeroEvento}`,
+    })
+    toast.showToast('Presupuesto PDF generado')
+  }
+
+  function handleUploadSoporte(tipo: TipoSoporte, file: File) {
+    if (!event) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const newSoporte: Soporte = {
+        id: `sop-${Date.now()}`,
+        eventoId: event.id,
+        tipo,
+        nombre: file.name,
+        archivo: reader.result as string,
+        tamanio: file.size,
+        mimeType: file.type,
+        version: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      const existing = event.soportes || []
+      const filtered = existing.filter((s) => s.tipo !== tipo)
+      updateEvent({ soportes: [...filtered, newSoporte] })
+      addAuditEntry({
+        accion: 'Carga de soporte documental',
+        entidad: 'Event',
+        entidadId: event.id,
+        usuario: CURRENT_USER,
+        fecha: new Date().toISOString(),
+        detalle: `Soporte "${tipo}" cargado: ${file.name}`,
+      })
+      toast.showToast(`Soporte "${tipo}" cargado`)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function handleDeleteSoporte(soporteId: string) {
+    if (!event) return
+    const soportes = (event.soportes || []).filter((s) => s.id !== soporteId)
+    updateEvent({ soportes })
+    toast.showToast('Soporte eliminado')
+  }
+
+  function handleStateChange(newEstado: string, motivo?: string) {
     if (!event) return
     const oldEstado = event.estado
     if (oldEstado === newEstado) return
 
-    const updated = localEvents.map((e) =>
-      e.id === event.id ? { ...e, estado: newEstado as EventState, updatedAt: new Date().toISOString() } : e,
-    )
+    const error = validateTransition(event, newEstado as EventState, eventOffers.length)
+    if (error) {
+      setTransitionError(error)
+      return
+    }
+
+    const isDev = isDevolucion(event.estado, newEstado as EventState)
+    const updatedEvent = {
+      ...event,
+      estado: newEstado as EventState,
+      updatedAt: new Date().toISOString(),
+      ...(isDev ? { motivoDevolucion: motivo || '' } : {}),
+    }
+    const updated = localEvents.map((e) => (e.id === event.id ? updatedEvent : e))
     persistEvents(updated)
     setCurrentEstado(newEstado)
+    setPendingEstado(null)
+    setTransitionError(null)
 
     addStateHistoryEntry({
       eventoId: event.id,
@@ -104,7 +205,7 @@ export function EventViewPage() {
       estadoNuevo: newEstado as EventState,
       usuario: CURRENT_USER,
       fecha: new Date().toISOString(),
-      motivo: '',
+      motivo: motivo || '',
     })
     addAuditEntry({
       accion: 'Cambio de estado',
@@ -112,7 +213,7 @@ export function EventViewPage() {
       entidadId: event.id,
       usuario: CURRENT_USER,
       fecha: new Date().toISOString(),
-      detalle: `Estado cambiado de ${oldEstado} a ${newEstado}`,
+      detalle: `Estado cambiado de ${oldEstado} a ${newEstado}${motivo ? `. Motivo: ${motivo}` : ''}`,
       valorAnterior: oldEstado,
       valorNuevo: newEstado,
     })
@@ -134,6 +235,7 @@ export function EventViewPage() {
   const aliado = mockAliados.find((a) => a.id === event.aliadoId)
   const municipio = mockMunicipios.find((m) => m.id === event.municipioId)
   const desembolso = mockDesembolsos.find((d) => d.id === event.desembolsoId)
+  const isDevolucionActive = event.motivoDevolucion && event.estado === 'Ejecutado'
 
   const label = (text: string) => (
     <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1">{text}</p>
@@ -142,6 +244,8 @@ export function EventViewPage() {
   const value = (text: string) => (
     <p className="text-sm font-medium text-slate-900">{text}</p>
   )
+
+  const availableTransitions = getAvailableTransitions(event.estado)
 
   return (
     <div className="space-y-6">
@@ -184,6 +288,17 @@ export function EventViewPage() {
         </Link>
       </div>
 
+      {isDevolucionActive && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-6 py-4 flex items-start gap-3">
+          <ArrowLeftCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Evento devuelto para corrección</p>
+            <p className="text-xs text-amber-700 mt-0.5">Motivo: {event.motivoDevolucion}</p>
+            <p className="text-xs text-amber-600 mt-0.5">Solo puede modificar las carpetas 5-7 (Facturas, Registro fotográfico, Listado de asistencia)</p>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Detalles de la Orden</h2>
@@ -223,6 +338,10 @@ export function EventViewPage() {
             {value(desembolso?.nombre ?? event.desembolsoId)}
           </div>
           <div>
+            {label('Operador Logístico')}
+            {value(event.asignadoA || 'No asignado')}
+          </div>
+          <div>
             {label('Esquema')}
             <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded capitalize">
               {event.esquema}
@@ -260,11 +379,15 @@ export function EventViewPage() {
               <div className="relative">
                 <select
                   value={currentEstado || event.estado}
-                  onChange={(e) => setPendingEstado(e.target.value)}
+                  onChange={(e) => {
+                    setPendingEstado(e.target.value)
+                    setTransitionError(null)
+                    setDevolucionMotivo('')
+                  }}
                   className="appearance-none text-sm border border-slate-300 rounded-lg pl-3 pr-8 py-1.5 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 cursor-pointer hover:border-slate-400"
                 >
-                  {EVENT_STATES.map((s) => (
-                    <option key={s} value={s} disabled={s === (currentEstado || event.estado)}>{s}</option>
+                  {availableTransitions.map((s) => (
+                    <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
                 <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -308,10 +431,39 @@ export function EventViewPage() {
         )}
       </div>
 
+      <AssociatedOffers
+        eventoId={event.id}
+        offers={offers}
+        selectedOfferId={event.cotizacionSeleccionadaId}
+        onSelectOffer={handleSelectOffer}
+        onExportPDF={handleExportPDF}
+        readOnly={event.estado === 'Legalizado'}
+      />
+
+      {(event.estado === 'Ejecutado' || event.estado === 'Cerrado' || isDevolucionActive) && (
+        <SupportDocuments
+          soportes={event.soportes || []}
+          readOnly={event.estado === 'Cerrado' && !isDevolucionActive}
+          soloModificables={!!isDevolucionActive}
+          onUpload={handleUploadSoporte}
+          onDelete={handleDeleteSoporte}
+        />
+      )}
+
+      <ItemManager
+        items={items}
+        aliados={mockAliados}
+        onAddItem={addItem}
+        onUpdateItem={updateItem}
+        onRemoveItem={removeItem}
+        eventTotals={eventTotals}
+        readOnly={event.estado === 'Legalizado' || event.estado === 'Cerrado'}
+      />
+
       {pendingEstado && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setPendingEstado(null)}
+          onClick={() => { setPendingEstado(null); setTransitionError(null) }}
         >
           <div
             className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]"
@@ -323,28 +475,53 @@ export function EventViewPage() {
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">Cambiar estado</h3>
-                <p className="text-xs sm:text-sm text-slate-500">Esta acción modificará el estado de seguimiento de la orden</p>
+                {!transitionError && (
+                  <p className="text-xs sm:text-sm text-slate-500">Esta acción modificará el estado de seguimiento de la orden</p>
+                )}
               </div>
             </div>
 
-            <p className="text-sm sm:text-base text-slate-700 mb-4">
-              ¿Estás seguro de cambiar la orden <span className="font-semibold">{event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}</span> de <span className="font-semibold">{currentEstado || event.estado}</span> a <span className="font-semibold">{pendingEstado}</span>?
-            </p>
+            {transitionError ? (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-xs font-semibold text-red-700 mb-1">No se puede realizar el cambio</p>
+                <p className="text-sm text-red-600">{transitionError}</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm sm:text-base text-slate-700 mb-4">
+                  ¿Estás seguro de cambiar la orden <span className="font-semibold">{event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}</span> de <span className="font-semibold">{currentEstado || event.estado}</span> a <span className="font-semibold">{pendingEstado}</span>?
+                </p>
+
+                {isDevolucion(event.estado, pendingEstado as EventState) && (
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Motivo de la devolución</label>
+                    <textarea
+                      value={devolucionMotivo}
+                      onChange={(e) => setDevolucionMotivo(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Describa el motivo de la devolución..."
+                    />
+                  </div>
+                )}
+              </>
+            )}
 
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setPendingEstado(null)}
+                onClick={() => { setPendingEstado(null); setTransitionError(null) }}
                 className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
               >
-                Cancelar
+                {transitionError ? 'Cerrar' : 'Cancelar'}
               </button>
-              <button
-                onClick={() => { handleStateChange(pendingEstado); setPendingEstado(null) }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                Cambiar a {pendingEstado}
-              </button>
+              {!transitionError && (
+                <button
+                  onClick={() => handleStateChange(pendingEstado, devolucionMotivo || undefined)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+                >
+                  Cambiar a {pendingEstado}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -378,6 +555,7 @@ export function EventViewPage() {
                     <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado Anterior</th>
                     <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado Nuevo</th>
                     <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Usuario</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Motivo</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -396,6 +574,7 @@ export function EventViewPage() {
                         </span>
                       </td>
                       <td className="px-6 py-3 text-sm text-slate-600">{h.usuario}</td>
+                      <td className="px-6 py-3 text-sm text-slate-500 max-w-[150px] truncate">{h.motivo || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -412,15 +591,6 @@ export function EventViewPage() {
           </div>
         </div>
       )}
-
-      <ItemManager
-        items={items}
-        aliados={mockAliados}
-        onAddItem={addItem}
-        onUpdateItem={updateItem}
-        onRemoveItem={removeItem}
-        eventTotals={eventTotals}
-      />
 
     </div>
   )
