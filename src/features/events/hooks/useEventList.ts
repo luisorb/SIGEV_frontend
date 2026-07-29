@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 
-const ITEMS_PER_PAGE = 10
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100] as const
+export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
 
 const SORTABLE_TEXT_COLUMNS = [
   'numeroEvento', 'responsable', 'estado', 'municipioId',
@@ -26,6 +27,7 @@ export function useEventList(events: Event[]) {
   })
 
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState<PageSize>(10)
 
   const filteredEvents = useMemo(() => {
     let result = [...events]
@@ -84,13 +86,13 @@ export function useEventList(events: Event[]) {
     total: events.length,
     filtered: filteredEvents.length,
     page,
-    pageSize: ITEMS_PER_PAGE,
-    totalPages: Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE)),
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(filteredEvents.length / pageSize)),
   }
 
   const paginatedEvents = filteredEvents.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE,
+    (page - 1) * pageSize,
+    page * pageSize,
   )
 
   function updateFilter(key: keyof EventListFilters, value: string) {
@@ -112,6 +114,8 @@ export function useEventList(events: Event[]) {
     toggleSort,
     page,
     setPage,
+    pageSize,
+    setPageSize,
     meta,
     paginatedEvents,
   }

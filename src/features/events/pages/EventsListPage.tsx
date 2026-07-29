@@ -10,7 +10,12 @@ export function EventsListPage() {
   const [localEvents, setLocalEvents] = useState<Event[]>(() => {
     try {
       const saved = localStorage.getItem('sigev-events')
-      return saved ? JSON.parse(saved) : mockEvents
+      if (saved) {
+        const parsed = JSON.parse(saved) as Event[]
+        if (parsed.length >= mockEvents.length) return parsed
+      }
+      localStorage.setItem('sigev-events', JSON.stringify(mockEvents))
+      return mockEvents
     } catch {
       return mockEvents
     }
@@ -24,6 +29,7 @@ export function EventsListPage() {
     sort,
     toggleSort,
     setPage,
+    setPageSize,
     meta,
     paginatedEvents,
   } = useEventList(activeEvents)
@@ -61,6 +67,7 @@ export function EventsListPage() {
       onFilterChange={updateFilter}
       onSort={toggleSort}
       onPageChange={setPage}
+      onPageSizeChange={setPageSize}
       onDelete={handleDelete}
     />
   )
