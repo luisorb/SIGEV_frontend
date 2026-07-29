@@ -332,6 +332,7 @@ function DesembolsosTab() {
   const [editing, setEditing] = useState<Disbursement | null>(null)
   const [form, setForm] = useState<DesForm>(EMPTY_DES)
   const [errors, setErrors] = useState<Partial<Record<keyof DesForm, string>>>({})
+  const [confirmToggle, setConfirmToggle] = useState<Disbursement | null>(null)
 
   const filtered = desembolsos.filter((d) =>
     !search || d.nombre.toLowerCase().includes(search.toLowerCase()) || d.codigo.toLowerCase().includes(search.toLowerCase())
@@ -399,7 +400,7 @@ function DesembolsosTab() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openEdit(d)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors" title="Editar"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => toggleActivo(d.id)} className={`p-1.5 rounded-lg transition-colors ${d.activo ? 'hover:bg-red-50 text-slate-500 hover:text-red-600' : 'hover:bg-green-50 text-slate-500 hover:text-green-600'}`} title={d.activo ? 'Inactivar' : 'Activar'}>{d.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}</button>
+                        <button onClick={() => setConfirmToggle(d)} className={`p-1.5 rounded-lg transition-colors ${d.activo ? 'hover:bg-red-50 text-slate-500 hover:text-red-600' : 'hover:bg-green-50 text-slate-500 hover:text-green-600'}`} title={d.activo ? 'Inactivar' : 'Activar'}>{d.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}</button>
                       </div>
                     </td>
                   </tr>
@@ -456,6 +457,38 @@ function DesembolsosTab() {
             <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
               <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
               <button onClick={handleSave} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Desembolso'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {confirmToggle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3 mb-3">
+              <div className={`p-2 rounded-lg shrink-0 ${confirmToggle.activo ? 'bg-red-100' : 'bg-green-100'}`}>
+                {confirmToggle.activo ? <PowerOff className="w-5 h-5 text-red-600" /> : <Power className="w-5 h-5 text-green-600" />}
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">{confirmToggle.activo ? 'Inactivar Desembolso' : 'Activar Desembolso'}</h3>
+                <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del desembolso.</p>
+              </div>
+            </div>
+            <p className="text-sm sm:text-base text-slate-700 mb-4">
+              ¿Estás seguro de {confirmToggle.activo ? 'inactivar' : 'activar'} <span className="font-semibold">{confirmToggle.nombre}</span>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmToggle(null)}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { toggleActivo(confirmToggle.id); setConfirmToggle(null) }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
+              </button>
             </div>
           </div>
         </div>
