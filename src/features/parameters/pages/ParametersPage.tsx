@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock } from 'lucide-react'
+import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X } from 'lucide-react'
 import { useParameters } from '../hooks/useParameters'
 import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
@@ -15,28 +15,47 @@ const EMPTY_ALLY: AllyForm = { nombre: '', nit: '', contacto: '', email: '', tel
 type DesForm = Omit<Disbursement, 'id'>
 const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', valorReferencia: 0, activo: true }
 
+const inputBase = [
+  'w-full px-3 py-2.5',
+  'border border-slate-300 rounded-lg',
+  'text-sm text-slate-900',
+  'bg-white',
+  'placeholder:text-slate-400',
+  'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary',
+  'transition-shadow duration-150',
+].join(' ')
+
+const inputError = 'border-red-300 focus:ring-red-300/40 focus:border-red-400'
+const labelBase = 'block text-sm font-medium text-slate-700'
+const requiredMark = <span className="text-red-400 ml-0.5">*</span>
+
 function AliadosTab() {
   const { aliados, addAliado, updateAliado, toggleActivo } = useAliados()
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Ally | null>(null)
   const [form, setForm] = useState<AllyForm>(EMPTY_ALLY)
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState<Partial<Record<keyof AllyForm, string>>>({})
 
   const filtered = aliados.filter((a) =>
     !search || a.nombre.toLowerCase().includes(search.toLowerCase()) || a.nit.includes(search)
   )
 
-  function openCreate() { setEditing(null); setForm(EMPTY_ALLY); setError(''); setModalOpen(true) }
+  function openCreate() { setEditing(null); setForm(EMPTY_ALLY); setErrors({}); setModalOpen(true) }
 
-  function openEdit(a: Ally) { setEditing(a); setForm({ nombre: a.nombre, nit: a.nit, contacto: a.contacto, email: a.email, telefono: a.telefono, color: a.color, activo: a.activo }); setError(''); setModalOpen(true) }
+  function openEdit(a: Ally) { setEditing(a); setForm({ nombre: a.nombre, nit: a.nit, contacto: a.contacto, email: a.email, telefono: a.telefono, color: a.color, activo: a.activo }); setErrors({}); setModalOpen(true) }
 
   function handleSave() {
-    if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return }
-    if (!form.nit.trim()) { setError('El NIT es obligatorio'); return }
-    setError('')
+    const newErrors: Partial<Record<keyof AllyForm, string>> = {}
+    if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
+    if (!form.nit.trim()) newErrors.nit = 'El NIT es obligatorio'
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     if (editing) updateAliado(editing.id, form); else addAliado(form)
     setModalOpen(false)
+  }
+
+  function inp(field: keyof AllyForm) {
+    return errors[field] ? inputBase + ' ' + inputError : inputBase
   }
 
   return (
@@ -94,45 +113,59 @@ function AliadosTab() {
         </div>
       </div>
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setModalOpen(false)}>
-          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-4">{editing ? 'Editar Aliado' : 'Nuevo Aliado'}</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Nombre <span className="text-red-500">*</span></label>
-                  <input type="text" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-[scaleIn_200ms_ease-out]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Handshake className="w-4 h-4 text-primary" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">NIT <span className="text-red-500">*</span></label>
-                  <input type="text" value={form.nit} onChange={(e) => setForm({ ...form, nit: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-                </div>
+                <h3 className="text-base font-bold text-slate-900">{editing ? 'Editar Aliado' : 'Nuevo Aliado'}</h3>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Contacto</label>
-                  <input type="text" value={form.contacto} onChange={(e) => setForm({ ...form, contacto: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Email</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Teléfono</label>
-                  <input type="text" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Color</label>
-                  <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-full h-9 px-1 border border-slate-300 rounded-lg cursor-pointer" />
-                </div>
-              </div>
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <div className="flex justify-end gap-3 mt-4">
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Nombre {requiredMark}</label>
+                  <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Aliado SAS" className={inp('nombre')} />
+                  {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelBase}>NIT {requiredMark}</label>
+                  <input type="text" value={form.nit} onChange={(e) => { setForm({ ...form, nit: e.target.value }); if (errors.nit) setErrors((prev) => ({ ...prev, nit: '' })) }} placeholder="Ej: 900.123.456-7" className={inp('nit')} />
+                  {errors.nit && <p className="text-xs text-red-500">{errors.nit}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Contacto</label>
+                  <input type="text" value={form.contacto} onChange={(e) => setForm({ ...form, contacto: e.target.value })} placeholder="Nombre del contacto" className={inputBase} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Email</label>
+                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contacto@ejemplo.com" className={inputBase} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Teléfono</label>
+                  <input type="text" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} placeholder="Ej: +57 300 000 0000" className={inputBase} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Color</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-9 px-0.5 border border-slate-300 rounded-lg cursor-pointer" />
+                    <span className="text-xs text-slate-500 font-mono">{form.color}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
               <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={handleSave} className="px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors">{editing ? 'Guardar' : 'Crear'}</button>
+              <button onClick={handleSave} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Aliado'}</button>
             </div>
           </div>
         </div>
@@ -147,24 +180,29 @@ function DesembolsosTab() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Disbursement | null>(null)
   const [form, setForm] = useState<DesForm>(EMPTY_DES)
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState<Partial<Record<keyof DesForm, string>>>({})
 
   const filtered = desembolsos.filter((d) =>
     !search || d.nombre.toLowerCase().includes(search.toLowerCase()) || d.codigo.toLowerCase().includes(search.toLowerCase())
   )
 
-  function openCreate() { setEditing(null); setForm(EMPTY_DES); setError(''); setModalOpen(true) }
+  function openCreate() { setEditing(null); setForm(EMPTY_DES); setErrors({}); setModalOpen(true) }
 
-  function openEdit(d: Disbursement) { setEditing(d); setForm({ nombre: d.nombre, codigo: d.codigo, porcentajeParticipacion: d.porcentajeParticipacion, vigencia: d.vigencia, valorReferencia: d.valorReferencia, activo: d.activo }); setError(''); setModalOpen(true) }
+  function openEdit(d: Disbursement) { setEditing(d); setForm({ nombre: d.nombre, codigo: d.codigo, porcentajeParticipacion: d.porcentajeParticipacion, vigencia: d.vigencia, valorReferencia: d.valorReferencia, activo: d.activo }); setErrors({}); setModalOpen(true) }
 
   function handleSave() {
-    if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return }
-    if (!form.codigo.trim()) { setError('El código es obligatorio'); return }
-    if (!form.vigencia) { setError('La vigencia es obligatoria'); return }
-    if (form.valorReferencia <= 0) { setError('El valor de referencia debe ser mayor a 0'); return }
-    setError('')
+    const newErrors: Partial<Record<keyof DesForm, string>> = {}
+    if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
+    if (!form.codigo.trim()) newErrors.codigo = 'El código es obligatorio'
+    if (!form.vigencia) newErrors.vigencia = 'La vigencia es obligatoria'
+    if (form.valorReferencia <= 0) newErrors.valorReferencia = 'El valor de referencia debe ser mayor a 0'
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     if (editing) updateDesembolso(editing.id, form); else addDesembolso(form)
     setModalOpen(false)
+  }
+
+  function inp(field: keyof DesForm) {
+    return errors[field] ? inputBase + ' ' + inputError : inputBase
   }
 
   return (
@@ -221,39 +259,52 @@ function DesembolsosTab() {
         </div>
       </div>
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setModalOpen(false)}>
-          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-4">{editing ? 'Editar Desembolso' : 'Nuevo Desembolso'}</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Código <span className="text-red-500">*</span></label>
-                  <input type="text" value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-[scaleIn_200ms_ease-out]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Banknote className="w-4 h-4 text-primary" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Nombre <span className="text-red-500">*</span></label>
-                  <input type="text" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-                </div>
+                <h3 className="text-base font-bold text-slate-900">{editing ? 'Editar Desembolso' : 'Nuevo Desembolso'}</h3>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Vigencia <span className="text-red-500">*</span></label>
-                  <input type="date" value={form.vigencia} onChange={(e) => setForm({ ...form, vigencia: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">% Participación</label>
-                  <input type="number" min={0} max={100} value={form.porcentajeParticipacion} onChange={(e) => setForm({ ...form, porcentajeParticipacion: Number(e.target.value) })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700">Valor de Referencia <span className="text-red-500">*</span></label>
-                <input type="number" min={0} step={1000} value={form.valorReferencia} onChange={(e) => setForm({ ...form, valorReferencia: Number(e.target.value) })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
-              </div>
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <div className="flex justify-end gap-3 mt-4">
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Código {requiredMark}</label>
+                  <input type="text" value={form.codigo} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: DES-001" className={inp('codigo')} />
+                  {errors.codigo && <p className="text-xs text-red-500">{errors.codigo}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Nombre {requiredMark}</label>
+                  <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Desembolso Tipo A" className={inp('nombre')} />
+                  {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Vigencia {requiredMark}</label>
+                  <input type="date" value={form.vigencia} onChange={(e) => { setForm({ ...form, vigencia: e.target.value }); if (errors.vigencia) setErrors((prev) => ({ ...prev, vigencia: '' })) }} className={inp('vigencia')} />
+                  {errors.vigencia && <p className="text-xs text-red-500">{errors.vigencia}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelBase}>% Participación</label>
+                  <input type="number" min={0} max={100} value={form.porcentajeParticipacion} onChange={(e) => setForm({ ...form, porcentajeParticipacion: Number(e.target.value) })} className={inputBase} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className={labelBase}>Valor de Referencia {requiredMark}</label>
+                <input type="number" min={0} step={1000} value={form.valorReferencia} onChange={(e) => { setForm({ ...form, valorReferencia: Number(e.target.value) }); if (errors.valorReferencia) setErrors((prev) => ({ ...prev, valorReferencia: '' })) }} placeholder="Ej: 1000000" className={inp('valorReferencia')} />
+                {errors.valorReferencia && <p className="text-xs text-red-500">{errors.valorReferencia}</p>}
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
               <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={handleSave} className="px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors">{editing ? 'Guardar' : 'Crear'}</button>
+              <button onClick={handleSave} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Desembolso'}</button>
             </div>
           </div>
         </div>
