@@ -120,7 +120,7 @@ function AliadosTab() {
   }
 
   return (
-    <div className="flex flex-col min-h-0 gap-2">
+    <div className="flex flex-col min-h-0 gap-0.5">
       <div className="flex items-center justify-end shrink-0">
         <button onClick={openCreate} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Aliado
@@ -413,7 +413,7 @@ function DesembolsosTab() {
   }
 
   return (
-    <div className="flex flex-col min-h-0 gap-2">
+    <div className="flex flex-col min-h-0 gap-0.5">
       <div className="flex items-center justify-end shrink-0">
         <button onClick={openCreate} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Desembolso
@@ -633,7 +633,7 @@ export function ParametersPage() {
   } = useParameters()
 
   return (
-    <div className="flex flex-col min-h-0 h-full gap-6">
+    <div className="flex flex-col min-h-0 h-full gap-2">
       <div className="shrink-0">
         <div className="flex items-center gap-2 mb-1">
           <Settings className="w-5 h-5 text-slate-400" />
