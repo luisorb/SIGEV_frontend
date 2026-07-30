@@ -179,8 +179,8 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
         </div>
         {sorted.length > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
-              <span>{safePage * pageSize + 1}�?"{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <span>Mostrando página {safePage + 1} de {totalPages} ({sorted.length} resultados)</span>
               <span className="text-slate-300">|</span>
               <label htmlFor="aliados-pageSize" className="sr-only">Filas por página</label>
               <select
@@ -211,8 +211,8 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
               >
                 <ChevronLeft className="w-4 h-4 text-gray-600" />
               </button>
-              <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[100px] sm:min-w-[120px] text-center">
-                {safePage + 1} / {totalPages}
+              <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+                Página <span className="text-primary font-semibold">{safePage + 1}</span> de <span className="font-semibold">{totalPages}</span>
               </div>
               <button
                 onClick={() => setPage(safePage + 1)}
@@ -226,7 +226,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
                 onClick={() => setPage(totalPages - 1)}
                 disabled={safePage >= totalPages - 1}
                 className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
-                title="�sltima página"
+                title="Última página"
               >
                 <ChevronsRight className="w-4 h-4 text-gray-600" />
               </button>
@@ -468,8 +468,8 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
         </div>
         {sorted.length > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
-            <span>{safePage * pageSize + 1}�?"{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span>Mostrando página {safePage + 1} de {totalPages} ({sorted.length} resultados)</span>
             <span className="text-slate-300">|</span>
             <label htmlFor="des-pageSize" className="sr-only">Filas por página</label>
             <select
@@ -500,8 +500,8 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
             >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
-            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[100px] sm:min-w-[120px] text-center">
-              {safePage + 1} / {totalPages}
+            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+              Página <span className="text-primary font-semibold">{safePage + 1}</span> de <span className="font-semibold">{totalPages}</span>
             </div>
             <button
               onClick={() => setPage(safePage + 1)}
@@ -515,7 +515,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
               onClick={() => setPage(totalPages - 1)}
               disabled={safePage >= totalPages - 1}
               className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
-              title="�sltima página"
+              title="Última página"
             >
               <ChevronsRight className="w-4 h-4 text-gray-600" />
             </button>
