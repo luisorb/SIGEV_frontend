@@ -664,7 +664,7 @@ export function ParametersPage() {
       </div>
 
       {activeTab === 'tasas' && (
-        <>
+        <div className="flex flex-col gap-4">
           <ParameterForm
             editParams={editParams}
             activeVersion={currentVersion ? { version: currentVersion.version } : null}
@@ -680,24 +680,42 @@ export function ParametersPage() {
           <div className="flex justify-center">
             <button
               onClick={() => setHistorialOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] shadow-sm transition-all"
             >
-              <Clock className="w-4 h-4" />
-              Ver Historial de Versiones ({versions.length})
+              <Clock className="w-4 h-4 text-slate-400" />
+              Ver Historial de Versiones
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">{versions.length}</span>
             </button>
           </div>
           {historialOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full animate-[scaleIn_200ms_ease-out]">
+              <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full animate-[scaleIn_200ms_ease-out] overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 rounded-lg bg-primary/5">
+                      <Clock className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Historial de Versiones</h3>
+                      <p className="text-xs text-slate-500">{versions.length} versión{versions.length !== 1 ? 'es' : ''} registrada{versions.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setHistorialOpen(false)}
+                    className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
                 <ParameterHistoryTable
                   versions={versions}
                   currentVersionId={currentVersion?.id ?? null}
                   onLoadVersion={(id) => { loadVersion(id); setHistorialOpen(false) }}
                 />
-                <div className="flex justify-end px-5 py-3 border-t border-slate-200">
+                <div className="flex justify-end px-6 py-3 border-t border-slate-200 bg-slate-50/50">
                   <button
                     onClick={() => setHistorialOpen(false)}
-                    className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="px-5 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all"
                   >
                     Cerrar
                   </button>
@@ -705,7 +723,7 @@ export function ParametersPage() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {activeTab === 'aliados' && <div className="min-h-0 flex-1 flex flex-col"><AliadosTab /></div>}
