@@ -285,6 +285,53 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
     )
   }
 
+  const desembolsoIds = useMemo(() => rows.map(r => r.desembolsoId), [rows])
+  const desembolsosMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const r of rows) m[r.desembolsoId] = r.desembolsoNombre
+    return m
+  }, [rows])
+
+  const transposedRows = useMemo(() => {
+    return aliadoIds.map(aId => {
+      const cells: Record<string, { valorTotal: number; cantidadEventos: number; feeTotal: number }> = {}
+      let totalValor = 0
+      let totalEventos = 0
+      let totalFee = 0
+      for (const row of rows) {
+        const cell = row.cells[aId]
+        if (cell) {
+          cells[row.desembolsoId] = {
+            valorTotal: cell.valorTotal,
+            cantidadEventos: cell.cantidadEventos,
+            feeTotal: cell.feeTotal,
+          }
+          totalValor += cell.valorTotal
+          totalEventos += cell.cantidadEventos
+          totalFee += cell.feeTotal
+        }
+      }
+      return { aliadoId: aId, aliadoNombre: aliadosMap[aId] || aId, cells, totalValor, totalEventos, totalFee }
+    }).filter(r => r.totalEventos > 0)
+  }, [rows, aliadoIds, aliadosMap])
+
+  const columnTotals = useMemo(() => {
+    const totalsByDesembolso: Record<string, { valor: number; eventos: number; fee: number }> = {}
+    for (const dId of desembolsoIds) {
+      let valor = 0; let eventos = 0; let fee = 0
+      for (const row of transposedRows) {
+        const cell = row.cells[dId]
+        if (cell) {
+          valor += cell.valorTotal
+          eventos += cell.cantidadEventos
+          fee += cell.feeTotal
+        }
+      }
+      if (eventos > 0) totalsByDesembolso[dId] = { valor, eventos, fee }
+    }
+    return totalsByDesembolso
+  }, [transposedRows, desembolsoIds])
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full flex flex-col relative">
       {isFullscreen && onExitFullscreen && (
@@ -301,11 +348,11 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="sticky top-0 z-10 px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[180px] bg-slate-50">
-                Desembolso
+                Aliado
               </th>
-              {aliadoIds.map((aId, idx) => (
-                <th key={aId} className={`sticky top-0 z-10 px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[150px] bg-slate-50 ${idx > 0 ? 'border-l border-slate-200' : 'border-l border-slate-100'}`}>
-                  {aliadosMap[aId] || aId}
+              {desembolsoIds.map((dId, idx) => (
+                <th key={dId} className={`sticky top-0 z-10 px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[150px] bg-slate-50 ${idx > 0 ? 'border-l border-slate-200' : 'border-l border-slate-100'}`}>
+                  {desembolsosMap[dId] || dId}
                 </th>
               ))}
               <th className="sticky top-0 z-10 px-4 py-3.5 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider min-w-[150px] border-l-2 border-slate-300 bg-slate-100">
@@ -314,15 +361,15 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((row, rowIdx) => (
-              <tr key={row.desembolsoId} className={`transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'} hover:bg-blue-50/50`}>
+            {transposedRows.map((row, rowIdx) => (
+              <tr key={row.aliadoId} className={`transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'} hover:bg-blue-50/50`}>
                 <td className="px-4 py-3.5 text-sm font-medium text-slate-900">
-                  {row.desembolsoNombre}
+                  {row.aliadoNombre}
                 </td>
-                {aliadoIds.map((aId, colIdx) => {
-                  const cell = row.cells[aId]
+                {desembolsoIds.map((dId, colIdx) => {
+                  const cell = row.cells[dId]
                   return (
-                    <td key={aId} className={`px-4 py-3.5 ${colIdx > 0 ? 'border-l border-slate-100' : 'border-l border-slate-50'} ${cell ? 'group relative cursor-default' : ''}`}>
+                    <td key={dId} className={`px-4 py-3.5 ${colIdx > 0 ? 'border-l border-slate-100' : 'border-l border-slate-50'} ${cell ? 'group relative cursor-default' : ''}`}>
                       {cell ? (
                         <div className="text-center space-y-0.5">
                           <p className="text-xs font-semibold text-slate-900 group-hover:text-primary transition-colors tabular-nums">
@@ -362,24 +409,16 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
               <td className="px-4 py-3.5 text-sm font-bold text-slate-900">
                 Totales Generales
               </td>
-              {aliadoIds.map((aId, colIdx) => {
-                let totalValor = 0
-                let totalEventos = 0
-                for (const r of rows) {
-                  const cell = r.cells[aId]
-                  if (cell) {
-                    totalValor += cell.valorTotal
-                    totalEventos += cell.cantidadEventos
-                  }
-                }
+              {desembolsoIds.map((dId, colIdx) => {
+                const ct = columnTotals[dId]
                 return (
-                  <td key={aId} className={`px-4 py-3.5 text-center ${colIdx > 0 ? 'border-l border-slate-200' : 'border-l border-slate-100'}`}>
-                    {totalEventos > 0 ? (
+                  <td key={dId} className={`px-4 py-3.5 text-center ${colIdx > 0 ? 'border-l border-slate-200' : 'border-l border-slate-100'}`}>
+                    {ct ? (
                       <div className="space-y-0.5">
                         <p className="text-xs font-bold text-slate-900 tabular-nums">
-                          {formatCurrencyCO(totalValor)}
+                          {formatCurrencyCO(ct.valor)}
                         </p>
-                        <p className="text-[10px] text-slate-500">{totalEventos} evento{totalEventos !== 1 ? 's' : ''}</p>
+                        <p className="text-[10px] text-slate-500">{ct.eventos} evento{ct.eventos !== 1 ? 's' : ''}</p>
                       </div>
                     ) : (
                       <p className="text-xs text-slate-300">—</p>
