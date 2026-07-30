@@ -2,27 +2,20 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { useMatrix } from '../hooks/useMatrix'
 import { MatrixTable } from '../components/MatrixTable'
 import { MatrixExcelExport } from '../components/MatrixExcelExport'
+import { useQuery } from '@tanstack/react-query'
 import { getEventsApi } from '../../../services/events.service'
-import { getAliadosSync, getDesembolsosSync } from '../../../lib/catalogStore'
-import { mockMunicipios } from '../../events/utils/mockData'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { EVENT_STATES } from '../../../config/constants'
 import { formatCurrencyCO } from '../../../utils/formatters'
 import { Table2, Calendar, DollarSign, FileSpreadsheet, Filter, List, Grid3x3, Receipt, BadgePercent, FileText, Maximize2, Minimize2 } from 'lucide-react'
-import type { Event } from '../../../types'
 
 export function MatrixPage() {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getEventsApi().then((data) => {
-      setEvents(data)
-      setLoading(false)
-    })
-  }, [])
-
-  const aliados = getAliadosSync()
-  const desembolsos = getDesembolsosSync()
+  const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
+  const { data: aliados = [] } = useAllies()
+  const { data: desembolsos = [] } = useDisbursements()
+  const { data: municipios = [] } = useMunicipalities()
 
   const {
     view,
@@ -39,7 +32,7 @@ export function MatrixPage() {
     aliadosMap,
     desembolsosMap,
     municipiosMap,
-  } = useMatrix(events, aliados, desembolsos, mockMunicipios)
+  } = useMatrix(events, aliados, desembolsos, municipios)
 
   const [showFilters, setShowFilters] = useState(false)
   const tableRef = useRef<HTMLDivElement>(null)
@@ -59,7 +52,7 @@ export function MatrixPage() {
     return () => document.removeEventListener('fullscreenchange', onFSChange)
   }, [])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <p className="text-slate-500">Cargando matriz...</p>

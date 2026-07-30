@@ -1,12 +1,18 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff } from 'lucide-react'
 import { useToast } from '../components/ToastProvider'
 import { USER_ROLES } from '../config/constants'
+import { getUsersApi, createUserApi, updateUserApi, deleteUserApi } from '../services/users.service'
+import type { CreateUserDto } from '../services/types'
 
-import { getUsersSync, addUserSync, updateUserSync, deleteUserSync, toggleUserActiveSync } from '../lib/usersStore'
-
-interface User extends Omit<import('../lib/usersStore').StoredUser, 'password'> {
+interface User {
+  id: string
+  identificador: string
+  nombre: string
+  email: string
   password: string
+  roles: string[]
+  activo: boolean
 }
 
 type SortableColumn = 'identificador' | 'nombre' | 'email'
@@ -49,13 +55,21 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
   )
 }
 
-function loadUsers(): User[] {
-  return getUsersSync().map((u) => ({ ...u }))
-}
-
 export function AdminUsersPage() {
   const toast = useToast()
-  const [users, setUsers] = useState<User[]>(loadUsers)
+  const [users, setUsers] = useState<User[]>([])
+
+  useEffect(() => {
+    getUsersApi().then(data => setUsers(data.map(u => ({
+      id: u.id,
+      identificador: u.document,
+      nombre: u.fullName,
+      email: u.email,
+      password: '',
+      roles: u.roles,
+      activo: true,
+    }))))
+  }, [])
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof Omit<User, 'id'>, string>>>({})
   const EMPTY_USER: Omit<User, 'id'> = {
@@ -77,7 +91,7 @@ export function AdminUsersPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<PageSize>(10)
 
-  function handleSave() {
+  async function handleSave() {
     const newErrors: Partial<Record<keyof Omit<User, 'id'>, string>> = {}
     if (!newUser.identificador.trim()) newErrors.identificador = 'El identificador es obligatorio'
     if (!newUser.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
@@ -88,26 +102,46 @@ export function AdminUsersPage() {
     if (newUser.roles.length === 0) newErrors.roles = 'Seleccione al menos un rol'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
 
-    if (editingUser) {
-      updateUserSync(editingUser.id, {
-        identificador: newUser.identificador,
-        nombre: newUser.nombre,
-        email: newUser.email,
-        password: newUser.password || editingUser.password,
-        roles: newUser.roles,
-        activo: newUser.activo,
-      })
-      toast.showToast(`Usuario "${newUser.nombre}" actualizado correctamente`)
-    } else {
-      addUserSync(newUser as import('../lib/usersStore').StoredUser)
-      toast.showToast(`Usuario "${newUser.nombre}" creado correctamente`)
-    }
+    try {
+      if (editingUser) {
+        await updateUserApi(editingUser.id, {
+          document: newUser.identificador,
+          fullName: newUser.nombre,
+          email: newUser.email,
+          password: newUser.password || editingUser.password,
+          roles: newUser.roles,
+        })
+        toast.showToast(`Usuario "${newUser.nombre}" actualizado correctamente`)
+      } else {
+        const createDto: CreateUserDto = {
+          document: newUser.identificador,
+          documentType: 'CC',
+          fullName: newUser.nombre,
+          email: newUser.email,
+          password: newUser.password,
+          roles: newUser.roles,
+        }
+        await createUserApi(createDto)
+        toast.showToast(`Usuario "${newUser.nombre}" creado correctamente`)
+      }
 
-    setUsers(loadUsers())
-    setNewUser(EMPTY_USER)
-    setErrors({})
-    setEditingUser(null)
-    setIsCreating(false)
+      const updated = await getUsersApi()
+      setUsers(updated.map(u => ({
+        id: u.id,
+        identificador: u.document,
+        nombre: u.fullName,
+        email: u.email,
+        password: '',
+        roles: u.roles,
+        activo: true,
+      })))
+      setNewUser(EMPTY_USER)
+      setErrors({})
+      setEditingUser(null)
+      setIsCreating(false)
+    } catch {
+      toast.showToast('Error al guardar el usuario')
+    }
   }
 
   function openCreate() {
@@ -136,20 +170,46 @@ export function AdminUsersPage() {
     if (user) setDeleteUser(user)
   }
 
-  function handleDeleteConfirm() {
+  async function handleDeleteConfirm() {
     if (!deleteUser) return
-    deleteUserSync(deleteUser.id)
-    setUsers(loadUsers())
-    toast.showToast(`Usuario "${deleteUser.nombre}" eliminado correctamente`)
+    try {
+      await deleteUserApi(deleteUser.id)
+      const updated = await getUsersApi()
+      setUsers(updated.map(u => ({
+        id: u.id,
+        identificador: u.document,
+        nombre: u.fullName,
+        email: u.email,
+        password: '',
+        roles: u.roles,
+        activo: true,
+      })))
+      toast.showToast(`Usuario "${deleteUser.nombre}" eliminado correctamente`)
+    } catch {
+      toast.showToast('Error al eliminar el usuario')
+    }
     setDeleteUser(null)
   }
 
-  function handleToggleActive() {
+  async function handleToggleActive() {
     if (!confirmToggle) return
     const newState = !confirmToggle.activo
-    toggleUserActiveSync(confirmToggle.id)
-    setUsers(loadUsers())
-    toast.showToast(`Usuario "${confirmToggle.nombre}" ${newState ? 'activado' : 'inactivado'} correctamente`)
+    try {
+      await deleteUserApi(confirmToggle.id)
+      const updated = await getUsersApi()
+      setUsers(updated.map(u => ({
+        id: u.id,
+        identificador: u.document,
+        nombre: u.fullName,
+        email: u.email,
+        password: '',
+        roles: u.roles,
+        activo: true,
+      })))
+      toast.showToast(`Usuario "${confirmToggle.nombre}" ${newState ? 'activado' : 'inactivado'} correctamente`)
+    } catch {
+      toast.showToast('Error al cambiar el estado del usuario')
+    }
     setConfirmToggle(null)
   }
 

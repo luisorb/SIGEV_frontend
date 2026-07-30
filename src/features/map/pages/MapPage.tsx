@@ -1,22 +1,16 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useMapMarkers } from '../hooks/useMapMarkers'
 import { ExecutionMap } from '../components/ExecutionMap'
-import { mockCoordenadas } from '../utils/coordinates'
+import { useQuery } from '@tanstack/react-query'
 import { getEventsApi } from '../../../services/events.service'
-import { getAliadosSync, getDesembolsosSync } from '../../../lib/catalogStore'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
 import { formatCurrencyCO } from '../../../utils/formatters'
-import type { Event } from '../../../types'
 
 export function MapPage() {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getEventsApi().then((data) => {
-      setEvents(data)
-      setLoading(false)
-    })
-  }, [])
+  const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
+  const { data: aliados = [] } = useAllies()
+  const { data: desembolsos = [] } = useDisbursements()
 
   const [selectedDesembolso, setSelectedDesembolso] = useState('')
   const [selectedAliado, setSelectedAliado] = useState('')
@@ -36,13 +30,13 @@ export function MapPage() {
     return result
   }, [events, selectedDesembolso, selectedAliado, selectedEstado])
 
-  const { groups } = useMapMarkers(filteredEvents, mockCoordenadas)
+  const { groups } = useMapMarkers(filteredEvents, [])
 
   const totalMunicipios = groups.length
   const totalEventos = groups.reduce((s, g) => s + g.totalEventos, 0)
   const totalValor = groups.reduce((s, g) => s + g.totalValor, 0)
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <p className="text-slate-500">Cargando mapa...</p>
@@ -63,11 +57,11 @@ export function MapPage() {
         <div className="flex flex-wrap items-center gap-3">
           <select value={selectedDesembolso} onChange={(e) => setSelectedDesembolso(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
             <option value="">Todos los desembolsos</option>
-            {getDesembolsosSync().map((d) => (<option key={d.id} value={d.id}>{d.nombre}</option>))}
+            {desembolsos.map((d) => (<option key={d.id} value={d.id}>{d.nombre}</option>))}
           </select>
           <select value={selectedAliado} onChange={(e) => setSelectedAliado(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
             <option value="">Todos los aliados</option>
-            {getAliadosSync().map((a) => (<option key={a.id} value={a.id}>{a.nombre}</option>))}
+            {aliados.map((a) => (<option key={a.id} value={a.id}>{a.nombre}</option>))}
           </select>
           <select value={selectedEstado} onChange={(e) => setSelectedEstado(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
             <option value="">Todos los estados</option>

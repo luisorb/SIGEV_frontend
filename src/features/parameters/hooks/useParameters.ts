@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react'
 import type { CalculationParams } from '../../../types'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser, DEFAULT_CALCULATION_PARAMS } from '../../../config/constants'
-import { mockParamVersions } from '../utils/mockData'
 import type { ParamVersion } from '../types'
 
 const STORAGE_KEY = 'sigev-param-versions'
@@ -10,9 +9,9 @@ const STORAGE_KEY = 'sigev-param-versions'
 function loadVersions(): ParamVersion[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
-    return saved ? JSON.parse(saved) : mockParamVersions
+    return saved ? JSON.parse(saved) : []
   } catch {
-    return mockParamVersions
+    return []
   }
 }
 

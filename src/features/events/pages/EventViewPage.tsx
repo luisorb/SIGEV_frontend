@@ -7,12 +7,12 @@ import { SupportDocuments } from '../components/SupportDocuments'
 import { useItems } from '../hooks/useItems'
 import { useStateMachine } from '../hooks/useStateMachine'
 import { useOffers } from '../../offers/hooks/useOffers'
+import { useQuery } from '@tanstack/react-query'
 import { getEventApi, changeEventStatusApi } from '../../../services/events.service'
-import { getAliadosSync } from '../../../lib/catalogStore'
-import { getDesembolsosSync } from '../../../lib/catalogStore'
-import { mockMunicipios } from '../utils/mockData'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
-import { getCurrentUser } from '../../../config/constants'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
@@ -25,16 +25,21 @@ export function EventViewPage() {
   const { validateTransition, isDevolucion, getAvailableTransitions } = useStateMachine()
   const { allOffers: offers } = useOffers()
 
-  const [event, setEvent] = useState<Event | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: event, isLoading } = useQuery({
+    queryKey: ['event', id],
+    queryFn: () => getEventApi(id!),
+    enabled: !!id,
+  })
+
+  const { data: aliados = [] } = useAllies()
+  const { data: desembolsos = [] } = useDisbursements()
+  const { data: municipios = [] } = useMunicipalities()
+
+  const [localEvent, setLocalEvent] = useState<Event | null>(null)
 
   useEffect(() => {
-    if (!id) return
-    getEventApi(id).then((evt) => {
-      setEvent(evt)
-      setLoading(false)
-    })
-  }, [id])
+    if (event) setLocalEvent(event)
+  }, [event])
 
   const [showHistory, setShowHistory] = useState(false)
   const [currentEstado, setCurrentEstado] = useState<string>(event?.estado ?? '')
@@ -49,23 +54,23 @@ export function EventViewPage() {
     removeItem,
     eventTotals,
   } = useItems(
-    event?.items.map((i) => ({
+    localEvent?.items.map((i) => ({
       descripcion: i.descripcion,
       cantidad: i.cantidad,
       valorUnitario: i.valorUnitario,
       categoriaTributaria: i.categoriaTributaria,
       aliadoId: i.aliadoId,
     })),
-    event?.aliadoId,
+    localEvent?.aliadoId,
   )
 
   useEffect(() => {
-    if (!event) return
+    if (!localEvent) return
     const updatedEvent = {
-      ...event,
+      ...localEvent,
       items: items.map((i) => ({
         id: i.id,
-        eventoId: event.id,
+        eventoId: localEvent.id,
         descripcion: i.descripcion,
         cantidad: i.cantidad,
         valorUnitario: i.valorUnitario,
@@ -81,7 +86,7 @@ export function EventViewPage() {
       })),
       updatedAt: new Date().toISOString(),
     }
-    setEvent(updatedEvent)
+    setLocalEvent(updatedEvent)
   }, [items])
 
   const stateHistory = event ? getStateHistory(event.id) : []
@@ -96,8 +101,8 @@ export function EventViewPage() {
   }
 
   function updateEvent(partial: Partial<Event>) {
-    if (!event) return
-    setEvent({ ...event, ...partial, updatedAt: new Date().toISOString() })
+    if (!localEvent) return
+    setLocalEvent({ ...localEvent, ...partial, updatedAt: new Date().toISOString() })
   }
 
   function handleSelectOffer(offerId: string) {
@@ -107,7 +112,7 @@ export function EventViewPage() {
       accion: 'Selección de oferta económica',
       entidad: 'Event',
       entidadId: event.id,
-      usuario: getCurrentUser(),
+      usuario: '',
       fecha: new Date().toISOString(),
       detalle: `Oferta ${offerId} seleccionada como aprobada`,
     })
@@ -123,7 +128,7 @@ export function EventViewPage() {
       accion: 'Exportación de presupuesto PDF',
       entidad: 'Offer',
       entidadId: offerId,
-      usuario: getCurrentUser(),
+      usuario: '',
       fecha: new Date().toISOString(),
       detalle: `Presupuesto PDF generado para evento ${event.numeroEvento}`,
     })
@@ -153,9 +158,9 @@ export function EventViewPage() {
         accion: 'Carga de soporte documental',
         entidad: 'Event',
         entidadId: event.id,
-        usuario: getCurrentUser(),
-        fecha: new Date().toISOString(),
-        detalle: `Soporte "${tipo}" cargado: ${file.name}`,
+      usuario: '',
+      fecha: new Date().toISOString(),
+      detalle: `Soporte "${tipo}" cargado: ${file.name}`,
       })
       toast.showToast(`Soporte "${tipo}" cargado`)
     }
@@ -189,7 +194,7 @@ export function EventViewPage() {
       updatedAt: new Date().toISOString(),
       ...(isDev ? { motivoDevolucion: motivo || '' } : {}),
     }
-    setEvent(updatedEvent)
+    setLocalEvent(updatedEvent)
     setCurrentEstado(newEstado)
     setPendingEstado(null)
     setTransitionError(null)
@@ -198,7 +203,7 @@ export function EventViewPage() {
       eventoId: event.id,
       estadoAnterior: oldEstado,
       estadoNuevo: newEstado as EventState,
-      usuario: getCurrentUser(),
+      usuario: '',
       fecha: new Date().toISOString(),
       motivo: motivo || '',
     })
@@ -206,7 +211,7 @@ export function EventViewPage() {
       accion: 'Cambio de estado',
       entidad: 'Event',
       entidadId: event.id,
-      usuario: getCurrentUser(),
+      usuario: '',
       fecha: new Date().toISOString(),
       detalle: `Estado cambiado de ${oldEstado} a ${newEstado}${motivo ? `. Motivo: ${motivo}` : ''}`,
       valorAnterior: oldEstado,
@@ -215,7 +220,7 @@ export function EventViewPage() {
     toast.showToast(`Estado cambiado de ${oldEstado} a ${newEstado}`)
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="text-slate-500 text-lg">Cargando evento...</p>
@@ -235,9 +240,9 @@ export function EventViewPage() {
     )
   }
 
-  const aliado = getAliadosSync().find((a) => a.id === event.aliadoId)
-  const municipio = mockMunicipios.find((m) => m.id === event.municipioId)
-  const desembolso = getDesembolsosSync().find((d) => d.id === event.desembolsoId)
+  const aliado = aliados.find((a) => a.id === event.aliadoId)
+  const municipio = municipios.find((m) => m.id === event.municipioId)
+  const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
   const isDevolucionActive = event.motivoDevolucion && event.estado === 'Ejecutado'
 
   const label = (text: string) => (
@@ -395,7 +400,7 @@ export function EventViewPage() {
 
       <ItemManager
         items={items}
-        aliados={getAliadosSync()}
+        aliados={aliados}
         onAddItem={addItem}
         onUpdateItem={updateItem}
         onRemoveItem={removeItem}

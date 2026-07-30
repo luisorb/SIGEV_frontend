@@ -6,27 +6,26 @@ import { getCurrentUser } from '../config/constants'
 const ALIADOS_KEY = 'sigev-aliados'
 const DESEMBOLSOS_KEY = 'sigev-desembolsos'
 
-let nextAllyId = 4
-let nextDesembolsoId = 4
-
-function seedIfEmpty<T>(key: string, mockData: T[]): T[] {
-  try {
-    const saved = localStorage.getItem(key)
-    if (saved) {
-      const parsed = JSON.parse(saved) as T[]
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
-    }
-  } catch { /* fall through */ }
-  localStorage.setItem(key, JSON.stringify(mockData))
-  return mockData
-}
-
 function loadAliados(): Ally[] {
-  return seedIfEmpty(ALIADOS_KEY, getMockAliados())
+  try {
+    const saved = localStorage.getItem(ALIADOS_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved) as Ally[]
+      if (Array.isArray(parsed)) return parsed
+    }
+  } catch { }
+  return []
 }
 
 function loadDesembolsos(): Disbursement[] {
-  return seedIfEmpty(DESEMBOLSOS_KEY, getMockDesembolsos())
+  try {
+    const saved = localStorage.getItem(DESEMBOLSOS_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved) as Disbursement[]
+      if (Array.isArray(parsed)) return parsed
+    }
+  } catch { }
+  return []
 }
 
 function persistAliados(list: Ally[]) {
@@ -37,30 +36,17 @@ function persistDesembolsos(list: Disbursement[]) {
   localStorage.setItem(DESEMBOLSOS_KEY, JSON.stringify(list))
 }
 
-function getMockAliados(): Ally[] {
-  return [
-    { id: '1', nombre: 'Fundación Social', nit: '900.123.456-7', contacto: 'Carlos Pérez', email: 'carlos@fsocial.org', telefono: '3001234567', color: '#EAB308', activo: true },
-    { id: '2', nombre: 'Corporación Desarrollo', nit: '900.789.012-3', contacto: 'Ana Gómez', email: 'ana@codesarrollo.org', telefono: '3007890123', color: '#f43340', activo: true },
-    { id: '3', nombre: 'Asociación Cultural', nit: '900.345.678-9', contacto: 'Luis Rojas', email: 'luis@acultural.org', telefono: '3003456789', color: '#22C55E', activo: true },
-  ]
-}
-
-function getMockDesembolsos(): Disbursement[] {
-  return [
-    { id: '1', nombre: 'Desembolso 2025-01', codigo: 'D2025-01', porcentajeParticipacion: 40, vigencia: '2025-01-01', valorReferencia: 500_000_000, activo: true },
-    { id: '2', nombre: 'Desembolso 2025-02', codigo: 'D2025-02', porcentajeParticipacion: 35, vigencia: '2025-06-01', valorReferencia: 400_000_000, activo: true },
-    { id: '3', nombre: 'Desembolso 2025-03', codigo: 'D2025-03', porcentajeParticipacion: 25, vigencia: '2025-01-01', valorReferencia: 300_000_000, activo: true },
-  ]
+function nextId(list: { id: string }[]): number {
+  const max = list.reduce((m, item) => Math.max(m, parseInt(item.id, 10) || 0), 0)
+  return max + 1
 }
 
 export function useAliados() {
   const [aliados, setAliados] = useState<Ally[]>(loadAliados)
 
-  const refresh = useCallback(() => setAliados(loadAliados()), [])
-
   const addAliado = useCallback((data: Omit<Ally, 'id'>) => {
     const list = loadAliados()
-    const nuevo: Ally = { id: String(nextAllyId++), ...data }
+    const nuevo: Ally = { id: String(nextId(list)), ...data }
     const updated = [...list, nuevo]
     persistAliados(updated)
     setAliados(updated)
@@ -86,7 +72,7 @@ export function useAliados() {
       entidadId: id,
       usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
-      detalle: `Aliado actualizado`,
+      detalle: 'Aliado actualizado',
     })
   }, [])
 
@@ -109,17 +95,15 @@ export function useAliados() {
     })
   }, [])
 
-  return { aliados, addAliado, updateAliado, toggleActivo, refresh }
+  return { aliados, addAliado, updateAliado, toggleActivo }
 }
 
 export function useDesembolsos() {
   const [desembolsos, setDesembolsos] = useState<Disbursement[]>(loadDesembolsos)
 
-  const refresh = useCallback(() => setDesembolsos(loadDesembolsos()), [])
-
   const addDesembolso = useCallback((data: Omit<Disbursement, 'id'>) => {
     const list = loadDesembolsos()
-    const nuevo: Disbursement = { id: String(nextDesembolsoId++), ...data }
+    const nuevo: Disbursement = { id: String(nextId(list)), ...data }
     const updated = [...list, nuevo]
     persistDesembolsos(updated)
     setDesembolsos(updated)
@@ -145,7 +129,7 @@ export function useDesembolsos() {
       entidadId: id,
       usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
-      detalle: `Desembolso actualizado`,
+      detalle: 'Desembolso actualizado',
     })
   }, [])
 
@@ -168,13 +152,5 @@ export function useDesembolsos() {
     })
   }, [])
 
-  return { desembolsos, addDesembolso, updateDesembolso, toggleActivo, refresh }
-}
-
-export function getAliadosSync(): Ally[] {
-  return loadAliados()
-}
-
-export function getDesembolsosSync(): Disbursement[] {
-  return loadDesembolsos()
+  return { desembolsos, addDesembolso, updateDesembolso, toggleActivo }
 }

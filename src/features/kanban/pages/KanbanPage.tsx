@@ -1,21 +1,15 @@
-import { useMemo, useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { useKanban } from '../hooks/useKanban'
+import { useQuery } from '@tanstack/react-query'
 import { getEventsApi } from '../../../services/events.service'
-import { getAliadosSync } from '../../../lib/catalogStore'
-import { mockMunicipios } from '../../events/utils/mockData'
-import type { Event } from '../../../types'
+import { useAllies } from '../../../hooks/useAllies'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 
 export function KanbanPage() {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getEventsApi().then((data) => {
-      setEvents(data)
-      setLoading(false)
-    })
-  }, [])
+  const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
+  const { data: aliados = [] } = useAllies()
+  const { data: municipios = [] } = useMunicipalities()
 
   const {
     grouped,
@@ -28,15 +22,15 @@ export function KanbanPage() {
 
   const aliadosMap = useMemo(() => {
     const m: Record<string, string> = {}
-    for (const a of getAliadosSync()) m[a.id] = a.nombre
+    for (const a of aliados) m[a.id] = a.nombre
     return m
-  }, [])
+  }, [aliados])
 
   const municipiosMap = useMemo(() => {
     const m: Record<string, string> = {}
-    for (const mun of mockMunicipios) m[mun.id] = `${mun.nombre} (${mun.departamento})`
+    for (const mun of municipios) m[mun.id] = `${mun.nombre} (${mun.departamento})`
     return m
-  }, [])
+  }, [municipios])
 
   const totalEventos = Object.values(counts).reduce((s, c) => s + c, 0)
 
@@ -56,7 +50,7 @@ export function KanbanPage() {
 
   const grandTotal = Object.values(columnTotals).reduce((s, v) => s + v, 0)
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <p className="text-slate-500">Cargando tablero...</p>

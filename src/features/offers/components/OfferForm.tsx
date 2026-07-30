@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { Save, X, FileSpreadsheet } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useOfferForm } from '../hooks/useOfferForm'
-import { mockEvents, mockMunicipios, getMockAliados, getMockDesembolsos } from '../../events/utils/mockData'
 import type { Offer } from '../types'
-import type { Event } from '../../../types'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
 
 interface OfferFormProps {
   offer?: Offer
@@ -34,20 +35,12 @@ interface OfferFormProps {
   onCancel: () => void
 }
 
-function loadEvents(): Event[] {
-  try {
-    const saved = localStorage.getItem('sigev-events')
-    if (saved) {
-      const parsed = JSON.parse(saved) as Event[]
-      return parsed.filter((e) => e.activo !== false)
-    }
-  } catch { /* ignore */ }
-  return mockEvents.filter((e) => e.activo !== false)
-}
-
 export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormProps) {
   const { register, handleSubmit, errors, isSubmitting, form } = useOfferForm({ offer, initialData, onSave })
-  const events = useMemo(() => loadEvents(), [])
+  const { data: allEvents = [] } = useQuery({ queryKey: ['events'], queryFn: () => import('../../../services/events.service').then(m => m.getEventsApi()) })
+  const events = useMemo(() => allEvents.filter(e => e.activo !== false), [allEvents])
+  const { data: aliadosList = [] } = useAllies()
+  const { data: desembolsosList = [] } = useDisbursements()
 
   function handleEventSelect(eventId: string) {
     if (!eventId) {
@@ -63,11 +56,10 @@ export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormPro
     }
     const ev = events.find((e) => e.id === eventId)
     if (!ev) return
-    const m = mockMunicipios.find((m) => m.id === ev.municipioId)
-    const municipio = m ? m.nombre : ev.municipioId
-    const a = getMockAliados().find((a) => a.id === ev.aliadoId)
+    const municipio = ev.municipioId
+    const a = aliadosList.find((a) => a.id === ev.aliadoId)
     const aliado = a ? a.nombre : ev.aliadoId
-    const d = getMockDesembolsos().find((d) => d.id === ev.desembolsoId)
+    const d = desembolsosList.find((d) => d.id === ev.desembolsoId)
     const desembolso = d ? d.nombre : ev.desembolsoId
     form.setValue('eventoId', ev.id)
     form.setValue('numeroEvento', `${ev.numeroEvento}${ev.sufijo ? `-${ev.sufijo}` : ''}`)

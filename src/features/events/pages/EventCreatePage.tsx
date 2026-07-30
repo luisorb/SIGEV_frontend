@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { EventForm } from '../components/EventForm'
-import { getEventsApi, createEventApi } from '../../../services/events.service'
-import { getAliadosSync } from '../../../lib/catalogStore'
-import { getDesembolsosSync } from '../../../lib/catalogStore'
-import { mockMunicipios } from '../utils/mockData'
-import { addAuditEntry } from '../../../lib/auditStore'
-import { getCurrentUser } from '../../../config/constants'
+import { createEventApi, getEventsApi } from '../../../services/events.service'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useToast } from '../../../components/ToastProvider'
+import { useQuery } from '@tanstack/react-query'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Event } from '../../../types'
 
@@ -16,11 +14,10 @@ export function EventCreatePage() {
   const navigate = useNavigate()
   const toast = useToast()
 
-  const [events, setEvents] = useState<Event[]>([])
-
-  useEffect(() => {
-    getEventsApi().then(setEvents)
-  }, [])
+  const { data: aliados = [] } = useAllies()
+  const { data: desembolsos = [] } = useDisbursements()
+  const { data: municipios = [] } = useMunicipalities()
+  const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
 
   async function handleSave(data: EventFormValues) {
     const partial: Partial<Event> = {
@@ -42,16 +39,6 @@ export function EventCreatePage() {
     }
 
     const newEvent = await createEventApi(partial)
-    setEvents((prev) => [newEvent, ...prev])
-
-    addAuditEntry({
-      accion: 'Creación de evento',
-      entidad: 'Event',
-      entidadId: newEvent.id,
-      usuario: getCurrentUser(),
-      fecha: new Date().toISOString(),
-      detalle: `Evento ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creado`,
-    })
 
     toast.showToast(`Orden ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creada correctamente`)
     navigate('/ordenes')
@@ -71,9 +58,9 @@ export function EventCreatePage() {
       </div>
 
       <EventForm
-        aliados={getAliadosSync()}
-        desembolsos={getDesembolsosSync()}
-        municipios={mockMunicipios}
+        aliados={aliados}
+        desembolsos={desembolsos}
+        municipios={municipios}
         events={events}
         onSave={handleSave}
         onCancel={() => navigate('/ordenes')}

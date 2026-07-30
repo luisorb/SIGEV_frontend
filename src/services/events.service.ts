@@ -2,25 +2,6 @@ import api from '../lib/api'
 import type { CreateEventDto, ChangeStatusDto } from './types'
 import type { Event, Item, EventState, SchemaType } from '../types'
 
-const EVENTS_STORAGE_KEY = 'sigev-events'
-
-function loadFallbackEvents(): Event[] {
-  try {
-    const saved = localStorage.getItem(EVENTS_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved) as Event[]
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
-    }
-  } catch { /* fall through */ }
-  return []
-}
-
-function persistFallbackEvents(events: Event[]) {
-  try {
-    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events))
-  } catch { /* silent */ }
-}
-
 function mapBackendEvent(data: Record<string, unknown>): Event {
   return {
     id: String(data.id ?? ''),
@@ -68,91 +49,30 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
 }
 
 export async function getEventsApi(): Promise<Event[]> {
-  try {
-    const response = await api.get<unknown[]>('/api/v1/events')
-    return (response.data as Record<string, unknown>[]).map(mapBackendEvent)
-  } catch {
-    return loadFallbackEvents()
-  }
+  const response = await api.get<unknown[]>('/api/v1/events')
+  return (response.data as Record<string, unknown>[]).map(mapBackendEvent)
 }
 
 export async function getEventApi(id: string): Promise<Event | null> {
-  try {
-    const response = await api.get<Record<string, unknown>>(`/api/v1/events/${id}`)
-    return mapBackendEvent(response.data)
-  } catch {
-    const events = loadFallbackEvents()
-    return events.find((e) => e.id === id) ?? null
-  }
+  const response = await api.get<Record<string, unknown>>(`/api/v1/events/${id}`)
+  return mapBackendEvent(response.data)
 }
 
 export async function createEventApi(event: Partial<Event>): Promise<Event> {
   const dto = mapToCreateDto(event)
-  try {
-    const response = await api.post<Record<string, unknown>>('/api/v1/events', dto)
-    const newEvent = mapBackendEvent(response.data)
-    const fallback = loadFallbackEvents()
-    persistFallbackEvents([newEvent, ...fallback])
-    return newEvent
-  } catch {
-    const fallback = loadFallbackEvents()
-    const newId = `EVT-${String(fallback.length + 1).padStart(3, '0')}`
-    const newEvent: Event = {
-      id: newId,
-      numeroEvento: event.numeroEvento || '',
-      sufijo: event.sufijo || '',
-      responsable: event.responsable || '',
-      dependencia: event.dependencia || '',
-      fechaEvento: event.fechaEvento || '',
-      asistentes: event.asistentes || 0,
-      dias: event.dias || 0,
-      municipioId: event.municipioId || '',
-      vereda: event.vereda || '',
-      observaciones: event.observaciones || '',
-      aliadoId: event.aliadoId || '',
-      desembolsoId: event.desembolsoId || '',
-      esquema: event.esquema || 'cotizacion',
-      estado: 'Abierto',
-      items: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    persistFallbackEvents([newEvent, ...fallback])
-    return newEvent
-  }
+  const response = await api.post<Record<string, unknown>>('/api/v1/events', dto)
+  return mapBackendEvent(response.data)
 }
 
 export async function updateEventApi(id: string, event: Partial<Event>): Promise<Event | null> {
-  try {
-    const response = await api.patch<Record<string, unknown>>(`/api/v1/events/${id}`, mapToCreateDto(event))
-    return mapBackendEvent(response.data)
-  } catch {
-    const fallback = loadFallbackEvents()
-    const updated = fallback.map((e) =>
-      e.id === id ? { ...e, ...event, updatedAt: new Date().toISOString() } : e,
-    )
-    persistFallbackEvents(updated)
-    return updated.find((e) => e.id === id) ?? null
-  }
+  const response = await api.patch<Record<string, unknown>>(`/api/v1/events/${id}`, mapToCreateDto(event))
+  return mapBackendEvent(response.data)
 }
 
 export async function deleteEventApi(id: string): Promise<void> {
-  try {
-    await api.delete(`/api/v1/events/${id}`)
-  } catch {
-    const fallback = loadFallbackEvents()
-    persistFallbackEvents(fallback.filter((e) => e.id !== id))
-  }
+  await api.delete(`/api/v1/events/${id}`)
 }
 
 export async function changeEventStatusApi(id: string, status: string): Promise<void> {
-  try {
-    await api.patch(`/api/v1/events/${id}/status`, { status } as ChangeStatusDto)
-  } catch {
-    const fallback = loadFallbackEvents()
-    const updated = fallback.map((e) =>
-      e.id === id ? { ...e, estado: status as EventState, updatedAt: new Date().toISOString() } : e,
-    )
-    persistFallbackEvents(updated)
-  }
+  await api.patch(`/api/v1/events/${id}/status`, { status } as ChangeStatusDto)
 }

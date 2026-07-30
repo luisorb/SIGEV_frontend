@@ -1,37 +1,29 @@
 import { ChevronLeft } from 'lucide-react'
-import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { EventForm } from '../components/EventForm'
+import { useQuery } from '@tanstack/react-query'
 import { getEventApi, updateEventApi, getEventsApi } from '../../../services/events.service'
-import { getAliadosSync } from '../../../lib/catalogStore'
-import { getDesembolsosSync } from '../../../lib/catalogStore'
-import { mockMunicipios } from '../utils/mockData'
-import { addAuditEntry } from '../../../lib/auditStore'
-import { getCurrentUser } from '../../../config/constants'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useToast } from '../../../components/ToastProvider'
 import type { EventFormValues } from '../schemas/eventSchema'
-import type { Event } from '../../../types'
 
 export function EventDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
 
-  const [event, setEvent] = useState<Event | null>(null)
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: event, isLoading } = useQuery({
+    queryKey: ['event', id],
+    queryFn: () => getEventApi(id!),
+    enabled: !!id,
+  })
 
-  useEffect(() => {
-    if (!id) return
-    Promise.all([
-      getEventApi(id),
-      getEventsApi(),
-    ]).then(([evt, allEvents]) => {
-      setEvent(evt)
-      setEvents(allEvents)
-      setLoading(false)
-    })
-  }, [id])
+  const { data: aliados = [] } = useAllies()
+  const { data: desembolsos = [] } = useDisbursements()
+  const { data: municipios = [] } = useMunicipalities()
+  const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
 
   async function handleSave(data: EventFormValues) {
     if (!event || !id) return
@@ -55,20 +47,11 @@ export function EventDetailPage() {
       observaciones: data.observaciones ?? '',
     })
 
-    addAuditEntry({
-      accion: 'Edición de evento',
-      entidad: 'Event',
-      entidadId: id,
-      usuario: getCurrentUser(),
-      fecha: new Date().toISOString(),
-      detalle: `Evento ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} editado`,
-    })
-
     toast.showToast(`Orden ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} actualizada correctamente`)
     navigate('/ordenes')
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="text-center py-12">
         <p className="text-slate-500">Cargando evento...</p>
@@ -88,8 +71,8 @@ export function EventDetailPage() {
     )
   }
 
-  const aliadoName = getAliadosSync().find((a) => a.id === event.aliadoId)?.nombre
-  const municipioName = mockMunicipios.find((m) => m.id === event.municipioId)?.nombre
+  const aliadoName = aliados.find((a) => a.id === event.aliadoId)?.nombre
+  const municipioName = municipios.find((m) => m.id === event.municipioId)?.nombre
 
   return (
     <div className="space-y-6">
@@ -111,9 +94,9 @@ export function EventDetailPage() {
 
       <EventForm
         event={event}
-        aliados={getAliadosSync()}
-        desembolsos={getDesembolsosSync()}
-        municipios={mockMunicipios}
+        aliados={aliados}
+        desembolsos={desembolsos}
+        municipios={municipios}
         events={events}
         onSave={handleSave}
         onCancel={() => navigate('/ordenes')}

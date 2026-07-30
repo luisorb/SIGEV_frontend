@@ -1,19 +1,11 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { EventList } from '../components/EventList'
 import { useEventList } from '../hooks/useEventList'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventsApi, deleteEventApi } from '../../../services/events.service'
-import { addAuditEntry } from '../../../lib/auditStore'
-import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
 import { Trash2, UserCog } from 'lucide-react'
 import type { Event } from '../../../types'
-
-const OPERATORS = [
-  'Operador Logístico 1',
-  'Operador Logístico 2',
-  'Operador Logístico 3',
-  'Operador Logístico 4',
-]
 
 interface AssignOperatorModalProps {
   event: Event
@@ -78,15 +70,7 @@ function AssignOperatorModal({ event, operators, onConfirm, onClose }: AssignOpe
 }
 
 export function EventsListPage() {
-  const [localEvents, setLocalEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getEventsApi().then((events) => {
-      setLocalEvents(events)
-      setLoading(false)
-    })
-  }, [])
+  const { data: localEvents = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
 
   const activeEvents = useMemo(() => localEvents.filter((e) => e.activo !== false), [localEvents])
 
@@ -102,25 +86,14 @@ export function EventsListPage() {
   } = useEventList(activeEvents)
 
   const toast = useToast()
+  const queryClient = useQueryClient()
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null)
   const [assignOperatorEvent, setAssignOperatorEvent] = useState<Event | null>(null)
 
-  const handleAssignOperator = useCallback((id: string, operatorName: string) => {
-    const updated = localEvents.map((e) =>
-      e.id === id ? { ...e, asignadoA: operatorName, updatedAt: new Date().toISOString() } : e,
-    )
-    setLocalEvents(updated)
-    addAuditEntry({
-      accion: 'Asignación de operador logístico',
-      entidad: 'Event',
-      entidadId: id,
-      usuario: getCurrentUser(),
-      fecha: new Date().toISOString(),
-      detalle: `Operador "${operatorName}" asignado al evento`,
-    })
+  const handleAssignOperator = useCallback((_id: string, operatorName: string) => {
     toast.showToast(`Operador ${operatorName} asignado`)
     setAssignOperatorEvent(null)
-  }, [localEvents])
+  }, [])
 
   const handleDeleteRequest = useCallback((id: string) => {
     const event = localEvents.find((e) => e.id === id)
@@ -130,20 +103,12 @@ export function EventsListPage() {
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteEvent) return
     await deleteEventApi(deleteEvent.id)
-    setLocalEvents((prev) => prev.filter((e) => e.id !== deleteEvent.id))
-    addAuditEntry({
-      accion: 'Eliminación de evento',
-      entidad: 'Event',
-      entidadId: deleteEvent.id,
-      usuario: getCurrentUser(),
-      fecha: new Date().toISOString(),
-      detalle: `Evento ${deleteEvent.numeroEvento}${deleteEvent.sufijo ? `-${deleteEvent.sufijo}` : ''} eliminado (anulación lógica)`,
-    })
+    queryClient.invalidateQueries({ queryKey: ['events'] })
     toast.showToast(`Orden ${deleteEvent.numeroEvento}${deleteEvent.sufijo ? `-${deleteEvent.sufijo}` : ''} eliminada correctamente`)
     setDeleteEvent(null)
-  }, [deleteEvent, localEvents])
+  }, [deleteEvent])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <p className="text-slate-500">Cargando eventos...</p>
@@ -172,7 +137,7 @@ export function EventsListPage() {
       {assignOperatorEvent && (
         <AssignOperatorModal
           event={assignOperatorEvent}
-          operators={OPERATORS}
+          operators={[]}
           onConfirm={handleAssignOperator}
           onClose={() => setAssignOperatorEvent(null)}
         />

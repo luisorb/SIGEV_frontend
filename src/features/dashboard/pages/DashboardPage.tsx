@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { useDashboard } from '../hooks/useDashboard'
 import { MetricGrid } from '../components/MetricGrid'
 import { DashboardFilters } from '../components/DashboardFilters'
@@ -8,23 +8,17 @@ import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
 import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
 import { EventosIncompletos } from '../components/EventosIncompletos'
+import { useQuery } from '@tanstack/react-query'
 import { getEventsApi } from '../../../services/events.service'
-import { getAliadosSync, getDesembolsosSync } from '../../../lib/catalogStore'
-import { mockMunicipios } from '../../events/utils/mockData'
-import type { Event } from '../../../types'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 
 export function DashboardPage() {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-  const aliados = useMemo(() => getAliadosSync(), [])
-  const desembolsos = useMemo(() => getDesembolsosSync(), [])
-
-  useEffect(() => {
-    getEventsApi().then((data) => {
-      setEvents(data)
-      setLoading(false)
-    })
-  }, [])
+  const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
+  const { data: aliados = [] } = useAllies()
+  const { data: desembolsos = [] } = useDisbursements()
+  const { data: municipios = [] } = useMunicipalities()
 
   const {
     filters,
@@ -37,7 +31,7 @@ export function DashboardPage() {
     coberturaTerritorial,
     eventosIncompletos,
     dependencias,
-  } = useDashboard(events, aliados, desembolsos, mockMunicipios)
+  } = useDashboard(events, aliados, desembolsos, municipios)
 
   const filteredEvents = useMemo(() => {
     const { periodoInicio, periodoFin, desembolsoId, aliadoId, estado, municipioId, dependencia } = filters
@@ -54,7 +48,7 @@ export function DashboardPage() {
 
   const totalEvents = events.length
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <p className="text-slate-500">Cargando panel...</p>
@@ -75,7 +69,7 @@ export function DashboardPage() {
           events={filteredEvents}
           aliados={aliados}
           desembolsos={desembolsos}
-          municipios={mockMunicipios}
+          municipios={municipios}
           metrics={metrics}
         />
       </div>
@@ -84,7 +78,7 @@ export function DashboardPage() {
         filters={filters}
         aliados={aliados}
         desembolsos={desembolsos}
-        municipios={mockMunicipios}
+        municipios={municipios}
         dependencias={dependencias}
         hasActiveFilters={hasActiveFilters}
         onFilterChange={updateFilter}

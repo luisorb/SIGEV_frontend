@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
 import type { Offer, OfferInput, OfferItemInput, OfferState } from '../types'
-import { mockOffers } from '../utils/mockOffers'
 import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
@@ -24,7 +23,7 @@ export function usePermissions(currentRole: string = 'Administrador'): {
 }
 
 export function useOffers() {
-  const [offers, setOffers] = useState<Offer[]>(mockOffers)
+  const [offers, setOffers] = useState<Offer[]>([])
   const [search, setSearch] = useState('')
   const idCounter = useRef(0)
 

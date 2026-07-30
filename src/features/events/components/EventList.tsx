@@ -5,7 +5,9 @@ import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { EVENT_STATES } from '../../../config/constants'
-import { getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
+import { useAllies } from '../../../hooks/useAllies'
+import { useDisbursements } from '../../../hooks/useDisbursements'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import type { PageSize } from '../hooks/useEventList'
 
 const stateColors: Record<string, string> = {
@@ -72,6 +74,9 @@ export function EventList({
 }: EventListProps) {
   const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
+  const { data: aliados = [] } = useAllies()
+  const { data: desembolsos = [] } = useDisbursements()
+  const { data: municipios = [] } = useMunicipalities()
 
   const totalItems = _events.reduce((sum, e) => sum + e.items.length, 0)
   const totalValue = _events.reduce((sum, e) => {
@@ -138,7 +143,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los municipios</option>
-            {mockMunicipios.map((m) => (
+            {municipios.map((m) => (
               <option key={m.id} value={m.id}>{m.nombre}</option>
             ))}
           </select>
@@ -148,7 +153,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los aliados</option>
-            {getMockAliados().map((a) => (
+            {aliados.map((a) => (
               <option key={a.id} value={a.id}>{a.nombre}</option>
             ))}
           </select>
@@ -158,7 +163,7 @@ export function EventList({
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos los desembolsos</option>
-            {getMockDesembolsos().map((d) => (
+            {desembolsos.map((d) => (
               <option key={d.id} value={d.id}>{d.nombre}</option>
             ))}
           </select>
@@ -193,8 +198,8 @@ export function EventList({
               ) : (
                 _events.map((event) => {
                   const eventTotal = event.items.reduce((s, i) => s + i.total, 0)
-                  const aliado = getMockAliados().find((a) => a.id === event.aliadoId)
-                  const desembolso = getMockDesembolsos().find((d) => d.id === event.desembolsoId)
+                  const aliado = aliados.find((a) => a.id === event.aliadoId)
+                  const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
                   return (
                     <tr key={event.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
