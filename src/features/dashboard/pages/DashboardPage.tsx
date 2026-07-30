@@ -6,9 +6,14 @@ import { DashboardExport } from '../components/DashboardExport'
 import { RecentOrders } from '../components/RecentOrders'
 import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
-import { mockEvents, getMockAliados, getMockDesembolsos } from '../../events/utils/mockData'
+import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
+import { EventosIncompletos } from '../components/EventosIncompletos'
+import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../../events/utils/mockData'
 
 export function DashboardPage() {
+  const aliados = useMemo(() => getMockAliados(), [])
+  const desembolsos = useMemo(() => getMockDesembolsos(), [])
+
   const {
     filters,
     updateFilter,
@@ -17,7 +22,23 @@ export function DashboardPage() {
     metrics,
     consolidadoDesembolso,
     consolidadoAliado,
-  } = useDashboard(mockEvents, getMockAliados(), getMockDesembolsos())
+    coberturaTerritorial,
+    eventosIncompletos,
+    dependencias,
+  } = useDashboard(mockEvents, aliados, desembolsos, mockMunicipios)
+
+  const filteredEvents = useMemo(() => {
+    const { periodoInicio, periodoFin, desembolsoId, aliadoId, estado, municipioId, dependencia } = filters
+    let result = [...mockEvents]
+    if (desembolsoId) result = result.filter((e) => e.desembolsoId === desembolsoId)
+    if (aliadoId) result = result.filter((e) => e.aliadoId === aliadoId)
+    if (estado) result = result.filter((e) => e.estado === estado)
+    if (periodoInicio) result = result.filter((e) => e.createdAt >= periodoInicio)
+    if (periodoFin) result = result.filter((e) => e.createdAt <= periodoFin)
+    if (municipioId) result = result.filter((e) => e.municipioId === municipioId)
+    if (dependencia) result = result.filter((e) => e.dependencia === dependencia)
+    return result
+  }, [filters])
 
   const totalEvents = useMemo(() => mockEvents.length, [])
 
@@ -31,35 +52,42 @@ export function DashboardPage() {
           </p>
         </div>
         <DashboardExport
-          events={mockEvents}
-          aliados={getMockAliados()}
-          desembolsos={getMockDesembolsos()}
+          events={filteredEvents}
+          aliados={aliados}
+          desembolsos={desembolsos}
+          municipios={mockMunicipios}
+          metrics={metrics}
         />
       </div>
 
       <DashboardFilters
         filters={filters}
-        aliados={getMockAliados()}
-        desembolsos={getMockDesembolsos()}
+        aliados={aliados}
+        desembolsos={desembolsos}
+        municipios={mockMunicipios}
+        dependencias={dependencias}
         hasActiveFilters={hasActiveFilters}
         onFilterChange={updateFilter}
         onReset={resetFilters}
       />
 
+      <EventosIncompletos events={eventosIncompletos} />
+
       <MetricGrid metrics={metrics} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ConsolidadoDesembolso rows={consolidadoDesembolso} />
             <ConsolidadoAliado rows={consolidadoAliado} />
           </div>
+          <CoberturaTerritorial rows={coberturaTerritorial} />
         </div>
-        <div>
+        <div className="space-y-6">
           <RecentOrders
             events={mockEvents}
-            aliados={getMockAliados()}
-            desembolsos={getMockDesembolsos()}
+            aliados={aliados}
+            desembolsos={desembolsos}
           />
         </div>
       </div>

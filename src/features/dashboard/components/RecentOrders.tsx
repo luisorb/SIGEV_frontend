@@ -57,7 +57,7 @@ export function RecentOrders({ events, aliados, desembolsos }: RecentOrdersProps
               <div className="flex items-center gap-3 ml-4">
                 <span className="text-sm font-semibold text-slate-900">{formatCurrencyCO(total)}</span>
                 <Link
-                  to="/ordenes"
+                  to={`/ordenes/${event.id}`}
                   className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
                 >
                   <Eye className="w-4 h-4" />

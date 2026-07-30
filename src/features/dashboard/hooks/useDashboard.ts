@@ -1,15 +1,22 @@
 import { useState, useMemo } from 'react'
-import type { Event, Ally, Disbursement } from '../../../types'
-import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow } from '../types'
+import type { Event, Ally, Disbursement, Municipality } from '../../../types'
+import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow, CoberturaItem, EventoIncompleto } from '../types'
 
 
-export function useDashboard(events: Event[], aliados: Ally[], desembolsos: Disbursement[]) {
+export function useDashboard(
+  events: Event[],
+  aliados: Ally[],
+  desembolsos: Disbursement[],
+  municipios: Municipality[]
+) {
   const [filters, setFilters] = useState<DashboardFiltersState>({
     periodoInicio: '',
     periodoFin: '',
     desembolsoId: '',
     aliadoId: '',
     estado: '',
+    municipioId: '',
+    dependencia: '',
   })
 
   const aliadosMap = useMemo(() => {
@@ -23,6 +30,20 @@ export function useDashboard(events: Event[], aliados: Ally[], desembolsos: Disb
     for (const d of desembolsos) m[d.id] = d.nombre
     return m
   }, [desembolsos])
+
+  const municipiosMap = useMemo(() => {
+    const m: Record<string, Municipality> = {}
+    for (const mun of municipios) m[mun.id] = mun
+    return m
+  }, [municipios])
+
+  const dependencias = useMemo(() => {
+    const set = new Set<string>()
+    for (const e of events) {
+      if (e.dependencia) set.add(e.dependencia)
+    }
+    return Array.from(set).sort()
+  }, [events])
 
   const filteredEvents = useMemo(() => {
     let result = [...events]
@@ -41,6 +62,12 @@ export function useDashboard(events: Event[], aliados: Ally[], desembolsos: Disb
     }
     if (filters.periodoFin) {
       result = result.filter((e) => e.createdAt <= filters.periodoFin)
+    }
+    if (filters.municipioId) {
+      result = result.filter((e) => e.municipioId === filters.municipioId)
+    }
+    if (filters.dependencia) {
+      result = result.filter((e) => e.dependencia === filters.dependencia)
     }
 
     return result
@@ -130,6 +157,55 @@ export function useDashboard(events: Event[], aliados: Ally[], desembolsos: Disb
     return rows
   }, [filteredEvents, aliadosMap])
 
+  const coberturaTerritorial = useMemo<CoberturaItem[]>(() => {
+    const groups: Record<string, { cantidadEventos: number; valorTotal: number }> = {}
+
+    for (const event of filteredEvents) {
+      if (!groups[event.municipioId]) {
+        groups[event.municipioId] = { cantidadEventos: 0, valorTotal: 0 }
+      }
+      groups[event.municipioId].cantidadEventos++
+      for (const item of event.items) {
+        groups[event.municipioId].valorTotal += item.total
+      }
+    }
+
+    const totalValor = Object.values(groups).reduce((s, g) => s + g.valorTotal, 0)
+    const rows: CoberturaItem[] = Object.entries(groups).map(([municipioId, g]) => {
+      const mun = municipiosMap[municipioId]
+      return {
+        municipioId,
+        municipio: mun?.nombre ?? municipioId,
+        departamento: mun?.departamento ?? '',
+        cantidadEventos: g.cantidadEventos,
+        valorTotal: g.valorTotal,
+        porcentaje: totalValor > 0 ? g.valorTotal / totalValor : 0,
+      }
+    })
+    rows.sort((a, b) => b.valorTotal - a.valorTotal)
+    return rows
+  }, [filteredEvents, municipiosMap])
+
+  const eventosIncompletos = useMemo<EventoIncompleto[]>(() => {
+    const result: EventoIncompleto[] = []
+    for (const event of filteredEvents) {
+      if (!event.aliadoId || !event.desembolsoId || event.items.length === 0) {
+        const missing: string[] = []
+        if (!event.aliadoId) missing.push('sin aliado')
+        if (!event.desembolsoId) missing.push('sin desembolso')
+        if (event.items.length === 0) missing.push('sin ítems')
+        result.push({
+          id: event.id,
+          numeroEvento: event.numeroEvento,
+          sufijo: event.sufijo,
+          responsable: event.responsable,
+          motivo: missing.join(', '),
+        })
+      }
+    }
+    return result
+  }, [filteredEvents])
+
   function updateFilter(key: keyof DashboardFiltersState, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
@@ -141,6 +217,8 @@ export function useDashboard(events: Event[], aliados: Ally[], desembolsos: Disb
       desembolsoId: '',
       aliadoId: '',
       estado: '',
+      municipioId: '',
+      dependencia: '',
     })
   }
 
@@ -154,7 +232,11 @@ export function useDashboard(events: Event[], aliados: Ally[], desembolsos: Disb
     metrics,
     consolidadoDesembolso,
     consolidadoAliado,
+    coberturaTerritorial,
+    eventosIncompletos,
     aliadosMap,
     desembolsosMap,
+    municipiosMap,
+    dependencias,
   }
 }

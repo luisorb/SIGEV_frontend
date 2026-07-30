@@ -4,6 +4,8 @@ export interface DashboardFiltersState {
   desembolsoId: string
   aliadoId: string
   estado: string
+  municipioId: string
+  dependencia: string
 }
 
 export interface DashboardMetrics {
@@ -21,4 +23,21 @@ export interface ConsolidadoRow {
   valorTotal: number
   feeTotal: number
   porcentaje: number
+}
+
+export interface CoberturaItem {
+  municipioId: string
+  municipio: string
+  departamento: string
+  cantidadEventos: number
+  valorTotal: number
+  porcentaje: number
+}
+
+export interface EventoIncompleto {
+  id: string
+  numeroEvento: string
+  sufijo: string
+  responsable: string
+  motivo: string
 }
