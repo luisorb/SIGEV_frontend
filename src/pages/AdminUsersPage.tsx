@@ -43,7 +43,7 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
   const isActive = sortColumn === column
   return (
     <th
-      className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase cursor-pointer hover:text-slate-700 select-none"
+      className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase cursor-pointer hover:text-slate-700 select-none"
       onClick={() => onSort(column)}
     >
       <div className="flex items-center gap-1">
@@ -202,16 +202,15 @@ export function AdminUsersPage() {
   }
 
   return (
-    <>
-      <div className="space-y-4">
-      <div className="flex items-center justify-between shrink-0">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Usuarios</h1>
           <p className="text-sm text-slate-500">Gestión de usuarios y roles del sistema</p>
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nuevo Usuario
@@ -225,7 +224,7 @@ export function AdminUsersPage() {
           placeholder="Buscar por nombre o email..."
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
         />
       </div>
 
@@ -237,9 +236,9 @@ export function AdminUsersPage() {
                 <SortHeader column="identificador" sortColumn={sortColumn} sortDirection={sortDirection} onSort={toggleSort}>Identificador</SortHeader>
                 <SortHeader column="nombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={toggleSort}>Nombre</SortHeader>
                 <SortHeader column="email" sortColumn={sortColumn} sortDirection={sortDirection} onSort={toggleSort}>Email</SortHeader>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Roles</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Estado</th>
-                <th className="px-4 py-3 text-right w-20" />
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Roles</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Estado</th>
+                <th className="px-3 sm:px-4 py-3 text-right w-20" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -252,27 +251,27 @@ export function AdminUsersPage() {
               ) : (
                 paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-mono text-slate-900">{user.identificador}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{user.nombre}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{user.email}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm font-mono text-slate-900">{user.identificador}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium text-slate-900">{user.nombre}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{user.email}</td>
+                    <td className="px-3 sm:px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {user.roles.map((r) => (
-                          <span key={r} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[r] || 'bg-slate-100 text-slate-700'}`}>
-                            {r === 'Administrador' ? <ShieldCheck className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                          <span key={r} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${roleColors[r] || 'bg-slate-100 text-slate-700'}`}>
+                            {r === 'Administrador' ? <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                             {r}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <td className="px-3 sm:px-4 py-3">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
                         user.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
                         {user.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-3 sm:px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openEdit(user)}
@@ -309,8 +308,8 @@ export function AdminUsersPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span>Mostrando página {page} de {totalPages} ({filteredUsers.length} resultados)</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
+            <span>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filteredUsers.length)} de {filteredUsers.length}</span>
             <span className="text-slate-300">|</span>
             <label htmlFor="pageSize" className="sr-only">Filas por página</label>
             <select
@@ -341,8 +340,8 @@ export function AdminUsersPage() {
             >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
-            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
-              Página <span className="text-primary font-semibold">{page}</span> de <span className="font-semibold">{totalPages}</span>
+            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[100px] sm:min-w-[120px] text-center">
+              {page} / {totalPages}
             </div>
             <button
               onClick={() => setPage(page + 1)}
@@ -363,16 +362,15 @@ export function AdminUsersPage() {
           </div>
         </div>
       </div>
-      </div>
 
       {deleteUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-3">
               <div className="p-2 bg-red-100 rounded-lg shrink-0">
                 <Trash2 className="w-5 h-5 text-red-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">Eliminar usuario</h3>
                 <p className="text-xs sm:text-sm text-slate-500">Esta acción no se puede deshacer.</p>
               </div>
@@ -382,16 +380,16 @@ export function AdminUsersPage() {
               ¿Estás seguro de eliminar a <span className="font-semibold">{deleteUser.nombre}</span>?
             </p>
 
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
               <button
                 onClick={() => setDeleteUser(null)}
-                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 <Trash2 className="w-4 h-4" />
                 Eliminar
@@ -402,13 +400,13 @@ export function AdminUsersPage() {
       )}
 
       {confirmToggle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-3">
               <div className={`p-2 rounded-lg shrink-0 ${confirmToggle.activo ? 'bg-red-100' : 'bg-green-100'}`}>
                 {confirmToggle.activo ? <PowerOff className="w-5 h-5 text-red-600" /> : <Power className="w-5 h-5 text-green-600" />}
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">{confirmToggle.activo ? 'Inactivar Usuario' : 'Activar Usuario'}</h3>
                 <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del usuario.</p>
               </div>
@@ -416,16 +414,16 @@ export function AdminUsersPage() {
             <p className="text-sm sm:text-base text-slate-700 mb-4">
               ¿Estás seguro de {confirmToggle.activo ? 'inactivar' : 'activar'} a <span className="font-semibold">{confirmToggle.nombre}</span>?
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
               <button
                 onClick={() => setConfirmToggle(null)}
-                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleToggleActive}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
               </button>
@@ -435,21 +433,21 @@ export function AdminUsersPage() {
       )}
 
       {(isCreating || editingUser) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full animate-[scaleIn_200ms_ease-out]">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl max-w-xl w-full max-h-[90dvh] animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
                   <Users className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
+                <h3 className="text-base font-bold text-slate-900 truncate">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
               </div>
-              <button onClick={() => { setEditingUser(null); setIsCreating(false) }} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+              <button onClick={() => { setEditingUser(null); setIsCreating(false) }} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-slate-700">Identificador <span className="text-red-400 ml-0.5">*</span></label>
                   <input
@@ -473,7 +471,7 @@ export function AdminUsersPage() {
                   {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-slate-700">Nombre <span className="text-red-400 ml-0.5">*</span></label>
                   <input
@@ -499,7 +497,7 @@ export function AdminUsersPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-700">Roles <span className="text-red-400 ml-0.5">*</span></label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {USER_ROLES.map((r) => {
                     const selected = newUser.roles.includes(r)
                     return (
@@ -535,7 +533,7 @@ export function AdminUsersPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-700">Estado</label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
                     <input
                       type="radio"
@@ -559,13 +557,13 @@ export function AdminUsersPage() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
-              <button onClick={() => { setEditingUser(null); setIsCreating(false) }} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl shrink-0">
+              <button onClick={() => { setEditingUser(null); setIsCreating(false) }} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
                 Cancelar
               </button>
               <button
                 onClick={handleSave}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {editingUser ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 {editingUser ? 'Guardar Cambios' : 'Crear Usuario'}
@@ -574,6 +572,6 @@ export function AdminUsersPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

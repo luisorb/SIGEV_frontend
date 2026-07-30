@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useToast } from '../../../components/ToastProvider'
 import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useParameters } from '../hooks/useParameters'
 import { ParameterForm } from '../components/ParameterForm'
@@ -35,7 +36,7 @@ const inputError = 'border-red-300 focus:ring-red-300/40 focus:border-red-400'
 const labelBase = 'block text-sm font-medium text-slate-700'
 const requiredMark = <span className="text-red-400 ml-0.5">*</span>
 
-function AliadosTab() {
+function AliadosTab({ showToast }: { showToast: (message: string, type?: 'success' | 'error') => void }) {
   const { aliados, addAliado, updateAliado, toggleActivo } = useAliados()
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState<'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado'>('nombre')
@@ -57,7 +58,8 @@ function AliadosTab() {
     if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
     if (!form.nit.trim()) newErrors.nit = 'El NIT es obligatorio'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
-    if (editing) updateAliado(editing.id, form); else addAliado(form)
+    if (editing) { updateAliado(editing.id, form); showToast(`Aliado "${form.nombre}" actualizado correctamente`) }
+    else { addAliado(form); showToast(`Aliado "${form.nombre}" creado correctamente`) }
     setModalOpen(false)
   }
 
@@ -178,7 +180,7 @@ function AliadosTab() {
         {sorted.length > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
             <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
-              <span>{safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
+              <span>{safePage * pageSize + 1}�?"{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
               <span className="text-slate-300">|</span>
               <label htmlFor="aliados-pageSize" className="sr-only">Filas por página</label>
               <select
@@ -224,7 +226,7 @@ function AliadosTab() {
                 onClick={() => setPage(totalPages - 1)}
                 disabled={safePage >= totalPages - 1}
                 className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
-                title="Última página"
+                title="�sltima página"
               >
                 <ChevronsRight className="w-4 h-4 text-gray-600" />
               </button>
@@ -313,7 +315,7 @@ function AliadosTab() {
                 Cancelar
               </button>
               <button
-                onClick={() => { toggleActivo(confirmToggle.id); setConfirmToggle(null) }}
+                onClick={() => { toggleActivo(confirmToggle.id); showToast(`Aliado "${confirmToggle.nombre}" ${confirmToggle.activo ? 'inactivado' : 'activado'} correctamente`); setConfirmToggle(null) }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
@@ -326,7 +328,7 @@ function AliadosTab() {
   )
 }
 
-function DesembolsosTab() {
+function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'success' | 'error') => void }) {
   const { desembolsos, addDesembolso, updateDesembolso, toggleActivo } = useDesembolsos()
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'vigencia' | 'porcentajeParticipacion' | 'valorReferencia' | 'estado'>('codigo')
@@ -350,7 +352,8 @@ function DesembolsosTab() {
     if (!form.vigencia) newErrors.vigencia = 'La vigencia es obligatoria'
     if (form.valorReferencia <= 0) newErrors.valorReferencia = 'El valor de referencia debe ser mayor a 0'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
-    if (editing) updateDesembolso(editing.id, form); else addDesembolso(form)
+    if (editing) { updateDesembolso(editing.id, form); showToast(`Desembolso "${form.codigo}" actualizado correctamente`) }
+    else { addDesembolso(form); showToast(`Desembolso "${form.codigo}" creado correctamente`) }
     setModalOpen(false)
   }
 
@@ -466,7 +469,7 @@ function DesembolsosTab() {
         {sorted.length > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
           <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
-            <span>{safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
+            <span>{safePage * pageSize + 1}�?"{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
             <span className="text-slate-300">|</span>
             <label htmlFor="des-pageSize" className="sr-only">Filas por página</label>
             <select
@@ -512,7 +515,7 @@ function DesembolsosTab() {
               onClick={() => setPage(totalPages - 1)}
               disabled={safePage >= totalPages - 1}
               className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
-              title="Última página"
+              title="�sltima página"
             >
               <ChevronsRight className="w-4 h-4 text-gray-600" />
             </button>
@@ -594,7 +597,7 @@ function DesembolsosTab() {
                 Cancelar
               </button>
               <button
-                onClick={() => { toggleActivo(confirmToggle.id); setConfirmToggle(null) }}
+                onClick={() => { toggleActivo(confirmToggle.id); showToast(`Desembolso "${confirmToggle.nombre}" ${confirmToggle.activo ? "inactivado" : "activado"} correctamente`); setConfirmToggle(null) }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
@@ -616,6 +619,7 @@ const TABS: { key: Tab; label: string; icon: typeof Calculator }[] = [
 export function ParametersPage() {
   const [activeTab, setActiveTab] = useState<Tab>('tasas')
   const [historialOpen, setHistorialOpen] = useState(false)
+  const toast = useToast()
 
   const {
     editParams,
@@ -631,6 +635,18 @@ export function ParametersPage() {
     discardChanges,
     saveMessage,
   } = useParameters()
+
+  useEffect(() => {
+    if (saveMessage) {
+      toast.showToast(saveMessage.text, saveMessage.type)
+    }
+  }, [saveMessage])
+
+  useEffect(() => {
+    if (activeTab !== 'tasas') setHistorialOpen(false)
+  }, [activeTab])
+
+
 
   return (
     <div className="flex flex-col min-h-0 h-full gap-2">
@@ -711,7 +727,7 @@ export function ParametersPage() {
                   <ParameterHistoryTable
                     versions={versions}
                     currentVersionId={currentVersion?.id ?? null}
-                    onLoadVersion={(id) => { loadVersion(id); setHistorialOpen(false) }}
+                    onLoadVersion={(id) => { loadVersion(id); const v = versions.find(v => v.id === id); if (v) toast.showToast(`Versi�n ${v.version} cargada`); setHistorialOpen(false) }}
                   />
                 </div>
                 <div className="flex justify-end px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50/50 shrink-0">
@@ -728,8 +744,8 @@ export function ParametersPage() {
         </div>
       )}
 
-      {activeTab === 'aliados' && <div className="min-h-0 flex-1 flex flex-col"><AliadosTab /></div>}
-      {activeTab === 'desembolsos' && <DesembolsosTab />}
+      {activeTab === 'aliados' && <div className="min-h-0 flex-1 flex flex-col"><AliadosTab showToast={toast.showToast} /></div>}
+      {activeTab === 'desembolsos' && <DesembolsosTab showToast={toast.showToast} />}
     </div>
   )
 }
