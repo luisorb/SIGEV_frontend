@@ -332,6 +332,58 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
     return totalsByDesembolso
   }, [transposedRows, desembolsoIds])
 
+  const [sortColumn, setSortColumn] = useState<string>('')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState<PageSize>(20)
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc')
+      } else if (sortDirection === 'desc') {
+        setSortColumn('')
+        setSortDirection(null)
+      } else {
+        setSortDirection('asc')
+      }
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
+
+  const sortedRows = useMemo(() => {
+    if (!sortColumn || !sortDirection) return transposedRows
+    const sorted = [...transposedRows]
+    sorted.sort((a, b) => {
+      let cmp = 0
+      switch (sortColumn) {
+        case 'aliadoNombre':
+          cmp = a.aliadoNombre.localeCompare(b.aliadoNombre)
+          break
+        case 'totalValor':
+          cmp = a.totalValor - b.totalValor
+          break
+        default: {
+          const cellA = a.cells[sortColumn]
+          const cellB = b.cells[sortColumn]
+          cmp = (cellA?.valorTotal ?? 0) - (cellB?.valorTotal ?? 0)
+          break
+        }
+      }
+      return sortDirection === 'desc' ? -cmp : cmp
+    })
+    return sorted
+  }, [transposedRows, sortColumn, sortDirection])
+
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const paginatedRows = useMemo(() => {
+    const start = (safePage - 1) * pageSize
+    return sortedRows.slice(start, start + pageSize)
+  }, [sortedRows, safePage, pageSize])
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full flex flex-col relative">
       {isFullscreen && onExitFullscreen && (
@@ -347,21 +399,28 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
         <table className="w-full">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="sticky top-0 z-10 px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[180px] bg-slate-50">
-                Aliado
-              </th>
+              <SortHeader column="aliadoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Aliado</SortHeader>
               {desembolsoIds.map((dId, idx) => (
-                <th key={dId} className={`sticky top-0 z-10 px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[150px] bg-slate-50 ${idx > 0 ? 'border-l border-slate-200' : 'border-l border-slate-100'}`}>
+                <SortHeader key={dId} column={dId} sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="center">
                   {desembolsosMap[dId] || dId}
-                </th>
+                </SortHeader>
               ))}
-              <th className="sticky top-0 z-10 px-4 py-3.5 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider min-w-[150px] border-l-2 border-slate-300 bg-slate-100">
-                Totales
+              <th className="sticky top-0 z-10 px-4 py-3.5 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider min-w-[150px] border-l-2 border-slate-300 bg-slate-100 cursor-pointer hover:text-slate-900 select-none" onClick={() => handleSort('totalValor')}>
+                <div className="flex items-center justify-center gap-1">
+                  Totales
+                  {sortColumn === 'totalValor' && sortDirection === 'asc' ? (
+                    <ArrowUp className="w-3 h-3 shrink-0" />
+                  ) : sortColumn === 'totalValor' && sortDirection === 'desc' ? (
+                    <ArrowDown className="w-3 h-3 shrink-0" />
+                  ) : (
+                    <ArrowUpDown className="w-3 h-3 shrink-0 opacity-40" />
+                  )}
+                </div>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {transposedRows.map((row, rowIdx) => (
+            {paginatedRows.map((row, rowIdx) => (
               <tr key={row.aliadoId} className={`transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'} hover:bg-blue-50/50`}>
                 <td className="px-4 py-3.5 text-sm font-medium text-slate-900">
                   {row.aliadoNombre}
@@ -442,6 +501,60 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
             </tr>
           </tfoot>
         </table>
+      </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <span>Mostrando página {safePage} de {totalPages} ({transposedRows.length} resultados)</span>
+          <span className="text-slate-300">|</span>
+          <label htmlFor="pageSize-global" className="sr-only">Filas por página</label>
+          <select
+            id="pageSize-global"
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value) as PageSize); setPage(1) }}
+            className="px-2 py-1 border border-slate-300 rounded text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+          >
+            {[10, 20, 30, 50, 100].map((size) => (
+              <option key={size} value={size}>{size} filas</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setPage(1)}
+            disabled={safePage <= 1}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Primera página"
+          >
+            <ChevronsLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <button
+            onClick={() => setPage(safePage - 1)}
+            disabled={safePage <= 1}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Página anterior"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+            Página <span className="text-primary font-semibold">{safePage}</span> de <span className="font-semibold">{totalPages}</span>
+          </div>
+          <button
+            onClick={() => setPage(safePage + 1)}
+            disabled={safePage >= totalPages}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Página siguiente"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          </button>
+          <button
+            onClick={() => setPage(totalPages)}
+            disabled={safePage >= totalPages}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Última página"
+          >
+            <ChevronsRight className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
       </div>
     </div>
   )
