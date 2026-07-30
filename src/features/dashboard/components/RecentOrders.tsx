@@ -1,14 +1,14 @@
-import { Eye } from 'lucide-react'
+import { Eye, ArrowUpRight } from 'lucide-react'
 import type { Event, Ally, Disbursement } from '../../../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { Link } from 'react-router-dom'
 
-const stateColors: Record<string, string> = {
-  Abierto: 'bg-yellow-100 text-yellow-800',
-  'En ejecucion': 'bg-red-100 text-red-800',
-  Ejecutado: 'bg-green-100 text-green-800',
-  Cerrado: 'bg-slate-100 text-slate-800',
-  Legalizado: 'bg-purple-100 text-purple-800',
+const stateStyles: Record<string, { dot: string; bg: string; text: string; label: string }> = {
+  Abierto: { dot: 'bg-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Abierto' },
+  'En ejecucion': { dot: 'bg-red-500', bg: 'bg-red-100', text: 'text-red-800', label: 'Ejecución' },
+  Ejecutado: { dot: 'bg-green-500', bg: 'bg-green-100', text: 'text-green-800', label: 'Ejecutado' },
+  Cerrado: { dot: 'bg-slate-400', bg: 'bg-slate-100', text: 'text-slate-800', label: 'Cerrado' },
+  Legalizado: { dot: 'bg-purple-500', bg: 'bg-purple-100', text: 'text-purple-800', label: 'Legalizado' },
 }
 
 interface RecentOrdersProps {
@@ -31,44 +31,55 @@ export function RecentOrders({ events, aliados, desembolsos }: RecentOrdersProps
         <h3 className="text-sm font-semibold text-slate-900">Órdenes Recientes</h3>
         <Link
           to="/ordenes"
-          className="text-xs font-medium text-primary hover:text-primary-dark transition-colors"
+          className="text-xs font-medium text-primary hover:text-primary-dark transition-colors inline-flex items-center gap-1"
         >
           Ver todas
+          <ArrowUpRight className="w-3 h-3" />
         </Link>
       </div>
-      <div className="divide-y divide-slate-100">
-        {recent.map((event) => {
-          const total = event.items.reduce((s, i) => s + i.total, 0)
-          return (
-            <div key={event.id} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-900">
-                    {event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}
-                  </span>
-                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${stateColors[event.estado] || ''}`}>
-                    {event.estado}
-                  </span>
+      <div className="relative">
+        <div className="absolute left-[22px] top-0 bottom-0 w-px bg-slate-200" />
+        <div className="divide-y divide-slate-100">
+          {recent.map((event) => {
+            const total = event.items.reduce((s, i) => s + i.total, 0)
+            const s = stateStyles[event.estado] || stateStyles.Abierto
+            return (
+              <div key={event.id} className="relative px-5 py-3.5 pl-[52px] hover:bg-slate-50 transition-colors group">
+                <div className={`absolute left-[17px] top-[18px] w-3 h-3 rounded-full border-2 border-white ${s.dot} shadow-sm`} />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-slate-900">
+                        {event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}
+                      </span>
+                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${s.bg} ${s.text}`}>
+                        {s.label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      {aliadosMap[event.aliadoId] || event.aliadoId}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      {desembolsosMap[event.desembolsoId] || event.desembolsoId} · {formatDateCO(event.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrencyCO(total)}</span>
+                    <Link
+                      to={`/ordenes/${event.id}`}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-300 hover:text-primary opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {aliadosMap[event.aliadoId] || event.aliadoId} · {desembolsosMap[event.desembolsoId] || event.desembolsoId} · {formatDateCO(event.createdAt)}
-                </p>
               </div>
-              <div className="flex items-center gap-3 ml-4">
-                <span className="text-sm font-semibold text-slate-900">{formatCurrencyCO(total)}</span>
-                <Link
-                  to={`/ordenes/${event.id}`}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          )
-        })}
-        {recent.length === 0 && (
-          <p className="px-5 py-8 text-sm text-slate-400 text-center">No hay órdenes registradas</p>
-        )}
+            )
+          })}
+          {recent.length === 0 && (
+            <p className="px-5 py-8 text-sm text-slate-400 text-center">No hay órdenes registradas</p>
+          )}
+        </div>
       </div>
     </div>
   )
