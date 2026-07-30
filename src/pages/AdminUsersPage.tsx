@@ -305,8 +305,8 @@ export function AdminUsersPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
-            <span>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filteredUsers.length)} de {filteredUsers.length}</span>
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span>Mostrando página {page} de {totalPages} ({filteredUsers.length} resultados)</span>
             <span className="text-slate-300">|</span>
             <label htmlFor="pageSize" className="sr-only">Filas por página</label>
             <select
@@ -337,8 +337,8 @@ export function AdminUsersPage() {
             >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
-            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[100px] sm:min-w-[120px] text-center">
-              {page} / {totalPages}
+            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+              Página <span className="text-primary font-semibold">{page}</span> de <span className="font-semibold">{totalPages}</span>
             </div>
             <button
               onClick={() => setPage(page + 1)}
