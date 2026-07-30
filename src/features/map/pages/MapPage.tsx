@@ -39,62 +39,63 @@ export function MapPage() {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <select
-          value={selectedDesembolso}
-          onChange={(e) => setSelectedDesembolso(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-        >
-          <option value="">Todos los desembolsos</option>
-          {getMockDesembolsos().map((d) => (
-            <option key={d.id} value={d.id}>{d.nombre}</option>
-          ))}
-        </select>
-        <select
-          value={selectedAliado}
-          onChange={(e) => setSelectedAliado(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-        >
-          <option value="">Todos los aliados</option>
-          {getMockAliados().map((a) => (
-            <option key={a.id} value={a.id}>{a.nombre}</option>
-          ))}
-        </select>
-        <select
-          value={selectedEstado}
-          onChange={(e) => setSelectedEstado(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-        >
-          <option value="">Todos los estados</option>
-          <option value="Abierto">Abierto</option>
-          <option value="En ejecucion">En ejecución</option>
-          <option value="Ejecutado">Ejecutado</option>
-          <option value="Cerrado">Cerrado</option>
-          <option value="Legalizado">Legalizado</option>
-        </select>
+      <div className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-slate-200 px-5 py-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={selectedDesembolso}
+            onChange={(e) => setSelectedDesembolso(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Todos los desembolsos</option>
+            {getMockDesembolsos().map((d) => (
+              <option key={d.id} value={d.id}>{d.nombre}</option>
+            ))}
+          </select>
+          <select
+            value={selectedAliado}
+            onChange={(e) => setSelectedAliado(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Todos los aliados</option>
+            {getMockAliados().map((a) => (
+              <option key={a.id} value={a.id}>{a.nombre}</option>
+            ))}
+          </select>
+          <select
+            value={selectedEstado}
+            onChange={(e) => setSelectedEstado(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Todos los estados</option>
+            <option value="Abierto">Abierto</option>
+            <option value="En ejecucion">En ejecución</option>
+            <option value="Ejecutado">Ejecutado</option>
+            <option value="Cerrado">Cerrado</option>
+            <option value="Legalizado">Legalizado</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-4 text-sm text-slate-500 ml-auto">
+          <span className="font-medium text-slate-700">Leyenda:</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-yellow-500" /> Abierto
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-primary" /> En ejecución
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-green-500" /> Ejecutado
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-slate-500" /> Cerrado
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-purple-500" /> Legalizado
+          </span>
+        </div>
       </div>
 
       <div className="h-[600px] rounded-xl overflow-hidden">
         <ExecutionMap groups={groups} />
-      </div>
-
-      <div className="flex items-center gap-6 text-sm text-slate-500 bg-white rounded-xl border border-slate-200 px-5 py-3">
-        <span className="font-medium text-slate-700">Leyenda:</span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-yellow-500" /> Abierto
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-primary" /> En ejecución
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-green-500" /> Ejecutado
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-slate-500" /> Cerrado
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-purple-500" /> Legalizado
-        </span>
       </div>
     </div>
   )
