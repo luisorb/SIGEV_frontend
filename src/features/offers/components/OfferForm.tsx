@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { Save, X, FileSpreadsheet } from 'lucide-react'
 import { useOfferForm } from '../hooks/useOfferForm'
 import { mockEvents, mockMunicipios, getMockAliados, getMockDesembolsos } from '../../events/utils/mockData'
@@ -34,23 +34,20 @@ interface OfferFormProps {
   onCancel: () => void
 }
 
+function loadEvents(): Event[] {
+  try {
+    const saved = localStorage.getItem('sigev-events')
+    if (saved) {
+      const parsed = JSON.parse(saved) as Event[]
+      return parsed.filter((e) => e.activo !== false)
+    }
+  } catch { /* ignore */ }
+  return mockEvents.filter((e) => e.activo !== false)
+}
+
 export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormProps) {
   const { register, handleSubmit, errors, isSubmitting, form } = useOfferForm({ offer, initialData, onSave })
-  const [events, setEvents] = useState<Event[]>([])
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('sigev-events')
-      if (saved) {
-        const parsed = JSON.parse(saved) as Event[]
-        setEvents(parsed.filter((e) => e.activo !== false))
-      } else {
-        setEvents(mockEvents.filter((e) => e.activo !== false))
-      }
-    } catch {
-      setEvents(mockEvents.filter((e) => e.activo !== false))
-    }
-  }, [])
+  const events = useMemo(() => loadEvents(), [])
 
   function handleEventSelect(eventId: string) {
     if (!eventId) {

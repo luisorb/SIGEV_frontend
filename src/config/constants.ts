@@ -3,7 +3,7 @@ import type { CalculationParams } from '../types'
 export const DEFAULT_CALCULATION_PARAMS: CalculationParams = {
   ivaRate: 0.19,
   impuestoConsumoRate: 0.08,
-  feeTarifadoRate: 0.05,
+  feeTarifadoRate: 0.0825,
   feeTercerosRate: 0.10,
   ivaFeeRate: 0.19,
   applyFeeOnBase: true,

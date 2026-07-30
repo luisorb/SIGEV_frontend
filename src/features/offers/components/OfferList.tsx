@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Plus, Eye, Pencil, FileDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { Offer } from '../types'
@@ -36,6 +36,13 @@ export function OfferList({
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
 
+  const filterKey = `${search}|${filterEstado}`
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey)
+  if (lastFilterKey !== filterKey) {
+    setLastFilterKey(filterKey)
+    setPage(0)
+  }
+
   function handleSort(column: string) {
     if (sortColumn !== column) {
       setSortColumn(column)
@@ -47,8 +54,6 @@ export function OfferList({
       setSortDir(null)
     }
   }
-
-  useEffect(() => { setPage(0) }, [search, filterEstado])
 
   const sorted = useMemo(() => {
     let filtered = offers
