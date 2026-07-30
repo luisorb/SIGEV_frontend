@@ -1,47 +1,88 @@
 import { Download } from 'lucide-react'
-import type { MatrixRow, MatrixTotals } from '../types'
+import type { DetailedRow, MatrixRow, MatrixTotals } from '../types'
+
 interface MatrixExcelExportProps {
-  rows: MatrixRow[]
+  detailedRows: DetailedRow[]
+  globalRows: MatrixRow[]
   totals: MatrixTotals
   aliadoIds: string[]
   aliadosMap: Record<string, string>
 }
 
-export function MatrixExcelExport({ rows, totals, aliadoIds, aliadosMap }: MatrixExcelExportProps) {
+export function MatrixExcelExport({ detailedRows, globalRows, totals, aliadoIds, aliadosMap }: MatrixExcelExportProps) {
   async function handleExport() {
     const { utils, writeFile } = await import('xlsx')
 
-    const allAliados = Object.values(aliadosMap)
-    const headers = ['Desembolso', ...allAliados, 'Total General']
-    const data: (string | number)[][] = [headers]
+    const wb = utils.book_new()
 
-    for (const row of rows) {
+    const detHeaders = [
+      'Evento', 'Fecha', 'Territorio', 'Estado',
+      'Descripción', 'Cantidad', 'Valor Unitario', 'Carga Tributaria',
+      'Base', 'IVA', 'Consumo', 'Fee Tarifado', 'Fee Terceros', 'IVA Fee',
+      'Total', 'Aliado', 'Desembolso',
+    ]
+    const detData: (string | number)[][] = [detHeaders]
+
+    for (const r of detailedRows) {
+      detData.push([
+        r.numeroEvento,
+        r.fechaEvento,
+        r.municipio,
+        r.estado,
+        r.descripcion,
+        r.cantidad,
+        r.valorUnitario,
+        r.categoriaTributaria,
+        r.base,
+        r.iva,
+        r.impuestoConsumo,
+        r.feeTarifado,
+        r.feeTerceros,
+        r.ivaFee,
+        r.total,
+        r.aliadoNombre,
+        r.desembolsoNombre,
+      ])
+    }
+
+    const detWs = utils.aoa_to_sheet(detData)
+    detWs['!cols'] = [
+      { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 12 },
+      { wch: 30 }, { wch: 8 }, { wch: 14 }, { wch: 14 },
+      { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+      { wch: 16 }, { wch: 18 }, { wch: 18 },
+    ]
+    utils.book_append_sheet(wb, detWs, 'Matriz Detallada')
+
+    const allAliados = Object.values(aliadosMap)
+    const globHeaders = ['Desembolso', ...allAliados, 'Total General']
+    const globData: (string | number)[][] = [globHeaders]
+
+    for (const row of globalRows) {
       const rowData: (string | number)[] = [row.desembolsoNombre]
       for (const aId of aliadoIds) {
         const cell = row.cells[aId]
         rowData.push(cell ? cell.valorTotal : 0)
       }
       rowData.push(row.totalValor)
-      data.push(rowData)
+      globData.push(rowData)
     }
 
     const totalsRow: (string | number)[] = ['Totales Generales']
     for (const aId of aliadoIds) {
       let colTotal = 0
-      for (const r of rows) {
+      for (const r of globalRows) {
         if (r.cells[aId]) colTotal += r.cells[aId].valorTotal
       }
       totalsRow.push(colTotal)
     }
     totalsRow.push(totals.totalValor)
-    data.push(totalsRow)
+    globData.push(totalsRow)
 
-    const ws = utils.aoa_to_sheet(data)
+    const globWs = utils.aoa_to_sheet(globData)
+    globWs['!cols'] = [{ wch: 22 }, ...aliadoIds.map(() => ({ wch: 18 })), { wch: 18 }]
+    utils.book_append_sheet(wb, globWs, 'Matriz Global')
 
-    ws['!cols'] = [{ wch: 22 }, ...aliadoIds.map(() => ({ wch: 18 })), { wch: 18 }]
-
-    const wb = utils.book_new()
-    utils.book_append_sheet(wb, ws, 'Matriz de Ejecución')
     writeFile(wb, `matriz_ejecucion_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
