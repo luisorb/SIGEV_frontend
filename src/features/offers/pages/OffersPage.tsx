@@ -2,7 +2,7 @@ import { useOffers, usePermissions } from '../hooks/useOffers'
 import { OfferList } from '../components/OfferList'
 import { exportOfferToExcel } from '../utils/excelExport'
 import { addAuditEntry } from '../../../lib/auditStore'
-import { CURRENT_USER } from '../../../config/constants'
+import { getCurrentUser } from '../../../config/constants'
 
 export function OffersPage() {
   const {
@@ -21,7 +21,7 @@ export function OffersPage() {
       accion: 'Exportación de oferta',
       entidad: 'Offer',
       entidadId: id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Oferta ${offer.codigo} exportada a Excel`,
     })

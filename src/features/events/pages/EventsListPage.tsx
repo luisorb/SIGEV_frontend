@@ -3,7 +3,7 @@ import { EventList } from '../components/EventList'
 import { useEventList } from '../hooks/useEventList'
 import { mockEvents } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
-import { CURRENT_USER } from '../../../config/constants'
+import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
 import { Trash2, UserCog } from 'lucide-react'
 import type { Event } from '../../../types'
@@ -125,7 +125,7 @@ export function EventsListPage() {
       accion: 'Asignación de operador logístico',
       entidad: 'Event',
       entidadId: id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Operador "${operatorName}" asignado al evento`,
     })
@@ -150,7 +150,7 @@ export function EventsListPage() {
       accion: 'Eliminación de evento',
       entidad: 'Event',
       entidadId: deleteEvent.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Evento ${deleteEvent.numeroEvento}${deleteEvent.sufijo ? `-${deleteEvent.sufijo}` : ''} eliminado (anulación lógica)`,
     })

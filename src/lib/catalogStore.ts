@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { Ally, Disbursement } from '../types'
 import { addAuditEntry } from './auditStore'
-import { CURRENT_USER } from '../config/constants'
+import { getCurrentUser } from '../config/constants'
 
 const ALIADOS_KEY = 'sigev-aliados'
 const DESEMBOLSOS_KEY = 'sigev-desembolsos'
@@ -70,7 +70,7 @@ export function useAliados() {
       accion: 'Creación de aliado',
       entidad: 'Ally',
       entidadId: nuevo.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Aliado "${nuevo.nombre}" creado`,
     })
@@ -86,7 +86,7 @@ export function useAliados() {
       accion: 'Edición de aliado',
       entidad: 'Ally',
       entidadId: id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Aliado actualizado`,
     })
@@ -105,7 +105,7 @@ export function useAliados() {
       accion: aliado.activo ? 'Inactivación de aliado' : 'Activación de aliado',
       entidad: 'Ally',
       entidadId: id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Aliado "${aliado.nombre}" ${aliado.activo ? 'inactivado' : 'activado'}`,
     })
@@ -129,7 +129,7 @@ export function useDesembolsos() {
       accion: 'Creación de desembolso',
       entidad: 'Disbursement',
       entidadId: nuevo.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Desembolso "${nuevo.nombre}" creado`,
     })
@@ -145,7 +145,7 @@ export function useDesembolsos() {
       accion: 'Edición de desembolso',
       entidad: 'Disbursement',
       entidadId: id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Desembolso actualizado`,
     })
@@ -164,7 +164,7 @@ export function useDesembolsos() {
       accion: des.activo ? 'Inactivación de desembolso' : 'Activación de desembolso',
       entidad: 'Disbursement',
       entidadId: id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Desembolso "${des.nombre}" ${des.activo ? 'inactivado' : 'activado'}`,
     })

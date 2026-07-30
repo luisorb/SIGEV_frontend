@@ -24,4 +24,15 @@ export const LOCAL_CONFIG = {
   currency: 'COP',
 } as const
 
+export function getCurrentUser(): string {
+  try {
+    const saved = sessionStorage.getItem('sigev-auth')
+    if (saved) {
+      const parsed = JSON.parse(saved) as { nombre: string }
+      return parsed.nombre
+    }
+  } catch { /* fall through */ }
+  return 'Admin SIGEV'
+}
+
 export const CURRENT_USER = 'Admin SIGEV'

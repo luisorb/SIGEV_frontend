@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import type { CalculationParams } from '../../../types'
 import { addAuditEntry } from '../../../lib/auditStore'
-import { CURRENT_USER, DEFAULT_CALCULATION_PARAMS } from '../../../config/constants'
+import { getCurrentUser, DEFAULT_CALCULATION_PARAMS } from '../../../config/constants'
 import { mockParamVersions } from '../utils/mockData'
 import type { ParamVersion } from '../types'
 
@@ -48,7 +48,7 @@ export function useParameters() {
   const [editParams, setEditParams] = useState<CalculationParams>(() => cloneParams(getActiveParams()))
   const [baseParams, setBaseParams] = useState<CalculationParams>(() => cloneParams(getActiveParams()))
   const [loadedVersionId, setLoadedVersionId] = useState<string | null>(null)
-  const [aprobadoPor, setAprobadoPor] = useState(CURRENT_USER)
+  const [aprobadoPor, setAprobadoPor] = useState(getCurrentUser())
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const activeVersion = useMemo(() => versions.find((v) => v.activo) ?? null, [versions])
@@ -110,7 +110,7 @@ export function useParameters() {
       accion: 'Actualización de parámetros',
       entidad: 'Param',
       entidadId: newVersion.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Nueva versión ${newVersion.version} de parámetros de cálculo. Aprobado por: ${aprobadoPor}`,
     })
@@ -135,7 +135,7 @@ export function useParameters() {
     setEditParams(p)
     setBaseParams(p)
     setLoadedVersionId(activeVersion?.id ?? null)
-    setAprobadoPor(activeVersion ? activeVersion.aprobadoPor : CURRENT_USER)
+    setAprobadoPor(activeVersion ? activeVersion.aprobadoPor : getCurrentUser())
     setSaveMessage(null)
   }
 

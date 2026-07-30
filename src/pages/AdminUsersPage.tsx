@@ -1,27 +1,15 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff } from 'lucide-react'
 import { useToast } from '../components/ToastProvider'
 import { USER_ROLES } from '../config/constants'
-import type { UserRole } from '../types'
 
-interface User {
-  id: string
-  identificador: string
-  nombre: string
-  email: string
+import { getUsersSync, addUserSync, updateUserSync, deleteUserSync, toggleUserActiveSync } from '../lib/usersStore'
+
+interface User extends Omit<import('../lib/usersStore').StoredUser, 'password'> {
   password: string
-  roles: UserRole[]
-  activo: boolean
 }
 
-const initialUsers: User[] = [
-  { id: 'usr-001', identificador: 'llopez', nombre: 'Luis López', email: 'luis@sigev.co', password: '', roles: ['Administrador'], activo: true },
-  { id: 'usr-002', identificador: 'mgarcia', nombre: 'María García', email: 'maria@sigev.co', password: '', roles: ['Operador'], activo: true },
-  { id: 'usr-003', identificador: 'cruiz', nombre: 'Carlos Ruiz', email: 'carlos@sigev.co', password: '', roles: ['Supervisor', 'Consulta'], activo: false },
-]
-
-const SORTABLE_TEXT_COLUMNS = ['identificador', 'nombre', 'email'] as const
-type SortableColumn = (typeof SORTABLE_TEXT_COLUMNS)[number]
+type SortableColumn = 'identificador' | 'nombre' | 'email'
 
 const roleColors: Record<string, string> = {
   Administrador: 'bg-purple-100 text-purple-700',
@@ -61,9 +49,13 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
   )
 }
 
+function loadUsers(): User[] {
+  return getUsersSync().map((u) => ({ ...u }))
+}
+
 export function AdminUsersPage() {
   const toast = useToast()
-  const [users, setUsers] = useState<User[]>(initialUsers)
+  const [users, setUsers] = useState<User[]>(loadUsers)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof Omit<User, 'id'>, string>>>({})
   const EMPTY_USER: Omit<User, 'id'> = {
@@ -75,7 +67,6 @@ export function AdminUsersPage() {
     activo: true,
   }
   const [newUser, setNewUser] = useState<Omit<User, 'id'>>(EMPTY_USER)
-  const idCounter = useRef(3)
 
   const [isCreating, setIsCreating] = useState(false)
   const [deleteUser, setDeleteUser] = useState<User | null>(null)
@@ -98,24 +89,21 @@ export function AdminUsersPage() {
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
 
     if (editingUser) {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === editingUser.id
-            ? { ...u, ...newUser, password: newUser.password || u.password }
-            : u,
-        ),
-      )
+      updateUserSync(editingUser.id, {
+        identificador: newUser.identificador,
+        nombre: newUser.nombre,
+        email: newUser.email,
+        password: newUser.password || editingUser.password,
+        roles: newUser.roles,
+        activo: newUser.activo,
+      })
       toast.showToast(`Usuario "${newUser.nombre}" actualizado correctamente`)
     } else {
-      idCounter.current += 1
-      const user: User = {
-        id: `usr-${String(idCounter.current).padStart(3, '0')}`,
-        ...newUser,
-      }
-      setUsers((prev) => [user, ...prev])
+      addUserSync(newUser as import('../lib/usersStore').StoredUser)
       toast.showToast(`Usuario "${newUser.nombre}" creado correctamente`)
     }
 
+    setUsers(loadUsers())
     setNewUser(EMPTY_USER)
     setErrors({})
     setEditingUser(null)
@@ -150,7 +138,8 @@ export function AdminUsersPage() {
 
   function handleDeleteConfirm() {
     if (!deleteUser) return
-    setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id))
+    deleteUserSync(deleteUser.id)
+    setUsers(loadUsers())
     toast.showToast(`Usuario "${deleteUser.nombre}" eliminado correctamente`)
     setDeleteUser(null)
   }
@@ -158,7 +147,8 @@ export function AdminUsersPage() {
   function handleToggleActive() {
     if (!confirmToggle) return
     const newState = !confirmToggle.activo
-    setUsers((prev) => prev.map((u) => (u.id === confirmToggle.id ? { ...u, activo: newState } : u)))
+    toggleUserActiveSync(confirmToggle.id)
+    setUsers(loadUsers())
     toast.showToast(`Usuario "${confirmToggle.nombre}" ${newState ? 'activado' : 'inactivado'} correctamente`)
     setConfirmToggle(null)
   }

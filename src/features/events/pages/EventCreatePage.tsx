@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react'
 import { EventForm } from '../components/EventForm'
 import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
-import { CURRENT_USER } from '../../../config/constants'
+import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Event } from '../../../types'
@@ -61,7 +61,7 @@ export function EventCreatePage() {
       accion: 'Creación de evento',
       entidad: 'Event',
       entidadId: newEvent.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Evento ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creado`,
     })

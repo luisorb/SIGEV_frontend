@@ -10,7 +10,7 @@ import { useStateMachine } from '../hooks/useStateMachine'
 import { useOffers } from '../../offers/hooks/useOffers'
 import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
-import { CURRENT_USER } from '../../../config/constants'
+import { getCurrentUser } from '../../../config/constants'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
@@ -113,7 +113,7 @@ export function EventViewPage() {
       accion: 'Selección de oferta económica',
       entidad: 'Event',
       entidadId: event.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Oferta ${offerId} seleccionada como aprobada`,
     })
@@ -129,7 +129,7 @@ export function EventViewPage() {
       accion: 'Exportación de presupuesto PDF',
       entidad: 'Offer',
       entidadId: offerId,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Presupuesto PDF generado para evento ${event.numeroEvento}`,
     })
@@ -159,7 +159,7 @@ export function EventViewPage() {
         accion: 'Carga de soporte documental',
         entidad: 'Event',
         entidadId: event.id,
-        usuario: CURRENT_USER,
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Soporte "${tipo}" cargado: ${file.name}`,
       })
@@ -203,7 +203,7 @@ export function EventViewPage() {
       eventoId: event.id,
       estadoAnterior: oldEstado,
       estadoNuevo: newEstado as EventState,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       motivo: motivo || '',
     })
@@ -211,7 +211,7 @@ export function EventViewPage() {
       accion: 'Cambio de estado',
       entidad: 'Event',
       entidadId: event.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Estado cambiado de ${oldEstado} a ${newEstado}${motivo ? `. Motivo: ${motivo}` : ''}`,
       valorAnterior: oldEstado,

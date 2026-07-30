@@ -3,7 +3,7 @@ import type { Offer, OfferInput, OfferItemInput, OfferState } from '../types'
 import { mockOffers } from '../utils/mockOffers'
 import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
 import { addAuditEntry } from '../../../lib/auditStore'
-import { CURRENT_USER } from '../../../config/constants'
+import { getCurrentUser } from '../../../config/constants'
 import { exportOfferToExcel } from '../utils/excelExport'
 
 export type UserPermission = 'create' | 'edit' | 'delete' | 'changeState' | 'export'
@@ -72,7 +72,7 @@ export function useOffers() {
       accion: 'Creación de oferta',
       entidad: 'Offer',
       entidadId: newOffer.id,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Oferta ${newOffer.codigo} creada para cliente ${newOffer.cliente}`,
     })
@@ -91,7 +91,7 @@ export function useOffers() {
         accion: 'Edición de oferta',
         entidad: 'Offer',
         entidadId: id,
-        usuario: CURRENT_USER,
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Oferta ${prev.codigo} actualizada`,
       })
@@ -108,7 +108,7 @@ export function useOffers() {
         accion: 'Cambio de estado de oferta',
         entidad: 'Offer',
         entidadId: id,
-        usuario: CURRENT_USER,
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Oferta ${prev.codigo}: ${prev.estado} → ${estado}`,
       })
@@ -143,7 +143,7 @@ export function useOffers() {
         accion: 'Adición de ítem',
         entidad: 'OfferItem',
         entidadId: newItem.id,
-        usuario: CURRENT_USER,
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Ítem "${newItem.descripcion}" agregado a oferta ${offer.codigo}`,
       })
@@ -196,7 +196,7 @@ export function useOffers() {
         accion: 'Eliminación de ítem',
         entidad: 'OfferItem',
         entidadId: itemId,
-        usuario: CURRENT_USER,
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Ítem "${item.descripcion}" eliminado de oferta ${offer.codigo}`,
       })
@@ -237,7 +237,7 @@ export function useOffers() {
       accion: 'Exportación de oferta',
       entidad: 'Offer',
       entidadId: offerId,
-      usuario: CURRENT_USER,
+      usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Oferta ${offer.codigo} exportada a Excel`,
     })

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '../layout/AppLayout'
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
 import { EventsListPage } from '../features/events/pages/EventsListPage'
@@ -15,27 +15,39 @@ import { MapPage } from '../features/map/pages/MapPage'
 import { ParametersPage } from '../features/parameters/pages/ParametersPage'
 import { AdminUsersPage } from '../pages/AdminUsersPage'
 import { AuditPage } from '../pages/AuditPage'
+import { LoginPage } from '../features/auth/pages/LoginPage'
+import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
     path: '/',
-    element: <AppLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'ordenes', element: <EventsListPage /> },
-      { path: 'ordenes/nueva', element: <EventCreatePage /> },
-      { path: 'ordenes/:id', element: <EventViewPage /> },
-      { path: 'ordenes/:id/editar', element: <EventDetailPage /> },
-      { path: 'ofertas', element: <OffersPage /> },
-      { path: 'ofertas/nueva', element: <OfferCreatePage /> },
-      { path: 'ofertas/:id', element: <OfferViewPage /> },
-      { path: 'ofertas/:id/editar', element: <OfferEditPage /> },
-      { path: 'matriz', element: <MatrixPage /> },
-      { path: 'tablero', element: <KanbanPage /> },
-      { path: 'mapa', element: <MapPage /> },
-      { path: 'parametros', element: <ParametersPage /> },
-      { path: 'usuarios', element: <AdminUsersPage /> },
-      { path: 'auditoria', element: <AuditPage /> },
+      {
+        element: <AppLayout />,
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: 'ordenes', element: <EventsListPage /> },
+          { path: 'ordenes/nueva', element: <EventCreatePage /> },
+          { path: 'ordenes/:id', element: <EventViewPage /> },
+          { path: 'ordenes/:id/editar', element: <EventDetailPage /> },
+          { path: 'ofertas', element: <OffersPage /> },
+          { path: 'ofertas/nueva', element: <OfferCreatePage /> },
+          { path: 'ofertas/:id', element: <OfferViewPage /> },
+          { path: 'ofertas/:id/editar', element: <OfferEditPage /> },
+          { path: 'matriz', element: <MatrixPage /> },
+          { path: 'tablero', element: <KanbanPage /> },
+          { path: 'mapa', element: <MapPage /> },
+          { path: 'parametros', element: <ParametersPage /> },
+          { path: 'usuarios', element: <AdminUsersPage /> },
+          { path: 'auditoria', element: <AuditPage /> },
+        ],
+      },
     ],
   },
+  { path: '*', element: <Navigate to="/" replace /> },
 ])
