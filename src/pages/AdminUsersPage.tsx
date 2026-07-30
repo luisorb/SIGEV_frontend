@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
-import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users } from 'lucide-react'
+import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil } from 'lucide-react'
 import { USER_ROLES } from '../config/constants'
 import type { UserRole } from '../types'
 
@@ -62,7 +62,7 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
 
 export function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>(initialUsers)
-  const [userModalOpen, setUserModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof Omit<User, 'id'>, string>>>({})
   const EMPTY_USER: Omit<User, 'id'> = {
     identificador: '',
@@ -75,6 +75,7 @@ export function AdminUsersPage() {
   const [newUser, setNewUser] = useState<Omit<User, 'id'>>(EMPTY_USER)
   const idCounter = useRef(3)
 
+  const [isCreating, setIsCreating] = useState(false)
   const [deleteUser, setDeleteUser] = useState<User | null>(null)
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState('')
@@ -82,32 +83,59 @@ export function AdminUsersPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<PageSize>(10)
 
-  function handleAdd() {
+  function handleSave() {
     const newErrors: Partial<Record<keyof Omit<User, 'id'>, string>> = {}
     if (!newUser.identificador.trim()) newErrors.identificador = 'El identificador es obligatorio'
     if (!newUser.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
     if (!newUser.email.trim()) newErrors.email = 'El correo es obligatorio'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUser.email)) newErrors.email = 'Formato de correo inválido'
-    if (!newUser.password) newErrors.password = 'La contraseña es obligatoria'
-    else if (newUser.password.length < 8) newErrors.password = 'Mínimo 8 caracteres'
+    if (!editingUser && !newUser.password) newErrors.password = 'La contraseña es obligatoria'
+    else if (newUser.password && newUser.password.length < 8) newErrors.password = 'Mínimo 8 caracteres'
     if (newUser.roles.length === 0) newErrors.roles = 'Seleccione al menos un rol'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
 
-    idCounter.current += 1
-    const user: User = {
-      id: `usr-${String(idCounter.current).padStart(3, '0')}`,
-      ...newUser,
+    if (editingUser) {
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === editingUser.id
+            ? { ...u, ...newUser, password: newUser.password || u.password }
+            : u,
+        ),
+      )
+    } else {
+      idCounter.current += 1
+      const user: User = {
+        id: `usr-${String(idCounter.current).padStart(3, '0')}`,
+        ...newUser,
+      }
+      setUsers((prev) => [user, ...prev])
     }
-    setUsers((prev) => [user, ...prev])
+
     setNewUser(EMPTY_USER)
     setErrors({})
-    setUserModalOpen(false)
+    setEditingUser(null)
+    setIsCreating(false)
   }
 
   function openCreate() {
+    setEditingUser(null)
+    setIsCreating(true)
     setNewUser(EMPTY_USER)
     setErrors({})
-    setUserModalOpen(true)
+  }
+
+  function openEdit(user: User) {
+    setEditingUser(user)
+    setIsCreating(false)
+    setNewUser({
+      identificador: user.identificador,
+      nombre: user.nombre,
+      email: user.email,
+      password: '',
+      roles: [...user.roles],
+      activo: user.activo,
+    })
+    setErrors({})
   }
 
   function handleDeleteRequest(id: string) {
@@ -244,6 +272,13 @@ export function AdminUsersPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
+                          onClick={() => openEdit(user)}
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleToggleActive(user.id)}
                           className={`p-1.5 rounded-lg transition-colors ${
                             user.activo
@@ -363,7 +398,7 @@ export function AdminUsersPage() {
         </div>
       )}
 
-      {userModalOpen && (
+      {(isCreating || editingUser) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full animate-[scaleIn_200ms_ease-out]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
@@ -371,9 +406,9 @@ export function AdminUsersPage() {
                 <div className="p-1.5 rounded-lg bg-primary/10">
                   <Users className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Nuevo Usuario</h3>
+                <h3 className="text-base font-bold text-slate-900">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
               </div>
-              <button onClick={() => setUserModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+              <button onClick={() => { setEditingUser(null); setIsCreating(false) }} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -489,16 +524,16 @@ export function AdminUsersPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
-              <button onClick={() => setUserModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+              <button onClick={() => { setEditingUser(null); setIsCreating(false) }} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
                 Cancelar
               </button>
               <button
-                onClick={handleAdd}
-                disabled={!newUser.identificador || !newUser.nombre || !newUser.email || !newUser.password || newUser.roles.length === 0}
+                onClick={handleSave}
+                disabled={!newUser.identificador || !newUser.nombre || !newUser.email || (!editingUser && !newUser.password) || newUser.roles.length === 0}
                 className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150"
               >
-                <Plus className="w-4 h-4" />
-                Crear Usuario
+                {editingUser ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                {editingUser ? 'Guardar Cambios' : 'Crear Usuario'}
               </button>
             </div>
           </div>
