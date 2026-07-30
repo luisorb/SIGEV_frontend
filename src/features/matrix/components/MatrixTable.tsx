@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Minimize2 } from 'lucide-react'
 import type { MatrixView, DetailedRow, MatrixRow, MatrixTotals } from '../types'
 import { formatCurrencyCO } from '../../../utils/formatters'
 
@@ -10,13 +10,15 @@ interface MatrixTableProps {
   totals: MatrixTotals
   aliadoIds: string[]
   aliadosMap: Record<string, string>
+  isFullscreen?: boolean
+  onExitFullscreen?: () => void
 }
 
-export function MatrixTable({ view, detailedRows, globalRows, totals, aliadoIds, aliadosMap }: MatrixTableProps) {
+export function MatrixTable({ view, detailedRows, globalRows, totals, aliadoIds, aliadosMap, isFullscreen, onExitFullscreen }: MatrixTableProps) {
   if (view === 'detallada') {
-    return <DetailedTable rows={detailedRows} />
+    return <DetailedTable rows={detailedRows} isFullscreen={isFullscreen} onExitFullscreen={onExitFullscreen} />
   }
-  return <GlobalTable rows={globalRows} totals={totals} aliadoIds={aliadoIds} aliadosMap={aliadosMap} />
+  return <GlobalTable rows={globalRows} totals={totals} aliadoIds={aliadoIds} aliadosMap={aliadosMap} isFullscreen={isFullscreen} onExitFullscreen={onExitFullscreen} />
 }
 
 function SortHeader({ column, sortColumn, sortDirection, onSort, align = 'left', children }: {
@@ -47,9 +49,13 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, align = 'left',
   )
 }
 
-function DetailedTable({ rows }: { rows: DetailedRow[] }) {
+type PageSize = 10 | 20 | 30 | 50 | 100
+
+function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: DetailedRow[]; isFullscreen?: boolean; onExitFullscreen?: () => void }) {
   const [sortColumn, setSortColumn] = useState<string>('')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState<PageSize>(20)
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -97,6 +103,13 @@ function DetailedTable({ rows }: { rows: DetailedRow[] }) {
     return sorted
   }, [rows, sortColumn, sortDirection])
 
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const paginatedRows = useMemo(() => {
+    const start = (safePage - 1) * pageSize
+    return sortedRows.slice(start, start + pageSize)
+  }, [sortedRows, safePage, pageSize])
+
   if (rows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-200 p-12 text-center">
@@ -110,8 +123,17 @@ function DetailedTable({ rows }: { rows: DetailedRow[] }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full flex flex-col relative">
+      {isFullscreen && onExitFullscreen && (
+        <button
+          onClick={onExitFullscreen}
+          className="absolute top-3 right-3 z-50 inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-300 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 shadow-sm transition-colors"
+        >
+          <Minimize2 className="w-3.5 h-3.5" />
+          Salir
+        </button>
+      )}
+      <div className="overflow-auto flex-1 min-h-0">
         <table className="w-full">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
@@ -146,7 +168,7 @@ function DetailedTable({ rows }: { rows: DetailedRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {sortedRows.map((row, idx) => (
+            {paginatedRows.map((row, idx) => (
               <tr key={row.itemId} className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'} hover:bg-blue-50/50`}>
                 <td className="px-3 py-2.5 text-xs font-medium text-slate-900">{row.numeroEvento}</td>
                 <td className="px-3 py-2.5 text-xs text-slate-600">{row.fechaEvento}</td>
@@ -185,18 +207,71 @@ function DetailedTable({ rows }: { rows: DetailedRow[] }) {
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
-        {rows.length} ítem{rows.length !== 1 ? 's' : ''} en total
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <span>Mostrando página {safePage} de {totalPages} ({rows.length} resultados)</span>
+          <span className="text-slate-300">|</span>
+          <label htmlFor="pageSize" className="sr-only">Filas por página</label>
+          <select
+            id="pageSize"
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value) as PageSize); setPage(1) }}
+            className="px-2 py-1 border border-slate-300 rounded text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+          >
+            {[10, 20, 30, 50, 100].map((size) => (
+              <option key={size} value={size}>{size} filas</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setPage(1)}
+            disabled={safePage <= 1}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Primera página"
+          >
+            <ChevronsLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <button
+            onClick={() => setPage(safePage - 1)}
+            disabled={safePage <= 1}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Página anterior"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+            Página <span className="text-primary font-semibold">{safePage}</span> de <span className="font-semibold">{totalPages}</span>
+          </div>
+          <button
+            onClick={() => setPage(safePage + 1)}
+            disabled={safePage >= totalPages}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Página siguiente"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          </button>
+          <button
+            onClick={() => setPage(totalPages)}
+            disabled={safePage >= totalPages}
+            className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+            title="Última página"
+          >
+            <ChevronsRight className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-function GlobalTable({ rows, totals, aliadoIds, aliadosMap }: {
+function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExitFullscreen }: {
   rows: MatrixRow[]
   totals: MatrixTotals
   aliadoIds: string[]
   aliadosMap: Record<string, string>
+  isFullscreen?: boolean
+  onExitFullscreen?: () => void
 }) {
   if (rows.length === 0) {
     return (
@@ -211,8 +286,17 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap }: {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full flex flex-col relative">
+      {isFullscreen && onExitFullscreen && (
+        <button
+          onClick={onExitFullscreen}
+          className="absolute top-3 right-3 z-50 inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-300 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 shadow-sm transition-colors"
+        >
+          <Minimize2 className="w-3.5 h-3.5" />
+          Salir
+        </button>
+      )}
+      <div className="overflow-auto flex-1 min-h-0">
         <table className="w-full">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
