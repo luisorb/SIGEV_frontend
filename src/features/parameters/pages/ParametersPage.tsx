@@ -120,15 +120,15 @@ function AliadosTab() {
   }
 
   return (
-    <div className="flex flex-col min-h-0 gap-0.5">
-      <div className="flex items-center justify-end shrink-0">
-        <button onClick={openCreate} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
+    <div className="flex flex-col min-h-0 gap-2 sm:gap-0.5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input type="text" placeholder="Buscar por nombre o NIT..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+        </div>
+        <button onClick={openCreate} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Aliado
         </button>
-      </div>
-      <div className="relative w-full sm:w-72 shrink-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input type="text" placeholder="Buscar por nombre o NIT..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
       </div>
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
@@ -141,7 +141,7 @@ function AliadosTab() {
                 {sortHeader('email', 'Email')}
                 {sortHeader('telefono', 'Teléfono')}
                 {sortHeader('estado', 'Estado', 'text-center')}
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -150,20 +150,20 @@ function AliadosTab() {
               ) : (
                 paged.map((a) => (
                   <tr key={a.id} className={`hover:bg-slate-50 transition-colors ${!a.activo ? 'opacity-50' : ''}`}>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full inline-block shrink-0" style={{ backgroundColor: a.color }} />
-                        <span className="font-medium text-slate-900">{a.nombre}</span>
+                        <span className="font-medium text-slate-900 text-sm sm:text-base">{a.nombre}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{a.nit}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{a.contacto || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{a.email || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{a.telefono || '-'}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${a.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{a.activo ? 'Activo' : 'Inactivo'}</span>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.nit}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.contacto || '-'}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.email || '-'}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.telefono || '-'}</td>
+                    <td className="px-3 sm:px-4 py-3 text-center">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${a.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{a.activo ? 'Activo' : 'Inactivo'}</span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-3 sm:px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openEdit(a)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors" title="Editar"><Pencil className="w-4 h-4" /></button>
                         <button onClick={() => setConfirmToggle(a)} className={`p-1.5 rounded-lg transition-colors ${a.activo ? 'hover:bg-red-50 text-slate-500 hover:text-red-600' : 'hover:bg-green-50 text-slate-500 hover:text-green-600'}`} title={a.activo ? 'Inactivar' : 'Activar'}>{a.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}</button>
@@ -177,8 +177,8 @@ function AliadosTab() {
         </div>
         {sorted.length > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span>Mostrando página {safePage + 1} de {totalPages} ({sorted.length} resultados)</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
+              <span>{safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
               <span className="text-slate-300">|</span>
               <label htmlFor="aliados-pageSize" className="sr-only">Filas por página</label>
               <select
@@ -209,8 +209,8 @@ function AliadosTab() {
               >
                 <ChevronLeft className="w-4 h-4 text-gray-600" />
               </button>
-              <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
-                Página <span className="text-primary font-semibold">{safePage + 1}</span> de <span className="font-semibold">{totalPages}</span>
+              <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[100px] sm:min-w-[120px] text-center">
+                {safePage + 1} / {totalPages}
               </div>
               <button
                 onClick={() => setPage(safePage + 1)}
@@ -233,21 +233,21 @@ function AliadosTab() {
         )}
       </div>
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-[scaleIn_200ms_ease-out]">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl max-w-lg w-full max-h-[90dvh] animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
                   <Handshake className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">{editing ? 'Editar Aliado' : 'Nuevo Aliado'}</h3>
+                <h3 className="text-base font-bold text-slate-900 truncate">{editing ? 'Editar Aliado' : 'Nuevo Aliado'}</h3>
               </div>
-              <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+              <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelBase}>Nombre {requiredMark}</label>
                   <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Aliado SAS" className={inp('nombre')} />
@@ -259,7 +259,7 @@ function AliadosTab() {
                   {errors.nit && <p className="text-xs text-red-500">{errors.nit}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelBase}>Contacto</label>
                   <input type="text" value={form.contacto} onChange={(e) => setForm({ ...form, contacto: e.target.value })} placeholder="Nombre del contacto" className={inputBase} />
@@ -269,7 +269,7 @@ function AliadosTab() {
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contacto@ejemplo.com" className={inputBase} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelBase}>Teléfono</label>
                   <input type="text" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} placeholder="Ej: +57 300 000 0000" className={inputBase} />
@@ -283,21 +283,21 @@ function AliadosTab() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
-              <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={handleSave} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Aliado'}</button>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl shrink-0">
+              <button onClick={() => setModalOpen(false)} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
+              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Aliado'}</button>
             </div>
           </div>
         </div>
       )}
       {confirmToggle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-3">
               <div className={`p-2 rounded-lg shrink-0 ${confirmToggle.activo ? 'bg-red-100' : 'bg-green-100'}`}>
                 {confirmToggle.activo ? <PowerOff className="w-5 h-5 text-red-600" /> : <Power className="w-5 h-5 text-green-600" />}
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">{confirmToggle.activo ? 'Inactivar Aliado' : 'Activar Aliado'}</h3>
                 <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del aliado.</p>
               </div>
@@ -305,16 +305,16 @@ function AliadosTab() {
             <p className="text-sm sm:text-base text-slate-700 mb-4">
               ¿Estás seguro de {confirmToggle.activo ? 'inactivar' : 'activar'} <span className="font-semibold">{confirmToggle.nombre}</span>?
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
               <button
                 onClick={() => setConfirmToggle(null)}
-                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => { toggleActivo(confirmToggle.id); setConfirmToggle(null) }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
               </button>
@@ -413,15 +413,15 @@ function DesembolsosTab() {
   }
 
   return (
-    <div className="flex flex-col min-h-0 gap-0.5">
-      <div className="flex items-center justify-end shrink-0">
-        <button onClick={openCreate} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
+    <div className="flex flex-col min-h-0 gap-2 sm:gap-0.5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input type="text" placeholder="Buscar por código, nombre, vigencia..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+        </div>
+        <button onClick={openCreate} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Desembolso
         </button>
-      </div>
-      <div className="relative w-full sm:w-72 shrink-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input type="text" placeholder="Buscar por código, nombre, vigencia..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
       </div>
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
@@ -432,9 +432,9 @@ function DesembolsosTab() {
                 {sortHeader('nombre', 'Nombre')}
                 {sortHeader('vigencia', 'Vigencia')}
                 {sortHeader('porcentajeParticipacion', '% Participación', 'text-center')}
-                {sortHeader('valorReferencia', 'Valor Referencia', 'text-center')}
+                {sortHeader('valorReferencia', 'Valor Ref.', 'text-center')}
                 {sortHeader('estado', 'Estado', 'text-center')}
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -443,15 +443,15 @@ function DesembolsosTab() {
               ) : (
                 paged.map((d) => (
                   <tr key={d.id} className={`hover:bg-slate-50 transition-colors ${!d.activo ? 'opacity-50' : ''}`}>
-                    <td className="px-4 py-3 font-medium text-slate-900">{d.codigo}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{d.nombre}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{d.vigencia ? formatDateCO(d.vigencia) : '-'}</td>
-                    <td className="px-4 py-3 text-sm text-center text-slate-600">{d.porcentajeParticipacion}%</td>
-                    <td className="px-4 py-3 text-sm text-center font-medium text-slate-900">{formatCurrencyCO(d.valorReferencia)}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${d.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{d.activo ? 'Activo' : 'Inactivo'}</span>
+                    <td className="px-3 sm:px-4 py-3 font-medium text-slate-900 text-sm">{d.codigo}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.nombre}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.vigencia ? formatDateCO(d.vigencia) : '-'}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center text-slate-600">{d.porcentajeParticipacion}%</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center font-medium text-slate-900 tabular-nums">{formatCurrencyCO(d.valorReferencia)}</td>
+                    <td className="px-3 sm:px-4 py-3 text-center">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${d.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{d.activo ? 'Activo' : 'Inactivo'}</span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-3 sm:px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openEdit(d)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors" title="Editar"><Pencil className="w-4 h-4" /></button>
                         <button onClick={() => setConfirmToggle(d)} className={`p-1.5 rounded-lg transition-colors ${d.activo ? 'hover:bg-red-50 text-slate-500 hover:text-red-600' : 'hover:bg-green-50 text-slate-500 hover:text-green-600'}`} title={d.activo ? 'Inactivar' : 'Activar'}>{d.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}</button>
@@ -465,8 +465,8 @@ function DesembolsosTab() {
         </div>
         {sorted.length > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span>Mostrando página {safePage + 1} de {totalPages} ({sorted.length} resultados)</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
+            <span>{safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, sorted.length)} de {sorted.length}</span>
             <span className="text-slate-300">|</span>
             <label htmlFor="des-pageSize" className="sr-only">Filas por página</label>
             <select
@@ -497,8 +497,8 @@ function DesembolsosTab() {
             >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
-            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
-              Página <span className="text-primary font-semibold">{safePage + 1}</span> de <span className="font-semibold">{totalPages}</span>
+            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[100px] sm:min-w-[120px] text-center">
+              {safePage + 1} / {totalPages}
             </div>
             <button
               onClick={() => setPage(safePage + 1)}
@@ -521,21 +521,21 @@ function DesembolsosTab() {
         )}
       </div>
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-[scaleIn_200ms_ease-out]">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl max-w-lg w-full max-h-[90dvh] animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
                   <Banknote className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">{editing ? 'Editar Desembolso' : 'Nuevo Desembolso'}</h3>
+                <h3 className="text-base font-bold text-slate-900 truncate">{editing ? 'Editar Desembolso' : 'Nuevo Desembolso'}</h3>
               </div>
-              <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+              <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelBase}>Código {requiredMark}</label>
                   <input type="text" value={form.codigo} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: DES-001" className={inp('codigo')} />
@@ -547,7 +547,7 @@ function DesembolsosTab() {
                   {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelBase}>Vigencia {requiredMark}</label>
                   <input type="date" value={form.vigencia} onChange={(e) => { setForm({ ...form, vigencia: e.target.value }); if (errors.vigencia) setErrors((prev) => ({ ...prev, vigencia: '' })) }} className={inp('vigencia')} />
@@ -564,38 +564,38 @@ function DesembolsosTab() {
                 {errors.valorReferencia && <p className="text-xs text-red-500">{errors.valorReferencia}</p>}
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
-              <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={handleSave} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Desembolso'}</button>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl shrink-0">
+              <button onClick={() => setModalOpen(false)} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
+              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Desembolso'}</button>
             </div>
           </div>
         </div>
       )}
       {confirmToggle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-3">
               <div className={`p-2 rounded-lg shrink-0 ${confirmToggle.activo ? 'bg-red-100' : 'bg-green-100'}`}>
                 {confirmToggle.activo ? <PowerOff className="w-5 h-5 text-red-600" /> : <Power className="w-5 h-5 text-green-600" />}
               </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">{confirmToggle.activo ? 'Inactivar Desembolso' : 'Activar Desembolso'}</h3>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">{confirmToggle.activo ? 'Inactivar Desembolso' : 'Activar Desembolso'}</h3>
                 <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del desembolso.</p>
               </div>
             </div>
             <p className="text-sm sm:text-base text-slate-700 mb-4">
               ¿Estás seguro de {confirmToggle.activo ? 'inactivar' : 'activar'} <span className="font-semibold">{confirmToggle.nombre}</span>?
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
               <button
                 onClick={() => setConfirmToggle(null)}
-                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => { toggleActivo(confirmToggle.id); setConfirmToggle(null) }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
               </button>
@@ -677,42 +677,44 @@ export function ParametersPage() {
             onSave={saveNewVersion}
             onDiscard={discardChanges}
           />
-          <div className="flex justify-center">
+          <div className="flex justify-center pb-4 sm:pb-6">
             <button
               onClick={() => setHistorialOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] shadow-sm transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] shadow-sm transition-all"
             >
               <Clock className="w-4 h-4 text-slate-400" />
-              Ver Historial de Versiones
+              <span className="hidden sm:inline">Ver </span>Historial de Versiones
               <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">{versions.length}</span>
             </button>
           </div>
           {historialOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full animate-[scaleIn_200ms_ease-out] overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 rounded-lg bg-primary/5">
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+              <div className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl max-w-6xl w-full max-h-[90dvh] sm:max-h-[85vh] animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out] overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/50 shrink-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-1.5 rounded-lg bg-primary/5 shrink-0">
                       <Clock className="w-4 h-4 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-900">Historial de Versiones</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-slate-900 truncate">Historial de Versiones</h3>
                       <p className="text-xs text-slate-500">{versions.length} versión{versions.length !== 1 ? 'es' : ''} registrada{versions.length !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setHistorialOpen(false)}
-                    className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <ParameterHistoryTable
-                  versions={versions}
-                  currentVersionId={currentVersion?.id ?? null}
-                  onLoadVersion={(id) => { loadVersion(id); setHistorialOpen(false) }}
-                />
-                <div className="flex justify-end px-6 py-3 border-t border-slate-200 bg-slate-50/50">
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <ParameterHistoryTable
+                    versions={versions}
+                    currentVersionId={currentVersion?.id ?? null}
+                    onLoadVersion={(id) => { loadVersion(id); setHistorialOpen(false) }}
+                  />
+                </div>
+                <div className="flex justify-end px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50/50 shrink-0">
                   <button
                     onClick={() => setHistorialOpen(false)}
                     className="px-5 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all"
