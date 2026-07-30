@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
-import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil } from 'lucide-react'
+import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff } from 'lucide-react'
 import { USER_ROLES } from '../config/constants'
 import type { UserRole } from '../types'
 
@@ -77,6 +77,7 @@ export function AdminUsersPage() {
 
   const [isCreating, setIsCreating] = useState(false)
   const [deleteUser, setDeleteUser] = useState<User | null>(null)
+  const [confirmToggle, setConfirmToggle] = useState<User | null>(null)
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState('')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
@@ -149,8 +150,10 @@ export function AdminUsersPage() {
     setDeleteUser(null)
   }
 
-  function handleToggleActive(id: string) {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, activo: !u.activo } : u)))
+  function handleToggleActive() {
+    if (!confirmToggle) return
+    setUsers((prev) => prev.map((u) => (u.id === confirmToggle.id ? { ...u, activo: !u.activo } : u)))
+    setConfirmToggle(null)
   }
 
   function toggleSort(column: SortableColumn) {
@@ -279,15 +282,15 @@ export function AdminUsersPage() {
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleToggleActive(user.id)}
+                          onClick={() => setConfirmToggle(user)}
                           className={`p-1.5 rounded-lg transition-colors ${
                             user.activo
                               ? 'hover:bg-red-50 text-slate-400 hover:text-red-600'
                               : 'hover:bg-green-50 text-slate-400 hover:text-green-600'
                           }`}
-                          title={user.activo ? 'Desactivar' : 'Activar'}
+                          title={user.activo ? 'Inactivar' : 'Activar'}
                         >
-                          <Shield className="w-4 h-4" />
+                          {user.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                         </button>
                         <button
                           onClick={() => handleDeleteRequest(user.id)}
@@ -392,6 +395,39 @@ export function AdminUsersPage() {
               >
                 <Trash2 className="w-4 h-4" />
                 Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmToggle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3 mb-3">
+              <div className={`p-2 rounded-lg shrink-0 ${confirmToggle.activo ? 'bg-red-100' : 'bg-green-100'}`}>
+                {confirmToggle.activo ? <PowerOff className="w-5 h-5 text-red-600" /> : <Power className="w-5 h-5 text-green-600" />}
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">{confirmToggle.activo ? 'Inactivar Usuario' : 'Activar Usuario'}</h3>
+                <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del usuario.</p>
+              </div>
+            </div>
+            <p className="text-sm sm:text-base text-slate-700 mb-4">
+              ¿Estás seguro de {confirmToggle.activo ? 'inactivar' : 'activar'} a <span className="font-semibold">{confirmToggle.nombre}</span>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmToggle(null)}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleToggleActive}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
               </button>
             </div>
           </div>
@@ -529,8 +565,7 @@ export function AdminUsersPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!newUser.identificador || !newUser.nombre || !newUser.email || (!editingUser && !newUser.password) || newUser.roles.length === 0}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {editingUser ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 {editingUser ? 'Guardar Cambios' : 'Crear Usuario'}
