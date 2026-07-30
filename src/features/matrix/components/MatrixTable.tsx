@@ -1,3 +1,5 @@
+import { useState, useMemo } from 'react'
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import type { MatrixView, DetailedRow, MatrixRow, MatrixTotals } from '../types'
 import { formatCurrencyCO } from '../../../utils/formatters'
 
@@ -17,7 +19,84 @@ export function MatrixTable({ view, detailedRows, globalRows, totals, aliadoIds,
   return <GlobalTable rows={globalRows} totals={totals} aliadoIds={aliadoIds} aliadosMap={aliadosMap} />
 }
 
+function SortHeader({ column, sortColumn, sortDirection, onSort, align = 'left', children }: {
+  column: string
+  sortColumn: string
+  sortDirection: 'asc' | 'desc' | null
+  onSort: (column: string) => void
+  align?: 'left' | 'right' | 'center'
+  children: React.ReactNode
+}) {
+  const isActive = sortColumn === column
+  return (
+    <th
+      className={`sticky top-0 z-10 px-3 py-3 text-${align} text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50 cursor-pointer hover:text-slate-700 select-none`}
+      onClick={() => onSort(column)}
+    >
+      <div className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : ''}`}>
+        {children}
+        {isActive && sortDirection === 'asc' ? (
+          <ArrowUp className="w-3 h-3 shrink-0" />
+        ) : isActive && sortDirection === 'desc' ? (
+          <ArrowDown className="w-3 h-3 shrink-0" />
+        ) : (
+          <ArrowUpDown className="w-3 h-3 shrink-0 opacity-40" />
+        )}
+      </div>
+    </th>
+  )
+}
+
 function DetailedTable({ rows }: { rows: DetailedRow[] }) {
+  const [sortColumn, setSortColumn] = useState<string>('')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc')
+      } else if (sortDirection === 'desc') {
+        setSortColumn('')
+        setSortDirection(null)
+      } else {
+        setSortDirection('asc')
+      }
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
+
+  const sortedRows = useMemo(() => {
+    if (!sortColumn || !sortDirection) return rows
+
+    const sorted = [...rows]
+    sorted.sort((a, b) => {
+      let cmp = 0
+      switch (sortColumn) {
+        case 'numeroEvento': cmp = a.numeroEvento.localeCompare(b.numeroEvento); break
+        case 'fechaEvento': cmp = a.fechaEvento.localeCompare(b.fechaEvento); break
+        case 'municipio': cmp = a.municipio.localeCompare(b.municipio); break
+        case 'estado': cmp = a.estado.localeCompare(b.estado); break
+        case 'descripcion': cmp = a.descripcion.localeCompare(b.descripcion); break
+        case 'cantidad': cmp = a.cantidad - b.cantidad; break
+        case 'valorUnitario': cmp = a.valorUnitario - b.valorUnitario; break
+        case 'categoriaTributaria': cmp = a.categoriaTributaria.localeCompare(b.categoriaTributaria); break
+        case 'base': cmp = a.base - b.base; break
+        case 'iva': cmp = a.iva - b.iva; break
+        case 'impuestoConsumo': cmp = a.impuestoConsumo - b.impuestoConsumo; break
+        case 'feeTarifado': cmp = a.feeTarifado - b.feeTarifado; break
+        case 'feeTerceros': cmp = a.feeTerceros - b.feeTerceros; break
+        case 'ivaFee': cmp = a.ivaFee - b.ivaFee; break
+        case 'total': cmp = a.total - b.total; break
+        case 'aliadoNombre': cmp = a.aliadoNombre.localeCompare(b.aliadoNombre); break
+        case 'desembolsoNombre': cmp = a.desembolsoNombre.localeCompare(b.desembolsoNombre); break
+      }
+      return sortDirection === 'desc' ? -cmp : cmp
+    })
+    return sorted
+  }, [rows, sortColumn, sortDirection])
+
   if (rows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-200 p-12 text-center">
@@ -36,27 +115,38 @@ function DetailedTable({ rows }: { rows: DetailedRow[] }) {
         <table className="w-full">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">Evento</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[90px] bg-slate-50">Fecha</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">Territorio</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[80px] bg-slate-50">Estado</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[180px] bg-slate-50">Descripción</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[70px] bg-slate-50">Cant</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">Vr Unit</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[70px] bg-slate-50">Carga Trib</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[110px] bg-slate-50">Base</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">IVA</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">Consumo</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">Fee Tarif</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">Fee 3ros</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50">IVA Fee</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider min-w-[110px] border-l-2 border-slate-300 bg-slate-100">Total</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[120px] bg-slate-50">Aliado</th>
-              <th className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[120px] bg-slate-50">Desembolso</th>
+              <SortHeader column="numeroEvento" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Evento</SortHeader>
+              <SortHeader column="fechaEvento" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Fecha</SortHeader>
+              <SortHeader column="municipio" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Territorio</SortHeader>
+              <SortHeader column="estado" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Estado</SortHeader>
+              <SortHeader column="descripcion" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Descripción</SortHeader>
+              <SortHeader column="cantidad" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Cant</SortHeader>
+              <SortHeader column="valorUnitario" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Vr Unit</SortHeader>
+              <SortHeader column="categoriaTributaria" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="center">Carga Trib</SortHeader>
+              <SortHeader column="base" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Base</SortHeader>
+              <SortHeader column="iva" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">IVA</SortHeader>
+              <SortHeader column="impuestoConsumo" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Consumo</SortHeader>
+              <SortHeader column="feeTarifado" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Fee Tarif</SortHeader>
+              <SortHeader column="feeTerceros" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Fee 3ros</SortHeader>
+              <SortHeader column="ivaFee" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">IVA Fee</SortHeader>
+              <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider min-w-[110px] border-l-2 border-slate-300 bg-slate-100 cursor-pointer hover:text-slate-900 select-none" onClick={() => handleSort('total')}>
+                <div className="flex items-center justify-end gap-1">
+                  Total
+                  {sortColumn === 'total' && sortDirection === 'asc' ? (
+                    <ArrowUp className="w-3 h-3 shrink-0" />
+                  ) : sortColumn === 'total' && sortDirection === 'desc' ? (
+                    <ArrowDown className="w-3 h-3 shrink-0" />
+                  ) : (
+                    <ArrowUpDown className="w-3 h-3 shrink-0 opacity-40" />
+                  )}
+                </div>
+              </th>
+              <SortHeader column="aliadoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Aliado</SortHeader>
+              <SortHeader column="desembolsoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Desembolso</SortHeader>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((row, idx) => (
+            {sortedRows.map((row, idx) => (
               <tr key={row.itemId} className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'} hover:bg-blue-50/50`}>
                 <td className="px-3 py-2.5 text-xs font-medium text-slate-900">{row.numeroEvento}</td>
                 <td className="px-3 py-2.5 text-xs text-slate-600">{row.fechaEvento}</td>
