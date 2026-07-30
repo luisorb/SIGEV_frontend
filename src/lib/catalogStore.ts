@@ -53,8 +53,6 @@ function getMockDesembolsos(): Disbursement[] {
   ]
 }
 
-// --- Exported hooks ---
-
 export function useAliados() {
   const [aliados, setAliados] = useState<Ally[]>(loadAliados)
 
@@ -172,8 +170,6 @@ export function useDesembolsos() {
 
   return { desembolsos, addDesembolso, updateDesembolso, toggleActivo, refresh }
 }
-
-// --- Static helpers (for components that don't need reactivity) ---
 
 export function getAliadosSync(): Ally[] {
   return loadAliados()

@@ -27,9 +27,9 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
-  function onSubmit(data: LoginForm) {
+  async function onSubmit(data: LoginForm) {
     setError('')
-    const result = login(data.identificador, data.password)
+    const result = await login(data.identificador, data.password)
     if (result.success) {
       navigate('/', { replace: true })
     } else {

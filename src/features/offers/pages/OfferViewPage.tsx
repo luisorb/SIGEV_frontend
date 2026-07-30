@@ -46,7 +46,7 @@ export function OfferViewPage() {
   }
 
   function handleStateChangeRequest(newState: OfferState) {
-    if ((newState === 'Enviada' || newState === 'Aprobada') && (!offer.aliado || !offer.desembolso)) {
+    if ((newState === 'Enviada' || newState === 'Aprobada') && (!offer?.aliado || !offer?.desembolso)) {
       setValidationError('La oferta debe tener Aliado y Desembolso asignados para poder ser aprobada.')
       return
     }
@@ -60,6 +60,7 @@ export function OfferViewPage() {
   }
 
   function handleExportExcel() {
+    if (!offer) return
     exportOfferToExcel(offer)
     addAuditEntry({
       accion: 'Exportación de oferta a Excel',
@@ -72,6 +73,7 @@ export function OfferViewPage() {
   }
 
   function handleExportPDF() {
+    if (!offer) return
     exportOfferToPDF(offer)
     addAuditEntry({
       accion: 'Exportación de oferta a PDF',
@@ -411,7 +413,7 @@ export function OfferViewPage() {
           message={`¿Estás seguro de cambiar la oferta ${offer.codigo} de ${offer.estado} a ${pendingState}?`}
           confirmLabel={`Cambiar a ${pendingState}`}
           cancelLabel="Cancelar"
-          variant={pendingState === 'Aprobada' ? 'success' : pendingState === 'Rechazada' ? 'danger' : 'warning'}
+          variant={pendingState === 'Rechazada' ? 'danger' : 'warning'}
           onConfirm={confirmStateChange}
           onCancel={() => setPendingState(null)}
         />

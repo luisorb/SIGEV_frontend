@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ClipboardList } from 'lucide-react'
 import { getAllAuditEntries } from '../lib/auditStore'
 import { formatDateCO } from '../utils/formatters'
-import type { AuditEntry } from '../types'
 
 const ENTIDADES = ['', 'Event', 'Offer', 'Item', 'Ally', 'User', 'Param']
 const ACCIONES = ['', 'Creación', 'Actualización', 'Eliminación', 'Cambio de estado']

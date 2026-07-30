@@ -400,7 +400,7 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <SortHeader column="aliadoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Aliado</SortHeader>
-              {desembolsoIds.map((dId, idx) => (
+              {desembolsoIds.map((dId) => (
                 <SortHeader key={dId} column={dId} sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="center">
                   {desembolsosMap[dId] || dId}
                 </SortHeader>

@@ -1,8 +1,11 @@
 import { ChevronLeft } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { EventForm } from '../components/EventForm'
-import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
+import { getEventApi, updateEventApi, getEventsApi } from '../../../services/events.service'
+import { getAliadosSync } from '../../../lib/catalogStore'
+import { getDesembolsosSync } from '../../../lib/catalogStore'
+import { mockMunicipios } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
@@ -14,37 +17,43 @@ export function EventDetailPage() {
   const navigate = useNavigate()
   const toast = useToast()
 
-  const [localEvents, setLocalEvents] = useState<Event[]>(() => {
-    try {
-      const saved = localStorage.getItem('sigev-events')
-      return saved ? JSON.parse(saved) : mockEvents
-    } catch {
-      return mockEvents
-    }
-  })
+  const [event, setEvent] = useState<Event | null>(null)
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const activeEvents = useMemo(() => localEvents.filter((e) => e.activo !== false), [localEvents])
-  const event = localEvents.find((e) => e.id === id)
+  useEffect(() => {
+    if (!id) return
+    Promise.all([
+      getEventApi(id),
+      getEventsApi(),
+    ]).then(([evt, allEvents]) => {
+      setEvent(evt)
+      setEvents(allEvents)
+      setLoading(false)
+    })
+  }, [id])
 
-  function persistEvents(events: Event[]) {
-    setLocalEvents(events)
-    try {
-      localStorage.setItem('sigev-events', JSON.stringify(events))
-    } catch { /* silent */ }
-  }
-
-  function handleSave(data: EventFormValues) {
+  async function handleSave(data: EventFormValues) {
     if (!event || !id) return
 
-    const updated = localEvents.map((e) =>
-      e.id === id
-        ? {
-            ...e,
-            ...data,
-            updatedAt: new Date().toISOString(),
-          }
-        : e,
-    )
+    await updateEventApi(id, {
+      ...event,
+      numeroEvento: data.numeroEvento,
+      sufijo: data.sufijo ?? '',
+      responsable: data.responsable,
+      dependencia: data.dependencia ?? '',
+      municipioId: data.municipioId,
+      aliadoId: data.aliadoId,
+      desembolsoId: data.desembolsoId,
+      esquema: data.esquema,
+      fechaEvento: data.fechaEvento ?? '',
+      asistentes: data.asistentes ?? 0,
+      dias: data.dias ?? 0,
+      vereda: data.vereda ?? '',
+      latitud: data.latitud || undefined,
+      longitud: data.longitud || undefined,
+      observaciones: data.observaciones ?? '',
+    })
 
     addAuditEntry({
       accion: 'Edición de evento',
@@ -55,9 +64,16 @@ export function EventDetailPage() {
       detalle: `Evento ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} editado`,
     })
 
-    persistEvents(updated)
     toast.showToast(`Orden ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} actualizada correctamente`)
     navigate('/ordenes')
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Cargando evento...</p>
+      </div>
+    )
   }
 
   if (!event) {
@@ -72,7 +88,7 @@ export function EventDetailPage() {
     )
   }
 
-  const aliadoName = getMockAliados().find((a) => a.id === event.aliadoId)?.nombre
+  const aliadoName = getAliadosSync().find((a) => a.id === event.aliadoId)?.nombre
   const municipioName = mockMunicipios.find((m) => m.id === event.municipioId)?.nombre
 
   return (
@@ -95,10 +111,10 @@ export function EventDetailPage() {
 
       <EventForm
         event={event}
-        aliados={getMockAliados()}
-        desembolsos={getMockDesembolsos()}
+        aliados={getAliadosSync()}
+        desembolsos={getDesembolsosSync()}
         municipios={mockMunicipios}
-        events={activeEvents}
+        events={events}
         onSave={handleSave}
         onCancel={() => navigate('/ordenes')}
       />

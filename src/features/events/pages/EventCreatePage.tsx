@@ -1,8 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { EventForm } from '../components/EventForm'
-import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../utils/mockData'
+import { getEventsApi, createEventApi } from '../../../services/events.service'
+import { getAliadosSync } from '../../../lib/catalogStore'
+import { getDesembolsosSync } from '../../../lib/catalogStore'
+import { mockMunicipios } from '../utils/mockData'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
@@ -13,29 +16,14 @@ export function EventCreatePage() {
   const navigate = useNavigate()
   const toast = useToast()
 
-  const [localEvents, setLocalEvents] = useState<Event[]>(() => {
-    try {
-      const saved = localStorage.getItem('sigev-events')
-      return saved ? JSON.parse(saved) : mockEvents
-    } catch {
-      return mockEvents
-    }
-  })
+  const [events, setEvents] = useState<Event[]>([])
 
-  const activeEvents = useMemo(() => localEvents.filter((e) => e.activo !== false), [localEvents])
+  useEffect(() => {
+    getEventsApi().then(setEvents)
+  }, [])
 
-  function persistEvents(events: Event[]) {
-    setLocalEvents(events)
-    try {
-      localStorage.setItem('sigev-events', JSON.stringify(events))
-    } catch { /* silent */ }
-  }
-
-  function handleSave(data: EventFormValues) {
-    const newId = `EVT-${String(localEvents.length + 1).padStart(3, '0')}`
-
-    const newEvent: Event = {
-      id: newId,
+  async function handleSave(data: EventFormValues) {
+    const partial: Partial<Event> = {
       numeroEvento: data.numeroEvento,
       sufijo: data.sufijo ?? '',
       responsable: data.responsable,
@@ -44,7 +32,6 @@ export function EventCreatePage() {
       aliadoId: data.aliadoId,
       desembolsoId: data.desembolsoId,
       esquema: data.esquema,
-      estado: 'Abierto',
       fechaEvento: data.fechaEvento ?? '',
       asistentes: data.asistentes ?? 0,
       dias: data.dias ?? 0,
@@ -52,10 +39,10 @@ export function EventCreatePage() {
       latitud: data.latitud || undefined,
       longitud: data.longitud || undefined,
       observaciones: data.observaciones ?? '',
-      items: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     }
+
+    const newEvent = await createEventApi(partial)
+    setEvents((prev) => [newEvent, ...prev])
 
     addAuditEntry({
       accion: 'Creación de evento',
@@ -66,7 +53,6 @@ export function EventCreatePage() {
       detalle: `Evento ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creado`,
     })
 
-    persistEvents([newEvent, ...localEvents])
     toast.showToast(`Orden ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creada correctamente`)
     navigate('/ordenes')
   }
@@ -85,10 +71,10 @@ export function EventCreatePage() {
       </div>
 
       <EventForm
-        aliados={getMockAliados()}
-        desembolsos={getMockDesembolsos()}
+        aliados={getAliadosSync()}
+        desembolsos={getDesembolsosSync()}
         municipios={mockMunicipios}
-        events={activeEvents}
+        events={events}
         onSave={handleSave}
         onCancel={() => navigate('/ordenes')}
       />

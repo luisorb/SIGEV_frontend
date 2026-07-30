@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { EventList } from '../components/EventList'
 import { useEventList } from '../hooks/useEventList'
-import { mockEvents } from '../utils/mockData'
+import { getEventsApi, deleteEventApi } from '../../../services/events.service'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
@@ -78,19 +78,15 @@ function AssignOperatorModal({ event, operators, onConfirm, onClose }: AssignOpe
 }
 
 export function EventsListPage() {
-  const [localEvents, setLocalEvents] = useState<Event[]>(() => {
-    try {
-      const saved = localStorage.getItem('sigev-events')
-      if (saved) {
-        const parsed = JSON.parse(saved) as Event[]
-        if (parsed.length >= mockEvents.length) return parsed
-      }
-      localStorage.setItem('sigev-events', JSON.stringify(mockEvents))
-      return mockEvents
-    } catch {
-      return mockEvents
-    }
-  })
+  const [localEvents, setLocalEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getEventsApi().then((events) => {
+      setLocalEvents(events)
+      setLoading(false)
+    })
+  }, [])
 
   const activeEvents = useMemo(() => localEvents.filter((e) => e.activo !== false), [localEvents])
 
@@ -109,18 +105,11 @@ export function EventsListPage() {
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null)
   const [assignOperatorEvent, setAssignOperatorEvent] = useState<Event | null>(null)
 
-  function persistEvents(events: Event[]) {
-    setLocalEvents(events)
-    try {
-      localStorage.setItem('sigev-events', JSON.stringify(events))
-    } catch { /* silent */ }
-  }
-
   const handleAssignOperator = useCallback((id: string, operatorName: string) => {
     const updated = localEvents.map((e) =>
       e.id === id ? { ...e, asignadoA: operatorName, updatedAt: new Date().toISOString() } : e,
     )
-    persistEvents(updated)
+    setLocalEvents(updated)
     addAuditEntry({
       accion: 'Asignación de operador logístico',
       entidad: 'Event',
@@ -138,14 +127,10 @@ export function EventsListPage() {
     if (event) setDeleteEvent(event)
   }, [localEvents])
 
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!deleteEvent) return
-    const updated = localEvents.map((e) =>
-      e.id === deleteEvent.id
-        ? { ...e, activo: false, eliminadoAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-        : e,
-    )
-    persistEvents(updated)
+    await deleteEventApi(deleteEvent.id)
+    setLocalEvents((prev) => prev.filter((e) => e.id !== deleteEvent.id))
     addAuditEntry({
       accion: 'Eliminación de evento',
       entidad: 'Event',
@@ -157,6 +142,14 @@ export function EventsListPage() {
     toast.showToast(`Orden ${deleteEvent.numeroEvento}${deleteEvent.sufijo ? `-${deleteEvent.sufijo}` : ''} eliminada correctamente`)
     setDeleteEvent(null)
   }, [deleteEvent, localEvents])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-slate-500">Cargando eventos...</p>
+      </div>
+    )
+  }
 
   return (
     <>

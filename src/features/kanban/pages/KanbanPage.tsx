@@ -1,9 +1,22 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { useKanban } from '../hooks/useKanban'
-import { mockEvents, getMockAliados, mockMunicipios } from '../../events/utils/mockData'
+import { getEventsApi } from '../../../services/events.service'
+import { getAliadosSync } from '../../../lib/catalogStore'
+import { mockMunicipios } from '../../events/utils/mockData'
+import type { Event } from '../../../types'
 
 export function KanbanPage() {
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getEventsApi().then((data) => {
+      setEvents(data)
+      setLoading(false)
+    })
+  }, [])
+
   const {
     grouped,
     counts,
@@ -11,11 +24,11 @@ export function KanbanPage() {
     handleDragEnd,
     confirmStateChange,
     cancelStateChange,
-  } = useKanban({ events: mockEvents })
+  } = useKanban({ events })
 
   const aliadosMap = useMemo(() => {
     const m: Record<string, string> = {}
-    for (const a of getMockAliados()) m[a.id] = a.nombre
+    for (const a of getAliadosSync()) m[a.id] = a.nombre
     return m
   }, [])
 
@@ -42,6 +55,14 @@ export function KanbanPage() {
   }, [grouped])
 
   const grandTotal = Object.values(columnTotals).reduce((s, v) => s + v, 0)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-slate-500">Cargando tablero...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="h-full flex flex-col">

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { useDashboard } from '../hooks/useDashboard'
 import { MetricGrid } from '../components/MetricGrid'
 import { DashboardFilters } from '../components/DashboardFilters'
@@ -8,11 +8,23 @@ import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
 import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
 import { EventosIncompletos } from '../components/EventosIncompletos'
-import { mockEvents, getMockAliados, getMockDesembolsos, mockMunicipios } from '../../events/utils/mockData'
+import { getEventsApi } from '../../../services/events.service'
+import { getAliadosSync, getDesembolsosSync } from '../../../lib/catalogStore'
+import { mockMunicipios } from '../../events/utils/mockData'
+import type { Event } from '../../../types'
 
 export function DashboardPage() {
-  const aliados = useMemo(() => getMockAliados(), [])
-  const desembolsos = useMemo(() => getMockDesembolsos(), [])
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const aliados = useMemo(() => getAliadosSync(), [])
+  const desembolsos = useMemo(() => getDesembolsosSync(), [])
+
+  useEffect(() => {
+    getEventsApi().then((data) => {
+      setEvents(data)
+      setLoading(false)
+    })
+  }, [])
 
   const {
     filters,
@@ -25,11 +37,11 @@ export function DashboardPage() {
     coberturaTerritorial,
     eventosIncompletos,
     dependencias,
-  } = useDashboard(mockEvents, aliados, desembolsos, mockMunicipios)
+  } = useDashboard(events, aliados, desembolsos, mockMunicipios)
 
   const filteredEvents = useMemo(() => {
     const { periodoInicio, periodoFin, desembolsoId, aliadoId, estado, municipioId, dependencia } = filters
-    let result = [...mockEvents]
+    let result = [...events]
     if (desembolsoId) result = result.filter((e) => e.desembolsoId === desembolsoId)
     if (aliadoId) result = result.filter((e) => e.aliadoId === aliadoId)
     if (estado) result = result.filter((e) => e.estado === estado)
@@ -38,9 +50,17 @@ export function DashboardPage() {
     if (municipioId) result = result.filter((e) => e.municipioId === municipioId)
     if (dependencia) result = result.filter((e) => e.dependencia === dependencia)
     return result
-  }, [filters])
+  }, [events, filters])
 
-  const totalEvents = useMemo(() => mockEvents.length, [])
+  const totalEvents = events.length
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-slate-500">Cargando panel...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -85,7 +105,7 @@ export function DashboardPage() {
         </div>
         <div className="space-y-6">
           <RecentOrders
-            events={mockEvents}
+            events={events}
             aliados={aliados}
             desembolsos={desembolsos}
           />

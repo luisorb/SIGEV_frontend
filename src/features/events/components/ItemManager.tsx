@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, FileSpreadsheet, Trash2, X } from 'lucide-react'
+import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { ItemInput, EventTotals, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'

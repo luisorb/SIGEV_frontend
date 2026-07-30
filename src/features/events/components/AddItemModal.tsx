@@ -6,7 +6,7 @@ import { TAX_CATEGORIES } from '../../../config/constants'
 interface AddItemModalProps {
   open: boolean
   onClose: () => void
-  onAdd: (item: ItemInput) => void
+  onAdd?: (item: ItemInput) => void
   onEdit?: (id: string, updates: ItemInput) => void
   editItem?: { id: string } & ItemInput
   aliados?: Ally[]
@@ -28,7 +28,7 @@ const taxCategoryLabels: Record<TaxCategory, string> = {
   Reembolso: 'Reembolso (0%)',
 }
 
-export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados, eventAliadoId }: AddItemModalProps) {
+export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados }: AddItemModalProps) {
   const [form, setForm] = useState<ItemInput>(emptyItem)
   const [errors, setErrors] = useState<Partial<Record<keyof ItemInput, string>>>({})
 
@@ -71,7 +71,7 @@ export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados, 
     }
     if (isEditing && editItem && onEdit) {
       onEdit(editItem.id, data)
-    } else {
+    } else if (onAdd) {
       onAdd(data)
     }
     setForm(emptyItem)

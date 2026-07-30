@@ -112,7 +112,7 @@ export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
               dataKey="size"
               aspectRatio={4 / 3}
               stroke="rgba(255,255,255,0.3)"
-              content={<TreemapContent />}
+              content={TreemapContent as any}
             >
               <Tooltip content={<CustomTooltip />} />
             </Treemap>
