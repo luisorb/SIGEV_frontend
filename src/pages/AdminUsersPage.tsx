@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'react'
 import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff } from 'lucide-react'
+import { useToast } from '../components/ToastProvider'
 import { USER_ROLES } from '../config/constants'
 import type { UserRole } from '../types'
 
@@ -61,6 +62,7 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
 }
 
 export function AdminUsersPage() {
+  const toast = useToast()
   const [users, setUsers] = useState<User[]>(initialUsers)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof Omit<User, 'id'>, string>>>({})
@@ -103,6 +105,7 @@ export function AdminUsersPage() {
             : u,
         ),
       )
+      toast.showToast(`Usuario "${newUser.nombre}" actualizado correctamente`)
     } else {
       idCounter.current += 1
       const user: User = {
@@ -110,6 +113,7 @@ export function AdminUsersPage() {
         ...newUser,
       }
       setUsers((prev) => [user, ...prev])
+      toast.showToast(`Usuario "${newUser.nombre}" creado correctamente`)
     }
 
     setNewUser(EMPTY_USER)
@@ -147,12 +151,15 @@ export function AdminUsersPage() {
   function handleDeleteConfirm() {
     if (!deleteUser) return
     setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id))
+    toast.showToast(`Usuario "${deleteUser.nombre}" eliminado correctamente`)
     setDeleteUser(null)
   }
 
   function handleToggleActive() {
     if (!confirmToggle) return
-    setUsers((prev) => prev.map((u) => (u.id === confirmToggle.id ? { ...u, activo: !u.activo } : u)))
+    const newState = !confirmToggle.activo
+    setUsers((prev) => prev.map((u) => (u.id === confirmToggle.id ? { ...u, activo: newState } : u)))
+    toast.showToast(`Usuario "${confirmToggle.nombre}" ${newState ? 'activado' : 'inactivado'} correctamente`)
     setConfirmToggle(null)
   }
 
