@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Eye, Pencil, FileDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Search, Plus, Eye, Pencil, FileDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { Offer } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -33,6 +33,8 @@ export function OfferList({
   const [filterEstado, setFilterEstado] = useState('')
   const [sortColumn, setSortColumn] = useState<string>('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null)
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(10)
 
   function handleSort(column: string) {
     if (sortColumn !== column) {
@@ -46,33 +48,39 @@ export function OfferList({
     }
   }
 
-  let filtered = offers
-  if (filterEstado) {
-    filtered = filtered.filter((o) => o.estado === filterEstado)
-  }
+  useEffect(() => { setPage(0) }, [search, filterEstado])
 
-  const sorted = sortDir
-    ? [...filtered].sort((a, b) => {
-        const cmp = sortColumn === 'codigo'
-          ? a.codigo.localeCompare(b.codigo)
-          : sortColumn === 'nombre'
-            ? a.nombre.localeCompare(b.nombre)
-            : sortColumn === 'cliente'
-              ? a.cliente.localeCompare(b.cliente)
-              : sortColumn === 'total'
-                ? a.total - b.total
-                : sortColumn === 'numeroEvento'
-                  ? (a.numeroEvento ?? '').localeCompare(b.numeroEvento ?? '')
-                  : sortColumn === 'estado'
-                    ? a.estado.localeCompare(b.estado)
-                    : sortColumn === 'items'
-                      ? a.items.length - b.items.length
-                      : sortColumn === 'createdAt'
-                        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        return sortDir === 'asc' ? cmp : -cmp
-      })
-    : [...filtered]
+  const sorted = useMemo(() => {
+    let filtered = offers
+    if (filterEstado) {
+      filtered = filtered.filter((o) => o.estado === filterEstado)
+    }
+    if (!sortDir) return [...filtered]
+    return [...filtered].sort((a, b) => {
+      const cmp = sortColumn === 'codigo'
+        ? a.codigo.localeCompare(b.codigo)
+        : sortColumn === 'nombre'
+          ? a.nombre.localeCompare(b.nombre)
+          : sortColumn === 'cliente'
+            ? a.cliente.localeCompare(b.cliente)
+            : sortColumn === 'total'
+              ? a.total - b.total
+              : sortColumn === 'numeroEvento'
+                ? (a.numeroEvento ?? '').localeCompare(b.numeroEvento ?? '')
+                : sortColumn === 'estado'
+                  ? a.estado.localeCompare(b.estado)
+                  : sortColumn === 'items'
+                    ? a.items.length - b.items.length
+                    : sortColumn === 'createdAt'
+                      ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                      : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [offers, filterEstado, sortColumn, sortDir])
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const safePage = Math.min(page, totalPages - 1)
+  const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
   return (
     <div className="space-y-4">
@@ -93,14 +101,14 @@ export function OfferList({
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+        <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder="Buscar por código, nombre, cliente, evento o responsable..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
         <select
@@ -115,10 +123,10 @@ export function OfferList({
         </select>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">
+        <div className="overflow-x-auto flex-1">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th
                   onClick={() => handleSort('codigo')}
@@ -196,14 +204,14 @@ export function OfferList({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sorted.length === 0 ? (
+              {paged.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-400">
                     No hay ofertas para mostrar.
                   </td>
                 </tr>
               ) : (
-                sorted.map((offer) => (
+                paged.map((offer) => (
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{offer.codigo}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{offer.numeroEvento || '—'}</td>
@@ -256,6 +264,62 @@ export function OfferList({
             </tbody>
           </table>
         </div>
+        {sorted.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span>Mostrando página {safePage + 1} de {totalPages} ({sorted.length} resultados)</span>
+            <span className="text-slate-300">|</span>
+            <label htmlFor="offers-pageSize" className="sr-only">Filas por página</label>
+            <select
+              id="offers-pageSize"
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)) }}
+              className="px-2 py-1 border border-slate-300 rounded text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+            >
+              {[5, 10, 15, 20, 30, 50, 100].map((size) => (
+                <option key={size} value={size}>{size} filas</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(0)}
+              disabled={safePage === 0}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Primera página"
+            >
+              <ChevronsLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <button
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage === 0}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Página anterior"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <div className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-w-[120px] text-center">
+              Página <span className="text-primary font-semibold">{safePage + 1}</span> de <span className="font-semibold">{totalPages}</span>
+            </div>
+            <button
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage >= totalPages - 1}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Página siguiente"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-600" />
+            </button>
+            <button
+              onClick={() => setPage(totalPages - 1)}
+              disabled={safePage >= totalPages - 1}
+              className="p-1.5 rounded-lg border border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all"
+              title="Última página"
+            >
+              <ChevronsRight className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
+        </div>
+        )}
       </div>
     </div>
   )
