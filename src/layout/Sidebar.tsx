@@ -13,17 +13,26 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react'
+import { useAuth } from '../features/auth/useAuth'
+import { hasAnyRole } from '../lib/permissions'
 
-const navItems = [
+interface NavItem {
+  label: string
+  to: string
+  icon: typeof LayoutDashboard
+  roles?: readonly string[]
+}
+
+const navItems: NavItem[] = [
   { label: 'Panel', to: '/', icon: LayoutDashboard },
   { label: 'Órdenes', to: '/ordenes', icon: ClipboardList },
   { label: 'Ofertas Económicas', to: '/ofertas', icon: FileSpreadsheet },
   { label: 'Matriz de Ejecución', to: '/matriz', icon: Table2 },
   { label: 'Tablero', to: '/tablero', icon: KanbanSquare },
   { label: 'Mapa', to: '/mapa', icon: Map },
-  { label: 'Parámetros', to: '/parametros', icon: Settings },
-  { label: 'Usuarios', to: '/usuarios', icon: Users },
-  { label: 'Auditoría', to: '/auditoria', icon: ShieldAlert },
+  { label: 'Parámetros', to: '/parametros', icon: Settings, roles: ['functional_admin'] },
+  { label: 'Usuarios', to: '/usuarios', icon: Users, roles: ['technical_admin'] },
+  { label: 'Auditoría', to: '/auditoria', icon: ShieldAlert, roles: ['functional_admin', 'supervisor', 'approver', 'auditor'] },
 ]
 
 interface SidebarProps {
@@ -34,6 +43,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+  const { user } = useAuth()
+  const roleNames = user?.roleNames ?? []
+  const visibleItems = navItems.filter((item) => !item.roles || hasAnyRole(roleNames, item.roles))
+
   const sidebarContent = (
     <>
       <div className="flex h-16 items-center justify-between px-4 border-b border-slate-700">
@@ -63,7 +76,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       </div>
 
       <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
-        {navItems.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

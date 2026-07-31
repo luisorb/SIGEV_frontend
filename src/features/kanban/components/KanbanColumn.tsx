@@ -4,11 +4,14 @@ import type { KanbanCardData } from '../types'
 import { KanbanCard, KanbanCardSkeleton } from './KanbanCard'
 
 const columnStyles: Record<string, { header: string; dot: string; bg: string }> = {
-  Abierto: { header: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-500', bg: 'bg-yellow-50/50' },
-  'En ejecucion': { header: 'bg-red-50 border-red-200', dot: 'bg-primary', bg: 'bg-red-50/50' },
-  Ejecutado: { header: 'bg-green-50 border-green-200', dot: 'bg-green-500', bg: 'bg-green-50/50' },
+  Postulado: { header: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-500', bg: 'bg-yellow-50/50' },
+  'En preparación': { header: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500', bg: 'bg-blue-50/50' },
+  'En revisión': { header: 'bg-orange-50 border-orange-200', dot: 'bg-orange-500', bg: 'bg-orange-50/50' },
+  'En ejecución': { header: 'bg-red-50 border-red-200', dot: 'bg-primary', bg: 'bg-red-50/50' },
   Cerrado: { header: 'bg-slate-50 border-slate-200', dot: 'bg-slate-500', bg: 'bg-slate-50/50' },
   Legalizado: { header: 'bg-purple-50 border-purple-200', dot: 'bg-purple-500', bg: 'bg-purple-50/50' },
+  Devuelto: { header: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500', bg: 'bg-amber-50/50' },
+  Rechazado: { header: 'bg-rose-50 border-rose-200', dot: 'bg-rose-500', bg: 'bg-rose-50/50' },
 }
 
 interface KanbanColumnProps {
@@ -34,7 +37,7 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: estado })
 
-  const styles = columnStyles[estado] ?? columnStyles.Abierto
+  const styles = columnStyles[estado] ?? columnStyles.Postulado
   const totalValor = cards.reduce((s, c) => s + c.totalEconomico, 0)
 
   return (
@@ -77,7 +80,7 @@ export function KanbanColumn({
 }
 
 export function KanbanColumnSkeleton({ estado }: { estado: string }) {
-  const styles = columnStyles[estado] ?? columnStyles.Abierto
+  const styles = columnStyles[estado] ?? columnStyles.Postulado
   return (
     <div className="flex flex-col rounded-lg border border-slate-200 min-w-[280px] w-[280px] flex-shrink-0 bg-slate-50/50">
       <div className={`flex items-center gap-2 px-4 py-3 border-b rounded-t-lg ${styles.header}`}>

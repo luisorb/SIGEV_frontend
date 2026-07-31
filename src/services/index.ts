@@ -52,3 +52,11 @@ export {
   getMunicipalitiesByCategoryApi,
 } from './map.service'
 export type { MunicipalityResponse } from './map.service'
+
+export {
+  getActiveParametersApi,
+  getParameterVersionsApi,
+  getParameterVersionApi,
+  createParameterVersionApi,
+} from './parameters.service'
+export type { ParametersResponse } from './parameters.service'

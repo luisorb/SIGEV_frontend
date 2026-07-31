@@ -1,86 +1,157 @@
-import type { Event, EventState, Soporte } from '../../../types'
-import { SOPORTES_REQUERIDOS } from '../../../types'
+import type { Event, EventState } from '../../../types'
 
-interface TransitionRule {
-  allowed: EventState[]
-  validate: (event: Event, offersCount?: number) => string | null
+export interface TransitionContext {
+  attachmentsCount: number
+  authorizeException?: boolean
 }
 
-const RULES: Record<EventState, TransitionRule> = {
-  Abierto: {
-    allowed: ['En ejecucion'],
-    validate: (event) => {
-      if (!event.asignadoA) return 'Debe asignar un operador logístico antes de iniciar ejecución'
-      if (!event.aliadoId) return 'Debe seleccionar un aliado'
-      if (!event.desembolsoId) return 'Debe seleccionar un desembolso'
-      if (!event.responsable) return 'Debe especificar un responsable'
-      return null
+export interface TransitionRule {
+  to: EventState
+  roles: string[]
+  isDevolucion?: boolean
+  isRechazo?: boolean
+  validate: (event: Event, ctx: TransitionContext) => string | null
+}
+
+const TRANSITIONS: Record<EventState, TransitionRule[]> = {
+  Postulado: [
+    {
+      to: 'En preparación',
+      roles: ['operator', 'functional_admin'],
+      validate: () => null,
     },
-  },
-  'En ejecucion': {
-    allowed: ['Ejecutado', 'Abierto'],
-    validate: (event) => {
-      if (event.items.length === 0) return 'Debe tener al menos un ítem antes de marcar como ejecutado'
-      return null
+    {
+      to: 'Devuelto',
+      roles: ['approver', 'supervisor'],
+      isDevolucion: true,
+      validate: () => null,
     },
-  },
-  Ejecutado: {
-    allowed: ['Cerrado'],
-    validate: (event, offersCount) => {
-      if (!offersCount || offersCount === 0) return 'No hay ofertas económicas asociadas a este evento'
-      if (offersCount < 3) return `Debe tener al menos 3 cotizaciones (actual: ${offersCount})`
-      if (!event.cotizacionSeleccionadaId) return 'Debe seleccionar la oferta económica aprobada'
-      return null
+    {
+      to: 'Rechazado',
+      roles: ['approver'],
+      isRechazo: true,
+      validate: () => null,
     },
-  },
-  Cerrado: {
-    allowed: ['Legalizado', 'Ejecutado'],
-    validate: (event) => {
-      if (!event.soportes || event.soportes.length === 0) return 'Debe cargar los soportes documentales'
-      const tiposCargados = event.soportes.map((s: Soporte) => s.tipo)
-      const faltantes = SOPORTES_REQUERIDOS.filter((t) => !tiposCargados.includes(t))
-      if (faltantes.length > 0) return `Faltan soportes obligatorios: ${faltantes.join(', ')}`
-      return null
+  ],
+  'En preparación': [
+    {
+      to: 'En revisión',
+      roles: ['operator', 'functional_admin'],
+      validate: (event) => {
+        if (event.items.length === 0) return 'Debe tener al menos un ítem antes de enviar a revisión'
+        return null
+      },
     },
-  },
-  Legalizado: {
-    allowed: [],
-    validate: () => null,
-  },
+    {
+      to: 'Devuelto',
+      roles: ['approver', 'supervisor'],
+      isDevolucion: true,
+      validate: () => null,
+    },
+  ],
+  'En revisión': [
+    {
+      to: 'En ejecución',
+      roles: ['approver'],
+      validate: (_event, ctx) => {
+        if (ctx.attachmentsCount < 4 && !ctx.authorizeException) {
+          return `Se requieren al menos 4 cotizaciones para aprobar (actual: ${ctx.attachmentsCount})`
+        }
+        return null
+      },
+    },
+    {
+      to: 'Devuelto',
+      roles: ['approver', 'supervisor'],
+      isDevolucion: true,
+      validate: () => null,
+    },
+    {
+      to: 'Rechazado',
+      roles: ['approver'],
+      isRechazo: true,
+      validate: () => null,
+    },
+  ],
+  Devuelto: [
+    {
+      to: 'En preparación',
+      roles: ['operator', 'analista', 'functional_admin'],
+      validate: () => null,
+    },
+    {
+      to: 'En revisión',
+      roles: ['operator', 'functional_admin'],
+      validate: (event) => {
+        if (event.items.length === 0) return 'Debe tener al menos un ítem antes de enviar a revisión'
+        return null
+      },
+    },
+  ],
+  'En ejecución': [
+    {
+      to: 'Cerrado',
+      roles: ['approver'],
+      validate: () => null,
+    },
+    {
+      to: 'Devuelto',
+      roles: ['supervisor'],
+      isDevolucion: true,
+      validate: () => null,
+    },
+  ],
+  Cerrado: [
+    {
+      to: 'Legalizado',
+      roles: ['approver'],
+      validate: () => null,
+    },
+  ],
+  Legalizado: [],
+  Rechazado: [],
 }
 
 export function useStateMachine() {
-  function canTransition(from: EventState, to: EventState): boolean {
-    return RULES[from].allowed.includes(to)
+  function getTransitionRules(state: EventState, roleNames: string[]): TransitionRule[] {
+    return TRANSITIONS[state]?.filter((rule) => rule.roles.some((role) => roleNames.includes(role))) ?? []
   }
 
-  function validateTransition(event: Event, to: EventState, offersCount?: number): string | null {
-    if (!canTransition(event.estado, to)) {
-      return `No se permite la transición de "${event.estado}" a "${to}"`
+  function canTransition(from: EventState, to: EventState, roleNames: string[]): boolean {
+    return getTransitionRules(from, roleNames).some((rule) => rule.to === to)
+  }
+
+  function validateTransition(event: Event, to: EventState, ctx: TransitionContext, roleNames: string[]): string | null {
+    const rule = getTransitionRules(event.estado, roleNames).find((r) => r.to === to)
+    if (!rule) {
+      return `Su rol no permite pasar de "${event.estado}" a "${to}"`
     }
-    return RULES[event.estado].validate(event, offersCount)
-  }
-
-  function isTerminal(state: EventState): boolean {
-    return RULES[state].allowed.length === 0
-  }
-
-  function getAvailableTransitions(state: EventState): EventState[] {
-    return RULES[state].allowed
+    return rule.validate(event, ctx)
   }
 
   function isDevolucion(from: EventState, to: EventState): boolean {
-    return (
-      (from === 'Cerrado' && to === 'Ejecutado') ||
-      (from === 'En ejecucion' && to === 'Abierto')
-    )
+    return TRANSITIONS[from]?.some((rule) => rule.to === to && rule.isDevolucion) ?? false
+  }
+
+  function isRechazo(from: EventState, to: EventState): boolean {
+    return TRANSITIONS[from]?.some((rule) => rule.to === to && rule.isRechazo) ?? false
+  }
+
+  function isTerminal(state: EventState): boolean {
+    return (TRANSITIONS[state]?.length ?? 0) === 0
+  }
+
+  function getAvailableTransitions(state: EventState, roleNames: string[]): EventState[] {
+    return getTransitionRules(state, roleNames).map((rule) => rule.to)
   }
 
   return {
+    getTransitionRules,
     canTransition,
     validateTransition,
+    isDevolucion,
+    isRechazo,
     isTerminal,
     getAvailableTransitions,
-    isDevolucion,
   }
 }

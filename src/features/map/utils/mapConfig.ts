@@ -4,9 +4,12 @@ export const MAP_MIN_ZOOM = 5
 export const MAP_MAX_ZOOM = 12
 
 export const STATE_MARKER_COLORS: Record<string, string> = {
-  Abierto: '#EAB308',
-  'En ejecucion': '#f43340',
-  Ejecutado: '#22C55E',
+  Postulado: '#EAB308',
+  'En preparación': '#3B82F6',
+  'En revisión': '#F97316',
+  'En ejecución': '#f43340',
   Cerrado: '#64748B',
   Legalizado: '#A855F7',
+  Devuelto: '#F59E0B',
+  Rechazado: '#F43F5E',
 }

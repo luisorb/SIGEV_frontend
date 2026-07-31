@@ -1,3 +1,5 @@
+import type { RoleName } from '../types'
+
 export interface LoginDto {
   document: string
   password: string
@@ -14,7 +16,13 @@ export interface AuthUserDto {
   documentType: string
   fullName: string
   email: string
-  roles: string[]
+  roles: RoleDto[]
+}
+
+export interface RoleDto {
+  id: string
+  name: RoleName
+  description: string
 }
 
 export interface CreateUserDto {
@@ -58,7 +66,9 @@ export interface UpdateEventDto {
 }
 
 export interface ChangeStatusDto {
-  status: 'Abierto' | 'En ejecución' | 'Cerrado' | 'Legalizado'
+  status: 'Postulado' | 'En preparación' | 'En revisión' | 'En ejecución' | 'Cerrado' | 'Legalizado' | 'Devuelto' | 'Rechazado'
+  observation?: string
+  authorizeException?: boolean
 }
 
 export interface CreateItemDto {
@@ -101,6 +111,7 @@ export interface UpdateAllyDto {
   document?: string
   contactName?: string
   contactEmail?: string
+  active?: boolean
 }
 
 export interface CreateDisbursementDto {
@@ -115,6 +126,7 @@ export interface UpdateDisbursementDto {
   amount?: number
   year?: number
   status?: string
+  active?: boolean
 }
 
 export interface GenerateReportDto {

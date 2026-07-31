@@ -1,10 +1,33 @@
 export type TaxCategory = 'IVA' | 'Consumo' | 'Tercero' | 'Reembolso'
 
-export type EventState = 'Abierto' | 'En ejecucion' | 'Ejecutado' | 'Cerrado' | 'Legalizado'
+export type RoleName =
+  | 'technical_admin'
+  | 'functional_admin'
+  | 'approver'
+  | 'operator'
+  | 'solicitante'
+  | 'analista'
+  | 'supervisor'
+  | 'auditor'
+  | 'consulta'
+
+export interface Role {
+  id: string
+  name: RoleName
+  description: string
+}
+
+export type EventState =
+  | 'Postulado'
+  | 'En preparación'
+  | 'En revisión'
+  | 'En ejecución'
+  | 'Cerrado'
+  | 'Legalizado'
+  | 'Devuelto'
+  | 'Rechazado'
 
 export type SchemaType = 'cotizacion' | 'detalle'
-
-export type UserRole = 'Administrador' | 'Operador' | 'Supervisor' | 'Consulta' | 'Auditor'
 
 export type TipoSoporte =
   | 'Formato de requerimiento'
@@ -221,6 +244,15 @@ export interface Soporte {
   updatedAt: string
 }
 
+export interface Attachment {
+  id: string
+  name: string
+  url?: string
+  mimeType?: string
+  size?: number
+  createdAt?: string
+}
+
 export interface Event {
   id: string
   numeroEvento: string
@@ -242,8 +274,9 @@ export interface Event {
   items: Item[]
   asignadoA?: string
   soportes?: Soporte[]
+  attachments?: Attachment[]
   cotizacionSeleccionadaId?: string
-  motivoDevolucion?: string
+  observation?: string
   activo?: boolean
   eliminadoAt?: string
   createdAt: string

@@ -2,6 +2,11 @@ import { useState, useCallback, useMemo } from 'react'
 import type { Event, EventState } from '../../../types'
 import type { KanbanGrouped, KanbanCardData, StateChangeRequest } from '../types'
 import { KANBAN_COLUMNS } from '../types'
+import { useStateMachine } from '../../events/hooks/useStateMachine'
+import { useRolePermissions } from '../../auth/useRolePermissions'
+import { changeEventStatusApi } from '../../../services/events.service'
+import { useToast } from '../../../components/ToastProvider'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
 
 interface UseKanbanOptions {
   events: Event[]
@@ -9,8 +14,10 @@ interface UseKanbanOptions {
 
 export function useKanban({ events }: UseKanbanOptions) {
   const [pendingChange, setPendingChange] = useState<StateChangeRequest | null>(null)
-
   const [localEvents, setLocalEvents] = useState<Event[]>(events)
+  const { canTransition } = useStateMachine()
+  const { roleNames } = useRolePermissions()
+  const toast = useToast()
 
   const grouped = useMemo<KanbanGrouped>(() => {
     const groups: KanbanGrouped = {}
@@ -54,6 +61,11 @@ export function useKanban({ events }: UseKanbanOptions) {
 
     if (event.estado === targetState) return
 
+    if (!canTransition(event.estado, targetState, roleNames)) {
+      toast.showToast(`Su rol no permite mover el evento de "${event.estado}" a "${targetState}"`, 'error')
+      return
+    }
+
     setPendingChange({
       eventId: activeId,
       from: event.estado,
@@ -61,19 +73,25 @@ export function useKanban({ events }: UseKanbanOptions) {
     })
   }
 
-  const confirmStateChange = useCallback((reason?: string) => {
-    void reason
+  const confirmStateChange = useCallback(async (reason?: string) => {
     if (!pendingChange) return
 
-    setLocalEvents((prev) =>
-      prev.map((e) =>
-        e.id === pendingChange.eventId
-          ? { ...e, estado: pendingChange.to, updatedAt: new Date().toISOString() }
-          : e,
-      ),
-    )
+    const { eventId, to } = pendingChange
+    try {
+      await changeEventStatusApi(eventId, to, { observation: reason || undefined })
+      setLocalEvents((prev) =>
+        prev.map((e) =>
+          e.id === eventId
+            ? { ...e, estado: to, updatedAt: new Date().toISOString() }
+            : e,
+        ),
+      )
+      toast.showToast(`Evento movido a "${to}"`)
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo cambiar el estado del evento'), 'error')
+    }
     setPendingChange(null)
-  }, [pendingChange])
+  }, [pendingChange, toast])
 
   const cancelStateChange = useCallback(() => {
     setPendingChange(null)

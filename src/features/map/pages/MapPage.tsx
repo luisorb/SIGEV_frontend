@@ -65,19 +65,23 @@ export function MapPage() {
           </select>
           <select value={selectedEstado} onChange={(e) => setSelectedEstado(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
             <option value="">Todos los estados</option>
-            <option value="Abierto">Abierto</option>
-            <option value="En ejecucion">En ejecución</option>
-            <option value="Ejecutado">Ejecutado</option>
+            <option value="Postulado">Postulado</option>
+            <option value="En preparación">En preparación</option>
+            <option value="En revisión">En revisión</option>
+            <option value="En ejecución">En ejecución</option>
             <option value="Cerrado">Cerrado</option>
             <option value="Legalizado">Legalizado</option>
+            <option value="Devuelto">Devuelto</option>
+            <option value="Rechazado">Rechazado</option>
           </select>
         </div>
         <div className="flex items-center gap-4 text-sm text-slate-500 ml-auto">
           <span className="font-medium text-slate-700">Leyenda:</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-500" /> Abierto</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-500" /> Postulado</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-500" /> En preparación</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-500" /> En revisión</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-primary" /> En ejecución</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-500" /> Ejecutado</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-500" /> Cerrado</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-500" /> Devuelto</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-purple-500" /> Legalizado</span>
         </div>
       </div>

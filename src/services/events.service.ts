@@ -1,6 +1,6 @@
 import api from '../lib/api'
 import type { CreateEventDto, ChangeStatusDto } from './types'
-import type { Event, Item, EventState, SchemaType } from '../types'
+import type { Event, Item, EventState, SchemaType, Attachment } from '../types'
 
 function mapBackendEvent(data: Record<string, unknown>): Event {
   return {
@@ -20,9 +20,11 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     aliadoId: String(data.generalAllyId ?? data.aliadoId ?? ''),
     desembolsoId: String(data.disbursementId ?? data.desembolsoId ?? ''),
     esquema: (data.schemaType ?? data.esquema ?? 'cotizacion') as SchemaType,
-    estado: (data.status ?? data.estado ?? 'Abierto') as EventState,
+    estado: (data.status ?? data.estado ?? 'Postulado') as EventState,
     items: (data.items as Item[]) ?? [],
     asignadoA: String(data.assignedTo ?? data.asignadoA ?? ''),
+    attachments: (data.attachments as Attachment[] | undefined) ?? undefined,
+    observation: String(data.observation ?? data.motivoDevolucion ?? '') || undefined,
     createdAt: String(data.createdAt ?? new Date().toISOString()),
     updatedAt: String(data.updatedAt ?? new Date().toISOString()),
   }
@@ -73,6 +75,15 @@ export async function deleteEventApi(id: string): Promise<void> {
   await api.delete(`/api/v1/events/${id}`)
 }
 
-export async function changeEventStatusApi(id: string, status: string): Promise<void> {
-  await api.patch(`/api/v1/events/${id}/status`, { status } as ChangeStatusDto)
+export async function changeEventStatusApi(
+  id: string,
+  status: EventState,
+  options?: { observation?: string; authorizeException?: boolean },
+): Promise<void> {
+  const dto: ChangeStatusDto = {
+    status,
+    ...(options?.observation !== undefined ? { observation: options.observation } : {}),
+    ...(options?.authorizeException !== undefined ? { authorizeException: options.authorizeException } : {}),
+  }
+  await api.patch(`/api/v1/events/${id}/status`, dto)
 }

@@ -1,11 +1,12 @@
-import type { UserRole } from '../../../types'
+import type { Role } from '../../../types'
 
 export interface AuthUser {
   id: string
   identificador: string
   nombre: string
   email: string
-  roles: UserRole[]
+  roles: Role[]
+  roleNames: string[]
   activo: boolean
 }
 

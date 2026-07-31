@@ -4,11 +4,14 @@ import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { Link } from 'react-router-dom'
 
 const stateStyles: Record<string, { dot: string; bg: string; text: string; label: string }> = {
-  Abierto: { dot: 'bg-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Abierto' },
-  'En ejecucion': { dot: 'bg-red-500', bg: 'bg-red-100', text: 'text-red-800', label: 'Ejecución' },
-  Ejecutado: { dot: 'bg-green-500', bg: 'bg-green-100', text: 'text-green-800', label: 'Ejecutado' },
+  Postulado: { dot: 'bg-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Postulado' },
+  'En preparación': { dot: 'bg-blue-500', bg: 'bg-blue-100', text: 'text-blue-800', label: 'En preparación' },
+  'En revisión': { dot: 'bg-orange-500', bg: 'bg-orange-100', text: 'text-orange-800', label: 'En revisión' },
+  'En ejecución': { dot: 'bg-red-500', bg: 'bg-red-100', text: 'text-red-800', label: 'En ejecución' },
   Cerrado: { dot: 'bg-slate-400', bg: 'bg-slate-100', text: 'text-slate-800', label: 'Cerrado' },
   Legalizado: { dot: 'bg-purple-500', bg: 'bg-purple-100', text: 'text-purple-800', label: 'Legalizado' },
+  Devuelto: { dot: 'bg-amber-500', bg: 'bg-amber-100', text: 'text-amber-800', label: 'Devuelto' },
+  Rechazado: { dot: 'bg-rose-500', bg: 'bg-rose-100', text: 'text-rose-800', label: 'Rechazado' },
 }
 
 interface RecentOrdersProps {
@@ -42,7 +45,7 @@ export function RecentOrders({ events, aliados, desembolsos }: RecentOrdersProps
         <div className="divide-y divide-slate-100">
           {recent.map((event) => {
             const total = event.items.reduce((s, i) => s + i.total, 0)
-            const s = stateStyles[event.estado] || stateStyles.Abierto
+            const s = stateStyles[event.estado] || stateStyles.Postulado
             return (
               <div key={event.id} className="relative px-5 py-3.5 pl-[52px] hover:bg-slate-50 transition-colors group">
                 <div className={`absolute left-[17px] top-[18px] w-3 h-3 rounded-full border-2 border-white ${s.dot} shadow-sm`} />

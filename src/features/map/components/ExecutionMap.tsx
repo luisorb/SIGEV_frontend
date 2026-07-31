@@ -10,11 +10,14 @@ interface ExecutionMapProps {
 }
 
 const stateBadge: Record<string, string> = {
-  Abierto: 'bg-yellow-500',
-  'En ejecucion': 'bg-primary',
-  Ejecutado: 'bg-green-500',
+  Postulado: 'bg-yellow-500',
+  'En preparación': 'bg-blue-500',
+  'En revisión': 'bg-orange-500',
+  'En ejecución': 'bg-primary',
   Cerrado: 'bg-slate-500',
   Legalizado: 'bg-purple-500',
+  Devuelto: 'bg-amber-500',
+  Rechazado: 'bg-rose-500',
 }
 
 function buildIcon(count: number, color: string): L.DivIcon {

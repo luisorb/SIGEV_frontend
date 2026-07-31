@@ -177,8 +177,10 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
                   <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
                     row.estado === 'Legalizado' ? 'bg-green-100 text-green-700' :
                     row.estado === 'Cerrado' ? 'bg-blue-100 text-blue-700' :
-                    row.estado === 'Ejecutado' ? 'bg-indigo-100 text-indigo-700' :
-                    row.estado === 'En ejecucion' ? 'bg-amber-100 text-amber-700' :
+                    row.estado === 'En ejecución' ? 'bg-indigo-100 text-indigo-700' :
+                    row.estado === 'En revisión' ? 'bg-amber-100 text-amber-700' :
+                    row.estado === 'Devuelto' ? 'bg-orange-100 text-orange-700' :
+                    row.estado === 'Rechazado' ? 'bg-red-100 text-red-700' :
                     'bg-slate-100 text-slate-600'
                   }`}>{row.estado}</span>
                 </td>

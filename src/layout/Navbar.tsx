@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Menu, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../features/auth/useAuth'
 import { Breadcrumbs } from './Breadcrumbs'
+import { ROLE_LABELS } from '../lib/permissions'
 
 interface NavbarProps {
   onToggleSidebar: () => void
@@ -30,7 +31,9 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
   }
 
   const userInitial = user?.nombre?.charAt(0).toUpperCase() ?? '?'
-  const userRoles = user?.roles?.join(', ') ?? ''
+  const userRoles = (user?.roleNames ?? [])
+    .map((name) => ROLE_LABELS[name as keyof typeof ROLE_LABELS] ?? name)
+    .join(', ')
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6">

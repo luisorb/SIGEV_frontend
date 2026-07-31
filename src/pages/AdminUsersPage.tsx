@@ -4,6 +4,7 @@ import { useToast } from '../components/ToastProvider'
 import { USER_ROLES } from '../config/constants'
 import { getUsersApi, createUserApi, updateUserApi, deleteUserApi } from '../services/users.service'
 import type { CreateUserDto } from '../services/types'
+import { ROLE_LABELS } from '../lib/permissions'
 
 interface User {
   id: string
@@ -18,11 +19,21 @@ interface User {
 type SortableColumn = 'identificador' | 'nombre' | 'email'
 
 const roleColors: Record<string, string> = {
-  Administrador: 'bg-purple-100 text-purple-700',
-  Operador: 'bg-blue-100 text-blue-700',
-  Supervisor: 'bg-amber-100 text-amber-700',
-  Consulta: 'bg-slate-100 text-slate-700',
-  Auditor: 'bg-green-100 text-green-700',
+  technical_admin: 'bg-purple-100 text-purple-700',
+  functional_admin: 'bg-indigo-100 text-indigo-700',
+  approver: 'bg-rose-100 text-rose-700',
+  operator: 'bg-blue-100 text-blue-700',
+  solicitante: 'bg-cyan-100 text-cyan-700',
+  analista: 'bg-teal-100 text-teal-700',
+  supervisor: 'bg-amber-100 text-amber-700',
+  auditor: 'bg-green-100 text-green-700',
+  consulta: 'bg-slate-100 text-slate-700',
+}
+
+const adminRoles = ['technical_admin', 'functional_admin']
+
+function roleLabel(role: string): string {
+  return ROLE_LABELS[role as keyof typeof ROLE_LABELS] ?? role
 }
 type PageSize = 10 | 20 | 30 | 50 | 100
 
@@ -66,7 +77,7 @@ export function AdminUsersPage() {
       nombre: u.fullName,
       email: u.email,
       password: '',
-      roles: u.roles,
+      roles: u.roles.map((r) => r.name),
       activo: true,
     }))))
   }, [])
@@ -132,7 +143,7 @@ export function AdminUsersPage() {
         nombre: u.fullName,
         email: u.email,
         password: '',
-        roles: u.roles,
+        roles: u.roles.map((r) => r.name),
         activo: true,
       })))
       setNewUser(EMPTY_USER)
@@ -181,7 +192,7 @@ export function AdminUsersPage() {
         nombre: u.fullName,
         email: u.email,
         password: '',
-        roles: u.roles,
+        roles: u.roles.map((r) => r.name),
         activo: true,
       })))
       toast.showToast(`Usuario "${deleteUser.nombre}" eliminado correctamente`)
@@ -203,7 +214,7 @@ export function AdminUsersPage() {
         nombre: u.fullName,
         email: u.email,
         password: '',
-        roles: u.roles,
+        roles: u.roles.map((r) => r.name),
         activo: true,
       })))
       toast.showToast(`Usuario "${confirmToggle.nombre}" ${newState ? 'activado' : 'inactivado'} correctamente`)
@@ -315,8 +326,8 @@ export function AdminUsersPage() {
                       <div className="flex flex-wrap gap-1">
                         {user.roles.map((r) => (
                           <span key={r} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${roleColors[r] || 'bg-slate-100 text-slate-700'}`}>
-                            {r === 'Administrador' ? <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
-                            {r}
+                            {adminRoles.includes(r) ? <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+                            {roleLabel(r)}
                           </span>
                         ))}
                       </div>
@@ -579,8 +590,8 @@ export function AdminUsersPage() {
                           className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                         />
                         <div className="flex items-center gap-1.5">
-                          {r === 'Administrador' ? <ShieldCheck className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
-                          {r}
+                          {adminRoles.includes(r) ? <ShieldCheck className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
+                          {roleLabel(r)}
                         </div>
                       </label>
                     )

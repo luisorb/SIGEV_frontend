@@ -1,4 +1,4 @@
-import { Save, RotateCcw, AlertCircle, CheckCircle2, Receipt, Percent, Banknote, Users, ShieldCheck } from 'lucide-react'
+import { Save, RotateCcw, AlertCircle, CheckCircle2, Receipt, Percent, Banknote, Users, ShieldCheck, Loader2 } from 'lucide-react'
 import type { CalculationParams } from '../../../types'
 import type { ParamFieldKey } from '../types'
 
@@ -9,6 +9,7 @@ interface ParameterFormProps {
   nextVersion: number
   aprobadoPor: string
   saveMessage: { type: 'success' | 'error'; text: string } | null
+  saving?: boolean
   onUpdateParam: (key: keyof CalculationParams, value: number | boolean) => void
   onAprobadoPorChange: (value: string) => void
   onSave: () => void
@@ -62,6 +63,7 @@ export function ParameterForm({
   nextVersion,
   aprobadoPor,
   saveMessage,
+  saving,
   onUpdateParam,
   onAprobadoPorChange,
   onSave,
@@ -203,11 +205,11 @@ export function ParameterForm({
             )}
             <button
               onClick={onSave}
-              disabled={!isDirty}
+              disabled={!isDirty || saving}
               className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-5 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 transition-all"
             >
-              <Save className="w-3.5 h-3.5" />
-              Guardar Cambios
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
         </div>

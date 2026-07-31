@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Pencil, ChevronLeft, Tag, MapPin, ArrowLeftCircle } from 'lucide-react'
+import { Pencil, ChevronLeft, Tag, MapPin, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { AssociatedOffers } from '../components/AssociatedOffers'
 import { SupportDocuments } from '../components/SupportDocuments'
@@ -17,12 +17,28 @@ import { addAuditEntry } from '../../../lib/auditStore'
 import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
 import { exportBudgetPDF } from '../../../utils/pdfExport'
+import { useRolePermissions } from '../../auth/useRolePermissions'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
 import type { Event, EventState, Soporte, TipoSoporte } from '../../../types'
+
+const ESTADO_COLORS: Record<string, string> = {
+  Postulado: 'bg-yellow-100 text-yellow-800',
+  'En preparación': 'bg-blue-100 text-blue-800',
+  'En revisión': 'bg-orange-100 text-orange-800',
+  'En ejecución': 'bg-red-100 text-red-800',
+  Cerrado: 'bg-slate-100 text-slate-800',
+  Legalizado: 'bg-purple-100 text-purple-800',
+  Devuelto: 'bg-amber-100 text-amber-800',
+  Rechazado: 'bg-rose-100 text-rose-800',
+}
+
+const TERMINAL_STATES: EventState[] = ['Cerrado', 'Legalizado', 'Rechazado']
 
 export function EventViewPage() {
   const { id } = useParams()
   const toast = useToast()
-  const { validateTransition, isDevolucion, getAvailableTransitions } = useStateMachine()
+  const { getTransitionRules, isDevolucion, validateTransition } = useStateMachine()
+  const { roleNames, can: userCan } = useRolePermissions()
   const { allOffers: offers } = useOffers()
 
   const { data: event, isLoading } = useQuery({
@@ -41,11 +57,12 @@ export function EventViewPage() {
     if (event) setLocalEvent(event)
   }, [event])
 
-  const [showHistory, setShowHistory] = useState(false)
-  const [currentEstado, setCurrentEstado] = useState<string>(event?.estado ?? '')
   const [pendingEstado, setPendingEstado] = useState<string | null>(null)
   const [transitionError, setTransitionError] = useState<string | null>(null)
   const [devolucionMotivo, setDevolucionMotivo] = useState('')
+  const [authorizeException, setAuthorizeException] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
 
   const {
     items,
@@ -90,15 +107,8 @@ export function EventViewPage() {
   }, [items])
 
   const stateHistory = event ? getStateHistory(event.id) : []
-  const eventOffers = offers.filter((o) => o.eventoId === id)
-
-  const estadoColors: Record<string, string> = {
-    Abierto: 'bg-yellow-100 text-yellow-800',
-    'En ejecucion': 'bg-red-100 text-red-800',
-    Ejecutado: 'bg-green-100 text-green-800',
-    Cerrado: 'bg-slate-100 text-slate-800',
-    Legalizado: 'bg-purple-100 text-purple-800',
-  }
+  const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Postulado') as EventState
+  const attachmentsCount = event?.attachments?.length ?? 0
 
   function updateEvent(partial: Partial<Event>) {
     if (!localEvent) return
@@ -158,9 +168,9 @@ export function EventViewPage() {
         accion: 'Carga de soporte documental',
         entidad: 'Event',
         entidadId: event.id,
-      usuario: '',
-      fecha: new Date().toISOString(),
-      detalle: `Soporte "${tipo}" cargado: ${file.name}`,
+        usuario: '',
+        fecha: new Date().toISOString(),
+        detalle: `Soporte "${tipo}" cargado: ${file.name}`,
       })
       toast.showToast(`Soporte "${tipo}" cargado`)
     }
@@ -174,50 +184,73 @@ export function EventViewPage() {
     toast.showToast('Soporte eliminado')
   }
 
-  async function handleStateChange(newEstado: string, motivo?: string) {
-    if (!event) return
-    const oldEstado = event.estado
-    if (oldEstado === newEstado) return
+  function requestTransition(newEstado: EventState) {
+    if (!event || event.estado === newEstado) return
+    setTransitionError(null)
+    setDevolucionMotivo('')
+    setAuthorizeException(false)
+    setPendingEstado(newEstado)
+  }
 
-    const error = validateTransition(event, newEstado as EventState, eventOffers.length)
+  async function confirmStateChange() {
+    if (!event || !pendingEstado) return
+    const newEstado = pendingEstado as EventState
+    const motivo = devolucionMotivo.trim()
+    const isDev = isDevolucion(event.estado, newEstado)
+
+    if (isDev && !motivo) {
+      setTransitionError('Debe indicar el motivo de la devolución')
+      return
+    }
+
+    const error = validateTransition(event, newEstado, { attachmentsCount, authorizeException }, roleNames)
     if (error) {
       setTransitionError(error)
       return
     }
 
-    await changeEventStatusApi(event.id, newEstado)
+    setConfirming(true)
+    try {
+      await changeEventStatusApi(event.id, newEstado, {
+        observation: motivo || undefined,
+        authorizeException: newEstado === 'En ejecución' && authorizeException ? true : undefined,
+      })
 
-    const isDev = isDevolucion(event.estado, newEstado as EventState)
-    const updatedEvent = {
-      ...event,
-      estado: newEstado as EventState,
-      updatedAt: new Date().toISOString(),
-      ...(isDev ? { motivoDevolucion: motivo || '' } : {}),
+      const oldEstado = event.estado
+      const updatedEvent = {
+        ...event,
+        estado: newEstado,
+        updatedAt: new Date().toISOString(),
+        ...(isDev ? { observation: motivo } : {}),
+      }
+      setLocalEvent(updatedEvent)
+      setPendingEstado(null)
+      setTransitionError(null)
+
+      addStateHistoryEntry({
+        eventoId: event.id,
+        estadoAnterior: oldEstado,
+        estadoNuevo: newEstado,
+        usuario: '',
+        fecha: new Date().toISOString(),
+        motivo,
+      })
+      addAuditEntry({
+        accion: 'Cambio de estado',
+        entidad: 'Event',
+        entidadId: event.id,
+        usuario: '',
+        fecha: new Date().toISOString(),
+        detalle: `Estado cambiado de ${oldEstado} a ${newEstado}${motivo ? `. Motivo: ${motivo}` : ''}`,
+        valorAnterior: oldEstado,
+        valorNuevo: newEstado,
+      })
+      toast.showToast(`Estado cambiado de ${oldEstado} a ${newEstado}`)
+    } catch (error) {
+      setTransitionError(getApiErrorMessage(error, 'No se pudo cambiar el estado del evento'))
+    } finally {
+      setConfirming(false)
     }
-    setLocalEvent(updatedEvent)
-    setCurrentEstado(newEstado)
-    setPendingEstado(null)
-    setTransitionError(null)
-
-    addStateHistoryEntry({
-      eventoId: event.id,
-      estadoAnterior: oldEstado,
-      estadoNuevo: newEstado as EventState,
-      usuario: '',
-      fecha: new Date().toISOString(),
-      motivo: motivo || '',
-    })
-    addAuditEntry({
-      accion: 'Cambio de estado',
-      entidad: 'Event',
-      entidadId: event.id,
-      usuario: '',
-      fecha: new Date().toISOString(),
-      detalle: `Estado cambiado de ${oldEstado} a ${newEstado}${motivo ? `. Motivo: ${motivo}` : ''}`,
-      valorAnterior: oldEstado,
-      valorNuevo: newEstado,
-    })
-    toast.showToast(`Estado cambiado de ${oldEstado} a ${newEstado}`)
   }
 
   if (isLoading) {
@@ -243,7 +276,29 @@ export function EventViewPage() {
   const aliado = aliados.find((a) => a.id === event.aliadoId)
   const municipio = municipios.find((m) => m.id === event.municipioId)
   const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
-  const isDevolucionActive = event.motivoDevolucion && event.estado === 'Ejecutado'
+  const isDevuelto = displayEstado === 'Devuelto'
+
+  const canEdit =
+    userCan('functional_admin', 'operator', 'supervisor') ||
+    (isDevuelto && userCan('analista', 'solicitante'))
+
+  const canModifyItems =
+    userCan('functional_admin', 'operator') ||
+    (isDevuelto && userCan('analista'))
+
+  const canManageOffers = userCan('functional_admin', 'operator')
+  const offersReadOnly = !canManageOffers || TERMINAL_STATES.includes(displayEstado)
+
+  const soportesVisible = ['En ejecución', 'Cerrado', 'Devuelto'].includes(displayEstado)
+  const soportesReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
+
+  const itemsReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
+
+  const availableTransitions = getTransitionRules(displayEstado, roleNames)
+  const needsExceptionApproval = attachmentsCount < 4
+  const pendingRule = pendingEstado
+    ? availableTransitions.find((r) => r.to === pendingEstado)
+    : undefined
 
   const label = (text: string) => (
     <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1">{text}</p>
@@ -252,8 +307,6 @@ export function EventViewPage() {
   const value = (text: string) => (
     <p className="text-sm font-medium text-slate-900">{text}</p>
   )
-
-  const availableTransitions = getAvailableTransitions(event.estado)
 
   return (
     <div className="space-y-6">
@@ -285,24 +338,43 @@ export function EventViewPage() {
             <div className="flex items-center gap-1.5 text-sm text-slate-500">
               {event.items.length} ítem{event.items.length !== 1 ? 's' : ''}
             </div>
+            <div className="flex items-center gap-1.5 text-sm text-slate-500">
+              {attachmentsCount} cotización{attachmentsCount !== 1 ? 'es' : ''}
+            </div>
           </div>
         </div>
-        <Link
-          to={`/ordenes/${event.id}/editar`}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150 shrink-0"
-        >
-          <Pencil className="w-4 h-4" />
-          Editar
-        </Link>
+        {canEdit && (
+          <Link
+            to={`/ordenes/${event.id}/editar`}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150 shrink-0"
+          >
+            <Pencil className="w-4 h-4" />
+            Editar
+          </Link>
+        )}
       </div>
 
-      {isDevolucionActive && (
+      {isDevuelto && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-6 py-4 flex items-start gap-3">
           <ArrowLeftCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-amber-800">Evento devuelto para corrección</p>
-            <p className="text-xs text-amber-700 mt-0.5">Motivo: {event.motivoDevolucion}</p>
-            <p className="text-xs text-amber-600 mt-0.5">Solo puede modificar las carpetas 5-7 (Facturas, Registro fotográfico, Listado de asistencia)</p>
+            {event.observation && (
+              <p className="text-xs text-amber-700 mt-0.5">Motivo: {event.observation}</p>
+            )}
+            <p className="text-xs text-amber-600 mt-0.5">
+              Pueden corregir: {canEdit ? 'su rol puede editar el evento en este estado.' : 'solo operador, analista o solicitante.'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {displayEstado === 'Rechazado' && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-6 py-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red-800">Evento rechazado</p>
+            {event.observation && <p className="text-xs text-red-700 mt-0.5">Motivo: {event.observation}</p>}
           </div>
         </div>
       )}
@@ -332,36 +404,39 @@ export function EventViewPage() {
           <div className="px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
             <div className="flex items-center gap-3">
               <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Estado</span>
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold rounded-full ${estadoColors[currentEstado || event.estado] || 'bg-slate-100 text-slate-800'}`}>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold rounded-full ${ESTADO_COLORS[displayEstado] || 'bg-slate-100 text-slate-800'}`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                {currentEstado || event.estado}
+                {displayEstado}
               </span>
             </div>
-            <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
-              <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Cambiar a</span>
-              <div className="relative">
-                <select
-                  value={currentEstado || event.estado}
-                  onChange={(e) => {
-                    setPendingEstado(e.target.value)
-                    setTransitionError(null)
-                    setDevolucionMotivo('')
-                  }}
-                  className="appearance-none text-sm border border-slate-300 rounded-lg pl-3 pr-8 py-1.5 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 cursor-pointer hover:border-slate-400"
-                >
-                  {availableTransitions.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+            {availableTransitions.length > 0 && (
+              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Acciones</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {availableTransitions.map((rule) => (
+                    <button
+                      key={rule.to}
+                      onClick={() => requestTransition(rule.to)}
+                      className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98] ${
+                        rule.isDevolucion
+                          ? 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100'
+                          : rule.isRechazo
+                            ? 'text-red-700 bg-red-50 border border-red-200 hover:bg-red-100'
+                            : 'text-white bg-primary hover:bg-primary-dark'
+                      }`}
+                    >
+                      {rule.isDevolucion ? 'Devolver' : rule.isRechazo ? 'Rechazar' : `Pasar a ${rule.to}`}
+                    </button>
                   ))}
-                </select>
-                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </div>
               </div>
-              {stateHistory.length > 0 && (
-                <button onClick={() => setShowHistory(true)} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  Ver historial
-                </button>
-              )}
-            </div>
+            )}
+            {stateHistory.length > 0 && (
+              <button onClick={() => setShowHistory(true)} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Ver historial
+              </button>
+            )}
             <div className="ml-auto flex items-center gap-4">
               <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(eventTotals.baseTotal)}</p></div>
               <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(eventTotals.impuestosTotal)}</p></div>
@@ -385,14 +460,13 @@ export function EventViewPage() {
         selectedOfferId={event.cotizacionSeleccionadaId}
         onSelectOffer={handleSelectOffer}
         onExportPDF={handleExportPDF}
-        readOnly={event.estado === 'Legalizado'}
+        readOnly={offersReadOnly}
       />
 
-      {(event.estado === 'Ejecutado' || event.estado === 'Cerrado' || isDevolucionActive) && (
+      {soportesVisible && (
         <SupportDocuments
           soportes={event.soportes || []}
-          readOnly={event.estado === 'Cerrado' && !isDevolucionActive}
-          soloModificables={!!isDevolucionActive}
+          readOnly={soportesReadOnly}
           onUpload={handleUploadSoporte}
           onDelete={handleDeleteSoporte}
         />
@@ -405,19 +479,29 @@ export function EventViewPage() {
         onUpdateItem={updateItem}
         onRemoveItem={removeItem}
         eventTotals={eventTotals}
-        readOnly={event.estado === 'Legalizado' || event.estado === 'Cerrado'}
+        readOnly={itemsReadOnly}
       />
 
       {pendingEstado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => { setPendingEstado(null); setTransitionError(null) }}>
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-3">
-              <div className="p-2 bg-amber-100 rounded-lg shrink-0">
-                <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              <div className={`p-2 rounded-lg shrink-0 ${pendingRule?.isDevolucion ? 'bg-amber-100' : pendingRule?.isRechazo ? 'bg-red-100' : 'bg-primary/10'}`}>
+                {pendingRule?.isDevolucion ? (
+                  <ArrowLeftCircle className="w-5 h-5 text-amber-600" />
+                ) : pendingRule?.isRechazo ? (
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                ) : (
+                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                )}
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">Cambiar estado</h3>
-                {!transitionError && <p className="text-xs sm:text-sm text-slate-500">Esta acción modificará el estado de seguimiento de la orden</p>}
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  {pendingRule?.isDevolucion ? 'Devolver evento' : pendingRule?.isRechazo ? 'Rechazar evento' : `Cambiar estado`}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  De <span className="font-semibold">{displayEstado}</span> a <span className="font-semibold">{pendingEstado}</span>
+                </p>
               </div>
             </div>
 
@@ -428,25 +512,61 @@ export function EventViewPage() {
               </div>
             ) : (
               <>
-                <p className="text-sm sm:text-base text-slate-700 mb-4">
-                  ¿Estás seguro de cambiar la orden <span className="font-semibold">{event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}</span> de <span className="font-semibold">{currentEstado || event.estado}</span> a <span className="font-semibold">{pendingEstado}</span>?
-                </p>
-                {isDevolucion(event.estado, pendingEstado as EventState) && (
+                {(pendingRule?.isDevolucion || pendingRule?.isRechazo) && (
                   <div className="mb-4">
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Motivo de la devolución</label>
-                    <textarea value={devolucionMotivo} onChange={(e) => setDevolucionMotivo(e.target.value)} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Describa el motivo de la devolución..." />
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      {pendingRule?.isDevolucion ? 'Motivo de la devolución' : 'Motivo del rechazo'} <span className="text-red-400">*</span>
+                    </label>
+                    <textarea value={devolucionMotivo} onChange={(e) => setDevolucionMotivo(e.target.value)} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Describa el motivo..." />
                   </div>
                 )}
+
+                {pendingEstado === 'En ejecución' && needsExceptionApproval && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs text-amber-800 mb-2">
+                      El evento tiene {attachmentsCount} cotización{attachmentsCount !== 1 ? 'es' : ''} y se requieren al menos 4 para aprobar.
+                    </p>
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={authorizeException}
+                        onChange={(e) => setAuthorizeException(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded border-amber-300 text-primary focus:ring-primary"
+                      />
+                      <span className="text-xs text-amber-800">
+                        Autorizar excepción y aprobar con menos de 4 cotizaciones
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                <p className="text-sm sm:text-base text-slate-700 mb-4">
+                  ¿Estás seguro de cambiar la orden <span className="font-semibold">{event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}</span> a <span className="font-semibold">{pendingEstado}</span>?
+                </p>
               </>
             )}
 
             <div className="flex justify-end gap-3">
-              <button onClick={() => { setPendingEstado(null); setTransitionError(null) }} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150">
+              <button
+                onClick={() => { setPendingEstado(null); setTransitionError(null) }}
+                disabled={confirming}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              >
                 {transitionError ? 'Cerrar' : 'Cancelar'}
               </button>
               {!transitionError && (
-                <button onClick={() => handleStateChange(pendingEstado, devolucionMotivo || undefined)} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
-                  Cambiar a {pendingEstado}
+                <button
+                  onClick={confirmStateChange}
+                  disabled={confirming}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg active:scale-[0.98] transition-all duration-150 disabled:opacity-50 ${
+                    pendingRule?.isDevolucion
+                      ? 'text-white bg-amber-600 hover:bg-amber-700'
+                      : pendingRule?.isRechazo
+                        ? 'text-white bg-red-600 hover:bg-red-700'
+                        : 'text-white bg-primary hover:bg-primary-dark'
+                  }`}
+                >
+                  {confirming ? 'Procesando...' : `Confirmar ${pendingRule?.isDevolucion ? 'devolución' : pendingRule?.isRechazo ? 'rechazo' : ''}`}
                 </button>
               )}
             </div>
@@ -485,8 +605,8 @@ export function EventViewPage() {
                     <tr key={h.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-3 text-sm text-slate-400">{i + 1}</td>
                       <td className="px-6 py-3 text-sm text-slate-700 whitespace-nowrap">{formatDateCO(h.fecha)}</td>
-                      <td className="px-6 py-3"><span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${estadoColors[h.estadoAnterior] || 'bg-slate-100 text-slate-800'}`}>{h.estadoAnterior}</span></td>
-                      <td className="px-6 py-3"><span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${estadoColors[h.estadoNuevo] || 'bg-slate-100 text-slate-800'}`}>{h.estadoNuevo}</span></td>
+                      <td className="px-6 py-3"><span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${ESTADO_COLORS[h.estadoAnterior] || 'bg-slate-100 text-slate-800'}`}>{h.estadoAnterior}</span></td>
+                      <td className="px-6 py-3"><span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${ESTADO_COLORS[h.estadoNuevo] || 'bg-slate-100 text-slate-800'}`}>{h.estadoNuevo}</span></td>
                       <td className="px-6 py-3 text-sm text-slate-600">{h.usuario}</td>
                       <td className="px-6 py-3 text-sm text-slate-500 max-w-[150px] truncate">{h.motivo || '—'}</td>
                     </tr>

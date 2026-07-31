@@ -8,14 +8,18 @@ import { EVENT_STATES } from '../../../config/constants'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
+import { useRolePermissions } from '../../auth/useRolePermissions'
 import type { PageSize } from '../hooks/useEventList'
 
 const stateColors: Record<string, string> = {
-  Abierto: 'bg-yellow-100 text-yellow-800',
-  'En ejecucion': 'bg-red-100 text-red-800',
-  Ejecutado: 'bg-green-100 text-green-800',
+  Postulado: 'bg-yellow-100 text-yellow-800',
+  'En preparación': 'bg-blue-100 text-blue-800',
+  'En revisión': 'bg-orange-100 text-orange-800',
+  'En ejecución': 'bg-red-100 text-red-800',
   Cerrado: 'bg-slate-100 text-slate-800',
   Legalizado: 'bg-purple-100 text-purple-800',
+  Devuelto: 'bg-amber-100 text-amber-800',
+  Rechazado: 'bg-rose-100 text-rose-800',
 }
 
 interface SortHeaderProps {
@@ -74,9 +78,15 @@ export function EventList({
 }: EventListProps) {
   const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
+  const { can: userCan } = useRolePermissions()
   const { data: aliados = [] } = useAllies()
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
+
+  const canCreate = userCan('functional_admin', 'operator', 'solicitante')
+  const canEdit = userCan('functional_admin', 'operator', 'supervisor', 'analista', 'solicitante')
+  const canDelete = userCan('functional_admin')
+  const canAssignOperator = userCan('functional_admin', 'operator', 'supervisor')
 
   const totalItems = _events.reduce((sum, e) => sum + e.items.length, 0)
   const totalValue = _events.reduce((sum, e) => {
@@ -93,13 +103,15 @@ export function EventList({
             {meta.total} eventos · {totalItems} ítems · Total {formatCurrencyCO(totalValue)}
           </p>
         </div>
-        <button
-          onClick={() => navigate('/ordenes/nueva')}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva Orden
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => navigate('/ordenes/nueva')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Orden
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 shrink-0">
@@ -223,7 +235,7 @@ export function EventList({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {onAssignOperatorClick && (
+                          {onAssignOperatorClick && canAssignOperator && (
                             <button
                               onClick={() => onAssignOperatorClick(event.id)}
                               className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-500 hover:text-blue-600 transition-colors"
@@ -239,20 +251,24 @@ export function EventList({
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => navigate(`/ordenes/${event.id}/editar`)}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
-                            title="Editar"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => onDeleteRequest(event.id)}
-                            className="p-1.5 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canEdit && (
+                            <button
+                              onClick={() => navigate(`/ordenes/${event.id}/editar`)}
+                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
+                              title="Editar"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => onDeleteRequest(event.id)}
+                              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -1,6 +1,6 @@
 import { createContext, useState, useCallback, type ReactNode } from 'react'
 import type { AuthUser } from './types'
-import type { UserRole } from '../../types'
+import type { Role } from '../../types'
 import { loginApi } from '../../services/auth.service'
 import type { AuthResponse } from '../../services/types'
 
@@ -29,12 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (document: string, password: string) => {
     try {
       const response: AuthResponse = await loginApi({ document, password })
+      const roles: Role[] = response.user.roles
       const authUser: AuthUser = {
         id: response.user.id,
         identificador: response.user.document,
         nombre: response.user.fullName,
         email: response.user.email,
-        roles: response.user.roles.map(mapBackendRole) as UserRole[],
+        roles,
+        roleNames: roles.map((role) => role.name),
         activo: true,
       }
       setUser(authUser)
@@ -57,20 +59,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-function mapBackendRole(role: string): string {
-  const roleMap: Record<string, string> = {
-    admin: 'Administrador',
-    Administrador: 'Administrador',
-    operator: 'Operador',
-    Operador: 'Operador',
-    supervisor: 'Supervisor',
-    Supervisor: 'Supervisor',
-    consulta: 'Consulta',
-    Consulta: 'Consulta',
-    auditor: 'Auditor',
-    Auditor: 'Auditor',
-  }
-  return roleMap[role] || role
 }

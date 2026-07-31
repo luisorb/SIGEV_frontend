@@ -17,6 +17,7 @@ import { AdminUsersPage } from '../pages/AdminUsersPage'
 import { AuditPage } from '../pages/AuditPage'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
+import { RoleRoute } from '../features/auth/components/RoleRoute'
 
 export const router = createBrowserRouter([
   {
@@ -32,19 +33,68 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'ordenes', element: <EventsListPage /> },
-          { path: 'ordenes/nueva', element: <EventCreatePage /> },
+          {
+            path: 'ordenes/nueva',
+            element: (
+              <RoleRoute roles={['functional_admin', 'operator', 'solicitante']}>
+                <EventCreatePage />
+              </RoleRoute>
+            ),
+          },
           { path: 'ordenes/:id', element: <EventViewPage /> },
-          { path: 'ordenes/:id/editar', element: <EventDetailPage /> },
+          {
+            path: 'ordenes/:id/editar',
+            element: (
+              <RoleRoute roles={['functional_admin', 'operator', 'supervisor', 'analista', 'solicitante']}>
+                <EventDetailPage />
+              </RoleRoute>
+            ),
+          },
           { path: 'ofertas', element: <OffersPage /> },
-          { path: 'ofertas/nueva', element: <OfferCreatePage /> },
+          {
+            path: 'ofertas/nueva',
+            element: (
+              <RoleRoute roles={['functional_admin', 'operator']}>
+                <OfferCreatePage />
+              </RoleRoute>
+            ),
+          },
           { path: 'ofertas/:id', element: <OfferViewPage /> },
-          { path: 'ofertas/:id/editar', element: <OfferEditPage /> },
+          {
+            path: 'ofertas/:id/editar',
+            element: (
+              <RoleRoute roles={['functional_admin', 'operator']}>
+                <OfferEditPage />
+              </RoleRoute>
+            ),
+          },
           { path: 'matriz', element: <MatrixPage /> },
           { path: 'tablero', element: <KanbanPage /> },
           { path: 'mapa', element: <MapPage /> },
-          { path: 'parametros', element: <ParametersPage /> },
-          { path: 'usuarios', element: <AdminUsersPage /> },
-          { path: 'auditoria', element: <AuditPage /> },
+          {
+            path: 'parametros',
+            element: (
+              <RoleRoute roles={['functional_admin']}>
+                <ParametersPage />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: 'usuarios',
+            element: (
+              <RoleRoute roles={['technical_admin']}>
+                <AdminUsersPage />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: 'auditoria',
+            element: (
+              <RoleRoute roles={['functional_admin', 'supervisor', 'approver', 'auditor']}>
+                <AuditPage />
+              </RoleRoute>
+            ),
+          },
         ],
       },
     ],

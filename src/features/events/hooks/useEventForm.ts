@@ -49,7 +49,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
           aliadoId: '',
           desembolsoId: '',
           esquema: 'cotizacion',
-          estado: 'Abierto',
+          estado: 'Postulado',
         },
   })
 

@@ -12,11 +12,30 @@ export const DEFAULT_CALCULATION_PARAMS: CalculationParams = {
 
 export const TAX_CATEGORIES = ['IVA', 'Consumo', 'Tercero', 'Reembolso'] as const
 
-export const EVENT_STATES = ['Abierto', 'En ejecucion', 'Ejecutado', 'Cerrado', 'Legalizado'] as const
+export const EVENT_STATES = [
+  'Postulado',
+  'En preparación',
+  'En revisión',
+  'En ejecución',
+  'Cerrado',
+  'Legalizado',
+  'Devuelto',
+  'Rechazado',
+] as const
 
 export const EVENT_SCHEMAS = ['cotizacion', 'detalle'] as const
 
-export const USER_ROLES = ['Administrador', 'Operador', 'Supervisor', 'Consulta', 'Auditor'] as const
+export const USER_ROLES = [
+  'technical_admin',
+  'functional_admin',
+  'approver',
+  'operator',
+  'solicitante',
+  'analista',
+  'supervisor',
+  'auditor',
+  'consulta',
+] as const
 
 export const LOCAL_CONFIG = {
   locale: 'es-CO',

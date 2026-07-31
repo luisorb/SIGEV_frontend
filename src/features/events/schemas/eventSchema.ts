@@ -52,7 +52,7 @@ export const eventSchema = z.object({
     }),
   estado: z
     .enum(EVENT_STATES)
-    .default('Abierto'),
+    .default('Postulado'),
 })
 
 export type EventFormValues = z.infer<typeof eventSchema>

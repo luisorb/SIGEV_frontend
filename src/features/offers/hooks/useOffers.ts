@@ -4,22 +4,25 @@ import { calculateItemPreview, calculateEventSummary } from '../../../utils/calc
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { exportOfferToExcel } from '../utils/excelExport'
+import { useAuth } from '../../auth/useAuth'
+import { hasAnyRole } from '../../../lib/permissions'
 
 export type UserPermission = 'create' | 'edit' | 'delete' | 'changeState' | 'export'
 
-const ROLE_PERMISSIONS: Record<string, UserPermission[]> = {
-  Administrador: ['create', 'edit', 'delete', 'changeState', 'export'],
-  Operador: ['create', 'edit', 'export'],
-  Supervisor: ['edit', 'changeState', 'export'],
-  Consulta: ['export'],
-  Auditor: [],
+const PERMISSION_ROLES: Record<UserPermission, readonly string[]> = {
+  create: ['functional_admin', 'operator'],
+  edit: ['functional_admin', 'operator'],
+  delete: ['functional_admin'],
+  changeState: ['functional_admin', 'operator', 'approver'],
+  export: ['technical_admin', 'functional_admin', 'approver', 'operator', 'solicitante', 'analista', 'supervisor', 'auditor', 'consulta'],
 }
 
-export function usePermissions(currentRole: string = 'Administrador'): {
+export function usePermissions(): {
   can: (perm: UserPermission) => boolean
 } {
-  const perms = ROLE_PERMISSIONS[currentRole] ?? []
-  return { can: (perm: UserPermission) => perms.includes(perm) }
+  const { user } = useAuth()
+  const roleNames = user?.roleNames ?? []
+  return { can: (perm: UserPermission) => hasAnyRole(roleNames, PERMISSION_ROLES[perm]) }
 }
 
 export function useOffers() {

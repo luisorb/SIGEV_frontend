@@ -1,17 +1,18 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useToast } from '../../../components/ToastProvider'
-import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from 'lucide-react'
 import { useParameters } from '../hooks/useParameters'
 import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
-import { useAliados, useDesembolsos } from '../../../lib/catalogStore'
+import { useAllies, useCreateAlly, useUpdateAlly } from '../../../hooks/useAllies'
+import { useDisbursements, useCreateDisbursement, useUpdateDisbursement } from '../../../hooks/useDisbursements'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import type { Ally, Disbursement } from '../../../types'
 
 type Tab = 'tasas' | 'aliados' | 'desembolsos'
 
-type AllyForm = Omit<Ally, 'id'>
-const EMPTY_ALLY: AllyForm = { nombre: '', nit: '', contacto: '', email: '', telefono: '', color: '#3B82F6', activo: true }
+type AllyForm = Omit<Ally, 'id' | 'telefono'>
+const EMPTY_ALLY: AllyForm = { nombre: '', nit: '', contacto: '', email: '', color: '#3B82F6', activo: true }
 
 type DesForm = Omit<Disbursement, 'id'>
 const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', valorReferencia: 0, activo: true }
@@ -36,10 +37,29 @@ const inputError = 'border-red-300 focus:ring-red-300/40 focus:border-red-400'
 const labelBase = 'block text-sm font-medium text-slate-700'
 const requiredMark = <span className="text-red-400 ml-0.5">*</span>
 
+interface LoadingOverlayProps {
+  show: boolean
+  message: string
+}
+
+function LoadingOverlay({ show, message }: LoadingOverlayProps) {
+  if (!show) return null
+  return (
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 rounded-xl">
+      <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-slate-200">
+        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+        <span className="text-sm text-slate-600">{message}</span>
+      </div>
+    </div>
+  )
+}
+
 function AliadosTab({ showToast }: { showToast: (message: string, type?: 'success' | 'error') => void }) {
-  const { aliados, addAliado, updateAliado, toggleActivo } = useAliados()
+  const { data: aliados = [], isLoading, error } = useAllies()
+  const createAlly = useCreateAlly()
+  const updateAlly = useUpdateAlly()
   const [search, setSearch] = useState('')
-  const [sortColumn, setSortColumn] = useState<'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado'>('nombre')
+  const [sortColumn, setSortColumn] = useState<'nombre' | 'nit' | 'contacto' | 'email' | 'estado'>('nombre')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [pageSize, setPageSize] = useState(8)
   const [page, setPage] = useState(0)
@@ -51,23 +71,57 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
 
   function openCreate() { setEditing(null); setForm(EMPTY_ALLY); setErrors({}); setModalOpen(true) }
 
-  function openEdit(a: Ally) { setEditing(a); setForm({ nombre: a.nombre, nit: a.nit, contacto: a.contacto, email: a.email, telefono: a.telefono, color: a.color, activo: a.activo }); setErrors({}); setModalOpen(true) }
+  function openEdit(a: Ally) { setEditing(a); setForm({ nombre: a.nombre, nit: a.nit, contacto: a.contacto, email: a.email, color: a.color, activo: a.activo }); setErrors({}); setModalOpen(true) }
 
-  function handleSave() {
+  async function handleSave() {
     const newErrors: Partial<Record<keyof AllyForm, string>> = {}
     if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
     if (!form.nit.trim()) newErrors.nit = 'El NIT es obligatorio'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
-    if (editing) { updateAliado(editing.id, form); showToast(`Aliado "${form.nombre}" actualizado correctamente`) }
-    else { addAliado(form); showToast(`Aliado "${form.nombre}" creado correctamente`) }
-    setModalOpen(false)
+    try {
+      if (editing) {
+        await updateAlly.mutateAsync({
+          id: editing.id,
+          data: {
+            name: form.nombre,
+            document: form.nit,
+            contactName: form.contacto || undefined,
+            contactEmail: form.email || undefined,
+            color: form.color,
+          },
+        })
+        showToast(`Aliado "${form.nombre}" actualizado correctamente`)
+      } else {
+        await createAlly.mutateAsync({
+          name: form.nombre,
+          document: form.nit,
+          contactName: form.contacto || undefined,
+          contactEmail: form.email || undefined,
+          color: form.color,
+        })
+        showToast(`Aliado "${form.nombre}" creado correctamente`)
+      }
+      setModalOpen(false)
+    } catch {
+      showToast('Error al guardar el aliado. Intenta nuevamente.', 'error')
+    }
+  }
+
+  async function handleToggleActivo(a: Ally) {
+    try {
+      await updateAlly.mutateAsync({ id: a.id, data: { active: !a.activo } })
+      showToast(`Aliado "${a.nombre}" ${a.activo ? 'inactivado' : 'activado'} correctamente`)
+      setConfirmToggle(null)
+    } catch {
+      showToast('Error al cambiar el estado del aliado.', 'error')
+    }
   }
 
   function inp(field: keyof AllyForm) {
     return errors[field] ? inputBase + ' ' + inputError : inputBase
   }
 
-  function toggleSort(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado') {
+  function toggleSort(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'estado') {
     if (sortColumn === col) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
@@ -85,7 +139,6 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
         || a.nit.toLowerCase().includes(q)
         || (a.contacto ?? '').toLowerCase().includes(q)
         || (a.email ?? '').toLowerCase().includes(q)
-        || (a.telefono ?? '').toLowerCase().includes(q)
     ).sort((a, b) => {
       const cmp = sortColumn === 'nombre'
         ? a.nombre.localeCompare(b.nombre)
@@ -95,9 +148,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
             ? (a.contacto ?? '').localeCompare(b.contacto ?? '')
             : sortColumn === 'email'
               ? (a.email ?? '').localeCompare(b.email ?? '')
-              : sortColumn === 'telefono'
-                ? (a.telefono ?? '').localeCompare(b.telefono ?? '')
-                : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
+              : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
       return sortDir === 'asc' ? cmp : -cmp
     })
   }, [aliados, search, sortColumn, sortDir])
@@ -106,7 +157,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
   const safePage = Math.min(page, totalPages - 1)
   const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
-  function sortHeader(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'telefono' | 'estado', label: string, className = '') {
+  function sortHeader(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'estado', label: string, className = '') {
     const justify = className.includes('text-right') ? 'justify-end' : className.includes('text-center') ? 'justify-center' : ''
     return (
       <th
@@ -121,8 +172,17 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <p className="text-sm text-red-500">Error al cargar aliados desde el servidor.</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col min-h-0 gap-2 sm:gap-0.5">
+    <div className="flex flex-col min-h-0 gap-2 sm:gap-0.5 relative">
+      <LoadingOverlay show={isLoading} message="Cargando aliados..." />
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -141,14 +201,13 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
                 {sortHeader('nit', 'NIT')}
                 {sortHeader('contacto', 'Contacto')}
                 {sortHeader('email', 'Email')}
-                {sortHeader('telefono', 'Teléfono')}
                 {sortHeader('estado', 'Estado', 'text-center')}
                 <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
               ) : (
                 paged.map((a) => (
                   <tr key={a.id} className={`hover:bg-slate-50 transition-colors ${!a.activo ? 'opacity-50' : ''}`}>
@@ -161,7 +220,6 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.nit}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.contacto || '-'}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.email || '-'}</td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.telefono || '-'}</td>
                     <td className="px-3 sm:px-4 py-3 text-center">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${a.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{a.activo ? 'Activo' : 'Inactivo'}</span>
                     </td>
@@ -273,10 +331,6 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className={labelBase}>Teléfono</label>
-                  <input type="text" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} placeholder="Ej: +57 300 000 0000" className={inputBase} />
-                </div>
-                <div className="space-y-1.5">
                   <label className={labelBase}>Color</label>
                   <div className="flex items-center gap-2">
                     <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-9 px-0.5 border border-slate-300 rounded-lg cursor-pointer" />
@@ -315,7 +369,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
                 Cancelar
               </button>
               <button
-                onClick={() => { toggleActivo(confirmToggle.id); showToast(`Aliado "${confirmToggle.nombre}" ${confirmToggle.activo ? 'inactivado' : 'activado'} correctamente`); setConfirmToggle(null) }}
+                onClick={() => handleToggleActivo(confirmToggle)}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
@@ -329,7 +383,9 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
 }
 
 function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'success' | 'error') => void }) {
-  const { desembolsos, addDesembolso, updateDesembolso, toggleActivo } = useDesembolsos()
+  const { data: desembolsos = [], isLoading, error } = useDisbursements()
+  const createDesembolso = useCreateDisbursement()
+  const updateDesembolso = useUpdateDisbursement()
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'vigencia' | 'porcentajeParticipacion' | 'valorReferencia' | 'estado'>('codigo')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
@@ -345,16 +401,46 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
 
   function openEdit(d: Disbursement) { setEditing(d); setForm({ nombre: d.nombre, codigo: d.codigo, porcentajeParticipacion: d.porcentajeParticipacion, vigencia: d.vigencia, valorReferencia: d.valorReferencia, activo: d.activo }); setErrors({}); setModalOpen(true) }
 
-  function handleSave() {
+  async function handleSave() {
     const newErrors: Partial<Record<keyof DesForm, string>> = {}
     if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
     if (!form.codigo.trim()) newErrors.codigo = 'El código es obligatorio'
     if (!form.vigencia) newErrors.vigencia = 'La vigencia es obligatoria'
     if (form.valorReferencia <= 0) newErrors.valorReferencia = 'El valor de referencia debe ser mayor a 0'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
-    if (editing) { updateDesembolso(editing.id, form); showToast(`Desembolso "${form.codigo}" actualizado correctamente`) }
-    else { addDesembolso(form); showToast(`Desembolso "${form.codigo}" creado correctamente`) }
-    setModalOpen(false)
+    try {
+      if (editing) {
+        await updateDesembolso.mutateAsync({
+          id: editing.id,
+          data: {
+            name: form.nombre,
+            amount: form.valorReferencia,
+            year: Number(form.vigencia),
+          },
+        })
+        showToast(`Desembolso "${form.codigo}" actualizado correctamente`)
+      } else {
+        await createDesembolso.mutateAsync({
+          name: form.nombre,
+          amount: form.valorReferencia,
+          year: Number(form.vigencia),
+        })
+        showToast(`Desembolso "${form.codigo}" creado correctamente`)
+      }
+      setModalOpen(false)
+    } catch {
+      showToast('Error al guardar el desembolso. Intenta nuevamente.', 'error')
+    }
+  }
+
+  async function handleToggleActivo(d: Disbursement) {
+    try {
+      await updateDesembolso.mutateAsync({ id: d.id, data: { active: !d.activo } })
+      showToast(`Desembolso "${d.nombre}" ${d.activo ? 'inactivado' : 'activado'} correctamente`)
+      setConfirmToggle(null)
+    } catch {
+      showToast('Error al cambiar el estado del desembolso.', 'error')
+    }
   }
 
   function inp(field: keyof DesForm) {
@@ -415,8 +501,17 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <p className="text-sm text-red-500">Error al cargar desembolsos desde el servidor.</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col min-h-0 gap-2 sm:gap-0.5">
+    <div className="flex flex-col min-h-0 gap-2 sm:gap-0.5 relative">
+      <LoadingOverlay show={isLoading} message="Cargando desembolsos..." />
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -597,7 +692,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 Cancelar
               </button>
               <button
-                onClick={() => { toggleActivo(confirmToggle.id); showToast(`Desembolso "${confirmToggle.nombre}" ${confirmToggle.activo ? "inactivado" : "activado"} correctamente`); setConfirmToggle(null) }}
+                onClick={() => handleToggleActivo(confirmToggle)}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
               >
                 {confirmToggle.activo ? 'Sí, Inactivar' : 'Sí, Activar'}
@@ -634,6 +729,9 @@ export function ParametersPage() {
     loadVersion,
     discardChanges,
     saveMessage,
+    loading,
+    error,
+    saving,
   } = useParameters()
 
   useEffect(() => {
@@ -645,8 +743,6 @@ export function ParametersPage() {
   useEffect(() => {
     if (activeTab !== 'tasas') setHistorialOpen(false)
   }, [activeTab])
-
-
 
   return (
     <div className="flex flex-col min-h-0 h-full gap-2">
@@ -681,18 +777,34 @@ export function ParametersPage() {
 
       {activeTab === 'tasas' && (
         <div className="flex flex-col gap-4">
-          <ParameterForm
-            editParams={editParams}
-            activeVersion={currentVersion ? { version: currentVersion.version } : null}
-            isDirty={isDirty}
-            nextVersion={nextVersion}
-            aprobadoPor={aprobadoPor}
-            saveMessage={saveMessage}
-            onUpdateParam={updateParam}
-            onAprobadoPorChange={setAprobadoPor}
-            onSave={saveNewVersion}
-            onDiscard={discardChanges}
-          />
+          {error && (
+            <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          <div className="relative">
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="ml-2 text-sm text-slate-500">Cargando parámetros...</span>
+              </div>
+            )}
+            {!loading && (
+              <ParameterForm
+                editParams={editParams}
+                activeVersion={currentVersion ? { version: currentVersion.version } : null}
+                isDirty={isDirty}
+                nextVersion={nextVersion}
+                aprobadoPor={aprobadoPor}
+                saveMessage={saveMessage}
+                saving={saving}
+                onUpdateParam={updateParam}
+                onAprobadoPorChange={setAprobadoPor}
+                onSave={saveNewVersion}
+                onDiscard={discardChanges}
+              />
+            )}
+          </div>
           <div className="flex justify-center pb-4 sm:pb-6">
             <button
               onClick={() => setHistorialOpen(true)}
@@ -727,7 +839,7 @@ export function ParametersPage() {
                   <ParameterHistoryTable
                     versions={versions}
                     currentVersionId={currentVersion?.id ?? null}
-                    onLoadVersion={(id) => { loadVersion(id); const v = versions.find(v => v.id === id); if (v) toast.showToast(`Versi�n ${v.version} cargada`); setHistorialOpen(false) }}
+                    onLoadVersion={(id) => { loadVersion(id); const v = versions.find(v => v.id === id); if (v) toast.showToast(`Versión ${v.version} cargada`); setHistorialOpen(false) }}
                   />
                 </div>
                 <div className="flex justify-end px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50/50 shrink-0">

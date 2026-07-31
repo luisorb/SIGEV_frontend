@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, ShieldAlert } from 'lucide-react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { EventForm } from '../components/EventForm'
 import { useQuery } from '@tanstack/react-query'
@@ -7,12 +7,14 @@ import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useToast } from '../../../components/ToastProvider'
+import { useRolePermissions } from '../../auth/useRolePermissions'
 import type { EventFormValues } from '../schemas/eventSchema'
 
 export function EventDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const { can: userCan } = useRolePermissions()
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
@@ -66,6 +68,30 @@ export function EventDetailPage() {
         <Link to="/ordenes" className="inline-flex items-center gap-1.5 text-primary hover:text-primary-dark text-sm font-medium mt-2 transition-colors">
           <ChevronLeft className="w-4 h-4" />
           Volver a órdenes
+        </Link>
+      </div>
+    )
+  }
+
+  const canEdit =
+    userCan('functional_admin', 'operator', 'supervisor') ||
+    (event.estado === 'Devuelto' && userCan('analista', 'solicitante'))
+
+  if (!canEdit) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+          <ShieldAlert className="h-7 w-7 text-amber-600" />
+        </div>
+        <h2 className="text-lg font-semibold text-slate-800">No puede editar este evento</h2>
+        <p className="max-w-md text-sm text-slate-500">
+          {event.estado === 'Devuelto'
+            ? 'Su rol no le permite corregir el evento en este estado.'
+            : 'Los roles analista y solicitante solo pueden editar el evento cuando está en estado Devuelto.'}
+        </p>
+        <Link to={`/ordenes/${event.id}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-dark transition-colors">
+          <ChevronLeft className="w-4 h-4" />
+          Volver al evento
         </Link>
       </div>
     )
