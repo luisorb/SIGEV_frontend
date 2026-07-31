@@ -6,7 +6,6 @@ export {
   getUserApi,
   createUserApi,
   updateUserApi,
-  deleteUserApi,
 } from './users.service'
 
 export {

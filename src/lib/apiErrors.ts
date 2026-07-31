@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios'
 
 interface ApiErrorPayload {
-  message?: string
+  message?: string | string[]
   error?: string
 }
 
@@ -9,7 +9,8 @@ export function getApiErrorMessage(error: unknown, fallback = 'Ocurrió un error
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosError = error as AxiosError<ApiErrorPayload>
     const status = axiosError.response?.status
-    const message = axiosError.response?.data?.message ?? axiosError.response?.data?.error
+    const rawMessage = axiosError.response?.data?.message ?? axiosError.response?.data?.error
+    const message = Array.isArray(rawMessage) ? rawMessage.join(' · ') : rawMessage
     if (status === 403) return 'No tiene permisos para realizar esta acción.'
     if (status === 404) return 'El recurso solicitado no existe.'
     if (status === 401) return 'Su sesión expiró. Vuelva a iniciar sesión.'

@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Plus, Trash2, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff } from 'lucide-react'
+import { Plus, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff } from 'lucide-react'
 import { useToast } from '../components/ToastProvider'
 import { USER_ROLES } from '../config/constants'
-import { getUsersApi, createUserApi, updateUserApi, deleteUserApi } from '../services/users.service'
-import type { CreateUserDto } from '../services/types'
+import { getUsersApi, createUserApi, updateUserApi } from '../services/users.service'
+import type { CreateUserDto, UpdateUserDto } from '../services/types'
 import { ROLE_LABELS } from '../lib/permissions'
+import { getApiErrorMessage } from '../lib/apiErrors'
 
 interface User {
   id: string
@@ -78,7 +79,7 @@ export function AdminUsersPage() {
       email: u.email,
       password: '',
       roles: u.roles.map((r) => r.name),
-      activo: true,
+      activo: u.isActive,
     }))))
   }, [])
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -94,7 +95,6 @@ export function AdminUsersPage() {
   const [newUser, setNewUser] = useState<Omit<User, 'id'>>(EMPTY_USER)
 
   const [isCreating, setIsCreating] = useState(false)
-  const [deleteUser, setDeleteUser] = useState<User | null>(null)
   const [confirmToggle, setConfirmToggle] = useState<User | null>(null)
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState('')
@@ -105,6 +105,7 @@ export function AdminUsersPage() {
   async function handleSave() {
     const newErrors: Partial<Record<keyof Omit<User, 'id'>, string>> = {}
     if (!newUser.identificador.trim()) newErrors.identificador = 'El identificador es obligatorio'
+    else if (newUser.identificador.trim().length < 5) newErrors.identificador = 'Mínimo 5 caracteres'
     if (!newUser.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
     if (!newUser.email.trim()) newErrors.email = 'El correo es obligatorio'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUser.email)) newErrors.email = 'Formato de correo inválido'
@@ -115,13 +116,14 @@ export function AdminUsersPage() {
 
     try {
       if (editingUser) {
-        await updateUserApi(editingUser.id, {
+        const updateData: UpdateUserDto = {
           document: newUser.identificador,
           fullName: newUser.nombre,
           email: newUser.email,
-          password: newUser.password || editingUser.password,
           roles: newUser.roles,
-        })
+        }
+        if (newUser.password) updateData.password = newUser.password
+        await updateUserApi(editingUser.id, updateData)
         toast.showToast(`Usuario "${newUser.nombre}" actualizado correctamente`)
       } else {
         const createDto: CreateUserDto = {
@@ -144,14 +146,14 @@ export function AdminUsersPage() {
         email: u.email,
         password: '',
         roles: u.roles.map((r) => r.name),
-        activo: true,
+        activo: u.isActive,
       })))
       setNewUser(EMPTY_USER)
       setErrors({})
       setEditingUser(null)
       setIsCreating(false)
-    } catch {
-      toast.showToast('Error al guardar el usuario')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'Error al guardar el usuario'), 'error')
     }
   }
 
@@ -176,37 +178,11 @@ export function AdminUsersPage() {
     setErrors({})
   }
 
-  function handleDeleteRequest(id: string) {
-    const user = users.find((u) => u.id === id)
-    if (user) setDeleteUser(user)
-  }
-
-  async function handleDeleteConfirm() {
-    if (!deleteUser) return
-    try {
-      await deleteUserApi(deleteUser.id)
-      const updated = await getUsersApi()
-      setUsers(updated.map(u => ({
-        id: u.id,
-        identificador: u.document,
-        nombre: u.fullName,
-        email: u.email,
-        password: '',
-        roles: u.roles.map((r) => r.name),
-        activo: true,
-      })))
-      toast.showToast(`Usuario "${deleteUser.nombre}" eliminado correctamente`)
-    } catch {
-      toast.showToast('Error al eliminar el usuario')
-    }
-    setDeleteUser(null)
-  }
-
   async function handleToggleActive() {
     if (!confirmToggle) return
     const newState = !confirmToggle.activo
     try {
-      await deleteUserApi(confirmToggle.id)
+      await updateUserApi(confirmToggle.id, { isActive: newState })
       const updated = await getUsersApi()
       setUsers(updated.map(u => ({
         id: u.id,
@@ -215,11 +191,11 @@ export function AdminUsersPage() {
         email: u.email,
         password: '',
         roles: u.roles.map((r) => r.name),
-        activo: true,
+        activo: u.isActive,
       })))
       toast.showToast(`Usuario "${confirmToggle.nombre}" ${newState ? 'activado' : 'inactivado'} correctamente`)
-    } catch {
-      toast.showToast('Error al cambiar el estado del usuario')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'Error al cambiar el estado del usuario'), 'error')
     }
     setConfirmToggle(null)
   }
@@ -359,13 +335,6 @@ export function AdminUsersPage() {
                         >
                           {user.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                         </button>
-                        <button
-                          onClick={() => handleDeleteRequest(user.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -430,42 +399,6 @@ export function AdminUsersPage() {
           </div>
         </div>
       </div>
-
-      {deleteUser && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
-          <div className="bg-white rounded-t-xl sm:rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[slideInUp_200ms_ease-out] sm:animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start gap-3 mb-3">
-              <div className="p-2 bg-red-100 rounded-lg shrink-0">
-                <Trash2 className="w-5 h-5 text-red-600" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">Eliminar usuario</h3>
-                <p className="text-xs sm:text-sm text-slate-500">Esta acción no se puede deshacer.</p>
-              </div>
-            </div>
-
-            <p className="text-sm sm:text-base text-slate-700 mb-4">
-              ¿Estás seguro de eliminar a <span className="font-semibold">{deleteUser.nombre}</span>?
-            </p>
-
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-              <button
-                onClick={() => setDeleteUser(null)}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
-              >
-                <Trash2 className="w-4 h-4" />
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {confirmToggle && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">

@@ -20,7 +20,3 @@ export async function updateUserApi(id: string, data: UpdateUserDto): Promise<Au
   const response = await api.patch<AuthUserDto>(`/api/v1/users/${id}`, data)
   return response.data
 }
-
-export async function deleteUserApi(id: string): Promise<void> {
-  await api.delete(`/api/v1/users/${id}`)
-}

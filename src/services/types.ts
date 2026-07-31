@@ -16,6 +16,7 @@ export interface AuthUserDto {
   documentType: string
   fullName: string
   email: string
+  isActive: boolean
   roles: RoleDto[]
 }
 
@@ -41,6 +42,7 @@ export interface UpdateUserDto {
   email?: string
   password?: string
   roles?: string[]
+  isActive?: boolean
 }
 
 export interface CreateEventDto {
