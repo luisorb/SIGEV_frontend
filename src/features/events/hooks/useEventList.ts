@@ -2,8 +2,7 @@ import { useState, useMemo } from 'react'
 import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 
-const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100] as const
-export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
+export type PageSize = 10 | 20 | 30 | 50 | 100
 
 const SORTABLE_TEXT_COLUMNS = [
   'numeroEvento', 'responsable', 'estado', 'municipioId',

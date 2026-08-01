@@ -48,12 +48,15 @@ export interface UpdateUserDto {
 export interface CreateEventDto {
   code: string
   suffix?: string
+  schemaType?: 'cotizacion' | 'detalle'
   name: string
   description?: string
   dependency?: string
   hamlet?: string
   attendees?: number
   days?: number
+  latitude?: number
+  longitude?: number
   divipolaCode?: string
   municipalityName?: string
   municipalityCategory?: string
@@ -66,12 +69,15 @@ export interface CreateEventDto {
 export interface UpdateEventDto {
   code?: string
   suffix?: string
+  schemaType?: 'cotizacion' | 'detalle'
   name?: string
   description?: string
   dependency?: string
   hamlet?: string
   attendees?: number
   days?: number
+  latitude?: number
+  longitude?: number
   divipolaCode?: string
   municipalityName?: string
   municipalityCategory?: string

@@ -150,7 +150,6 @@ export function useMatrix(
   }, [filteredEvents, aliadoIds, desembolsoIds, aliadosMap, desembolsosMap])
 
   const totals = useMemo<MatrixTotals>(() => {
-    let totalEventos = 0
     let totalValor = 0
     let totalBase = 0
     let totalIva = 0
@@ -159,7 +158,6 @@ export function useMatrix(
     let totalFeeTerceros = 0
     let totalIvaFee = 0
     for (const r of detailedRows) {
-      totalEventos++
       totalValor += r.total
       totalBase += r.base
       totalIva += r.iva

@@ -93,7 +93,7 @@ export function EventsListPage() {
   const handleAssignOperator = useCallback((_id: string, operatorName: string) => {
     toast.showToast(`Operador ${operatorName} asignado`)
     setAssignOperatorEvent(null)
-  }, [])
+  }, [toast])
 
   const handleDeleteRequest = useCallback((id: string) => {
     const event = localEvents.find((e) => e.id === id)
@@ -106,7 +106,7 @@ export function EventsListPage() {
     queryClient.invalidateQueries({ queryKey: ['events'] })
     toast.showToast(`Orden ${deleteEvent.numeroEvento}${deleteEvent.sufijo ? `-${deleteEvent.sufijo}` : ''} eliminada correctamente`)
     setDeleteEvent(null)
-  }, [deleteEvent])
+  }, [deleteEvent, queryClient, toast])
 
   if (isLoading) {
     return (

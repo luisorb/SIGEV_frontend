@@ -31,12 +31,20 @@ export const eventSchema = z.object({
   vereda: z
     .string()
     .default(''),
-  latitud: z
-    .number()
-    .default(0),
-  longitud: z
-    .number()
-    .default(0),
+  latitud: z.preprocess(
+    (value) =>
+      value === '' || value === null || (typeof value === 'number' && Number.isNaN(value))
+        ? undefined
+        : value,
+    z.number().optional(),
+  ),
+  longitud: z.preprocess(
+    (value) =>
+      value === '' || value === null || (typeof value === 'number' && Number.isNaN(value))
+        ? undefined
+        : value,
+    z.number().optional(),
+  ),
   observaciones: z
     .string()
     .default(''),

@@ -275,18 +275,6 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
   isFullscreen?: boolean
   onExitFullscreen?: () => void
 }) {
-  if (rows.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-200 p-12 text-center">
-        <div className="p-3 rounded-full bg-slate-100 mb-3">
-          <span className="text-2xl">📊</span>
-        </div>
-        <p className="text-sm font-medium text-slate-500">No hay datos de ejecución para mostrar</p>
-        <p className="text-xs text-slate-400 mt-1">Crea eventos primero para ver la matriz global.</p>
-      </div>
-    )
-  }
-
   const desembolsoIds = useMemo(() => rows.map(r => r.desembolsoId), [rows])
   const desembolsosMap = useMemo(() => {
     const m: Record<string, string> = {}
@@ -359,7 +347,7 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
     if (!sortColumn || !sortDirection) return transposedRows
     const sorted = [...transposedRows]
     sorted.sort((a, b) => {
-      let cmp = 0
+      let cmp: number
       switch (sortColumn) {
         case 'aliadoNombre':
           cmp = a.aliadoNombre.localeCompare(b.aliadoNombre)
@@ -385,6 +373,18 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
     const start = (safePage - 1) * pageSize
     return sortedRows.slice(start, start + pageSize)
   }, [sortedRows, safePage, pageSize])
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-200 p-12 text-center">
+        <div className="p-3 rounded-full bg-slate-100 mb-3">
+          <span className="text-2xl">📊</span>
+        </div>
+        <p className="text-sm font-medium text-slate-500">No hay datos de ejecución para mostrar</p>
+        <p className="text-xs text-slate-400 mt-1">Crea eventos primero para ver la matriz global.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full flex flex-col relative">

@@ -45,7 +45,7 @@ export function EventForm({
 
   const duplicate = checkDuplicateEventNumber(
     events,
-    watchedValues.numeroEvento,
+    watchedValues.numeroEvento ?? '',
     watchedValues.sufijo ?? '',
     event?.id,
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Plus, Pencil, X } from 'lucide-react'
 import type { ItemInput, Ally, TaxCategory } from '../../../types'
 import { TAX_CATEGORIES } from '../../../config/constants'
@@ -29,27 +29,34 @@ const taxCategoryLabels: Record<TaxCategory, string> = {
 }
 
 export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados }: AddItemModalProps) {
-  const [form, setForm] = useState<ItemInput>(emptyItem)
-  const [errors, setErrors] = useState<Partial<Record<keyof ItemInput, string>>>({})
-
-  const isEditing = !!editItem
-
-  useEffect(() => {
-    if (open && editItem) {
-      setForm({
-        descripcion: editItem.descripcion,
-        cantidad: editItem.cantidad,
-        valorUnitario: editItem.valorUnitario,
-        categoriaTributaria: editItem.categoriaTributaria,
-        aliadoId: editItem.aliadoId,
-      })
-    } else if (open) {
-      setForm(emptyItem)
-    }
-    setErrors({})
-  }, [open, editItem])
-
   if (!open) return null
+  return (
+    <AddItemModalContent
+      key={editItem?.id ?? 'new'}
+      initialItem={editItem ?? emptyItem}
+      isEditing={!!editItem}
+      aliados={aliados}
+      onCancel={onClose}
+      onSubmit={(data) => {
+        if (editItem && onEdit) onEdit(editItem.id, data)
+        else if (onAdd) onAdd(data)
+        onClose()
+      }}
+    />
+  )
+}
+
+interface AddItemModalContentProps {
+  initialItem: ItemInput
+  isEditing: boolean
+  aliados?: Ally[]
+  onCancel: () => void
+  onSubmit: (data: ItemInput) => void
+}
+
+function AddItemModalContent({ initialItem, isEditing, aliados, onCancel, onSubmit }: AddItemModalContentProps) {
+  const [form, setForm] = useState<ItemInput>(initialItem)
+  const [errors, setErrors] = useState<Partial<Record<keyof ItemInput, string>>>({})
 
   function validate(): boolean {
     const errs: Partial<Record<keyof ItemInput, string>> = {}
@@ -69,20 +76,11 @@ export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados }
       descripcion: form.descripcion.trim(),
       aliadoId: form.aliadoId || undefined,
     }
-    if (isEditing && editItem && onEdit) {
-      onEdit(editItem.id, data)
-    } else if (onAdd) {
-      onAdd(data)
-    }
-    setForm(emptyItem)
-    setErrors({})
-    onClose()
+    onSubmit(data)
   }
 
   function handleClose() {
-    setForm(emptyItem)
-    setErrors({})
-    onClose()
+    onCancel()
   }
 
   function update<K extends keyof ItemInput>(key: K, value: ItemInput[K]) {

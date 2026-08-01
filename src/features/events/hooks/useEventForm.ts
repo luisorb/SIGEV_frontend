@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { eventSchema } from '../schemas/eventSchema'
 import type { z } from 'zod'
@@ -57,11 +57,11 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch,
     setValue,
+    control,
   } = form
 
-  const watchedValues = watch()
+  const watchedValues = useWatch({ control })
 
   const submit = handleSubmit((data: EventFormValues) => {
     onSave(data)

@@ -738,11 +738,7 @@ export function ParametersPage() {
     if (saveMessage) {
       toast.showToast(saveMessage.text, saveMessage.type)
     }
-  }, [saveMessage])
-
-  useEffect(() => {
-    if (activeTab !== 'tasas') setHistorialOpen(false)
-  }, [activeTab])
+  }, [saveMessage, toast])
 
   return (
     <div className="flex flex-col min-h-0 h-full gap-2">
@@ -761,7 +757,10 @@ export function ParametersPage() {
           {TABS.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => {
+                if (tab.key !== 'tasas') setHistorialOpen(false)
+                setActiveTab(tab.key)
+              }}
               className={`inline-flex items-center gap-2 px-1 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? 'border-primary text-primary'

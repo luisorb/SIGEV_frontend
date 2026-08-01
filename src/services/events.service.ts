@@ -1,6 +1,31 @@
 import api from '../lib/api'
 import type { CreateEventDto, ChangeStatusDto } from './types'
-import type { Event, Item, EventState, SchemaType, Attachment } from '../types'
+import type { Event, Item, EventState, SchemaType, Attachment, TaxCategory } from '../types'
+
+function mapBackendItem(data: Record<string, unknown>): Item {
+  const ivaRate = Number(data.ivaRate ?? 0)
+  const consumptionTaxRate = Number(data.consumptionTaxRate ?? 0)
+  const feeValue = Number(data.feeValue ?? 0)
+  const categoriaTributaria: TaxCategory =
+    ivaRate > 0 ? 'IVA' : consumptionTaxRate > 0 ? 'Consumo' : 'Tercero'
+  const isTarifado = categoriaTributaria === 'IVA' || categoriaTributaria === 'Consumo'
+  return {
+    id: String(data.id ?? ''),
+    eventoId: String(data.eventId ?? ''),
+    descripcion: String(data.name ?? data.description ?? ''),
+    cantidad: Number(data.quantity ?? 0),
+    valorUnitario: Number(data.unitPrice ?? 0),
+    categoriaTributaria,
+    aliadoId: data.allyId ? String(data.allyId) : undefined,
+    base: Number(data.baseValue ?? 0),
+    iva: Number(data.ivaValue ?? 0),
+    impuestoConsumo: Number(data.consumptionTaxValue ?? 0),
+    feeTarifado: isTarifado ? feeValue : 0,
+    feeTerceros: isTarifado ? 0 : feeValue,
+    ivaFee: Number(data.feeIvaValue ?? 0),
+    total: Number(data.totalValue ?? 0),
+  }
+}
 
 function mapBackendEvent(data: Record<string, unknown>): Event {
   return {
@@ -21,7 +46,9 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     desembolsoId: String(data.disbursementId ?? data.desembolsoId ?? ''),
     esquema: (data.schemaType ?? data.esquema ?? 'cotizacion') as SchemaType,
     estado: (data.status ?? data.estado ?? 'Postulado') as EventState,
-    items: (data.items as Item[]) ?? [],
+    items: Array.isArray(data.items)
+      ? (data.items as Record<string, unknown>[]).map(mapBackendItem)
+      : [],
     asignadoA: String(data.assignedTo ?? data.asignadoA ?? ''),
     attachments: (data.attachments as Attachment[] | undefined) ?? undefined,
     observation: String(data.observation ?? data.motivoDevolucion ?? '') || undefined,
@@ -34,12 +61,15 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
   return {
     code: event.numeroEvento || '',
     suffix: event.sufijo || undefined,
+    schemaType: event.esquema ?? 'cotizacion',
     name: event.responsable || '',
     description: event.observaciones,
     dependency: event.dependencia || undefined,
     hamlet: event.vereda || undefined,
     attendees: event.asistentes,
     days: event.dias,
+    latitude: event.latitud,
+    longitude: event.longitud,
     divipolaCode: event.municipioId,
     municipalityName: '',
     municipalityCategory: '',

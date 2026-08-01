@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ClipboardList } from 'lucide-react'
 import { getAllAuditEntries } from '../lib/auditStore'
+import { getAuditApi } from '../services/audit.service'
 import { formatDateCO } from '../utils/formatters'
 
 const ENTIDADES = ['', 'Event', 'Offer', 'Item', 'Ally', 'User', 'Param']
@@ -12,8 +14,7 @@ function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | '
   return <ArrowUpDown className="w-3 h-3 ml-1 shrink-0 opacity-40" />
 }
 
-const SORTABLE_COLUMNS = ['fecha', 'usuario', 'accion', 'entidad', 'entidadId', 'detalle'] as const
-type SortColumn = (typeof SORTABLE_COLUMNS)[number]
+type SortColumn = 'fecha' | 'usuario' | 'accion' | 'entidad' | 'entidadId' | 'detalle'
 
 export function AuditPage() {
   const [search, setSearch] = useState('')
@@ -23,6 +24,12 @@ export function AuditPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null)
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(0)
+
+  const { data: serverAudit = [] } = useQuery({
+    queryKey: ['audit'],
+    queryFn: getAuditApi,
+    refetchOnWindowFocus: false,
+  })
 
   function handleSort(column: SortColumn) {
     if (sortColumn !== column) {
@@ -37,7 +44,10 @@ export function AuditPage() {
   }
 
   const filteredAndSorted = useMemo(() => {
-    let result = getAllAuditEntries()
+    const localEntries = getAllAuditEntries()
+    let result = [...serverAudit, ...localEntries].sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+    )
 
     if (filterEntidad) result = result.filter((e) => e.entidad === filterEntidad)
     if (filterAccion) result = result.filter((e) => e.accion.startsWith(filterAccion))
@@ -81,7 +91,7 @@ export function AuditPage() {
       }
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [filterEntidad, filterAccion, search, sortColumn, sortDir])
+  }, [filterEntidad, filterAccion, search, sortColumn, sortDir, serverAudit])
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / pageSize))
   const safePage = Math.min(page, totalPages - 1)

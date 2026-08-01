@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Pencil, ChevronLeft, Tag, MapPin, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { AssociatedOffers } from '../components/AssociatedOffers'
 import { SupportDocuments } from '../components/SupportDocuments'
+import { ImportExcelModal } from '../components/ImportExcelModal'
 import { useItems } from '../hooks/useItems'
 import { useStateMachine } from '../hooks/useStateMachine'
 import { useOffers } from '../../offers/hooks/useOffers'
@@ -51,11 +52,7 @@ export function EventViewPage() {
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
 
-  const [localEvent, setLocalEvent] = useState<Event | null>(null)
-
-  useEffect(() => {
-    if (event) setLocalEvent(event)
-  }, [event])
+  const [localOverrides, setLocalOverrides] = useState<Partial<Event>>({})
 
   const [pendingEstado, setPendingEstado] = useState<string | null>(null)
   const [transitionError, setTransitionError] = useState<string | null>(null)
@@ -63,6 +60,7 @@ export function EventViewPage() {
   const [authorizeException, setAuthorizeException] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
 
   const {
     items,
@@ -71,23 +69,24 @@ export function EventViewPage() {
     removeItem,
     eventTotals,
   } = useItems(
-    localEvent?.items.map((i) => ({
+    event?.items.map((i) => ({
       descripcion: i.descripcion,
       cantidad: i.cantidad,
       valorUnitario: i.valorUnitario,
       categoriaTributaria: i.categoriaTributaria,
       aliadoId: i.aliadoId,
     })),
-    localEvent?.aliadoId,
   )
 
-  useEffect(() => {
-    if (!localEvent) return
-    const updatedEvent = {
-      ...localEvent,
+  const localEvent = useMemo<Event | null>(() => {
+    if (!event) return null
+    return {
+      ...event,
+      ...localOverrides,
+      updatedAt: localOverrides.updatedAt ?? event.updatedAt,
       items: items.map((i) => ({
         id: i.id,
-        eventoId: localEvent.id,
+        eventoId: event.id,
         descripcion: i.descripcion,
         cantidad: i.cantidad,
         valorUnitario: i.valorUnitario,
@@ -101,18 +100,15 @@ export function EventViewPage() {
         ivaFee: i.totals.ivaFee,
         total: i.totals.total,
       })),
-      updatedAt: new Date().toISOString(),
     }
-    setLocalEvent(updatedEvent)
-  }, [items])
+  }, [event, localOverrides, items])
 
   const stateHistory = event ? getStateHistory(event.id) : []
   const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Postulado') as EventState
   const attachmentsCount = event?.attachments?.length ?? 0
 
   function updateEvent(partial: Partial<Event>) {
-    if (!localEvent) return
-    setLocalEvent({ ...localEvent, ...partial, updatedAt: new Date().toISOString() })
+    setLocalOverrides((prev) => ({ ...prev, ...partial, updatedAt: new Date().toISOString() }))
   }
 
   function handleSelectOffer(offerId: string) {
@@ -217,13 +213,12 @@ export function EventViewPage() {
       })
 
       const oldEstado = event.estado
-      const updatedEvent = {
-        ...event,
+      setLocalOverrides((prev) => ({
+        ...prev,
         estado: newEstado,
         updatedAt: new Date().toISOString(),
         ...(isDev ? { observation: motivo } : {}),
-      }
-      setLocalEvent(updatedEvent)
+      }))
       setPendingEstado(null)
       setTransitionError(null)
 
@@ -479,7 +474,14 @@ export function EventViewPage() {
         onUpdateItem={updateItem}
         onRemoveItem={removeItem}
         eventTotals={eventTotals}
+        onOpenImport={!itemsReadOnly ? () => setShowImportModal(true) : undefined}
         readOnly={itemsReadOnly}
+      />
+
+      <ImportExcelModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={(importedItems) => importedItems.forEach(addItem)}
       />
 
       {pendingEstado && (

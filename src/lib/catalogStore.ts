@@ -13,7 +13,7 @@ function loadAliados(): Ally[] {
       const parsed = JSON.parse(saved) as Ally[]
       if (Array.isArray(parsed)) return parsed
     }
-  } catch { }
+  } catch { void 0 }
   return []
 }
 
@@ -24,7 +24,7 @@ function loadDesembolsos(): Disbursement[] {
       const parsed = JSON.parse(saved) as Disbursement[]
       if (Array.isArray(parsed)) return parsed
     }
-  } catch { }
+  } catch { void 0 }
   return []
 }
 
