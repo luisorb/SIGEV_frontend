@@ -47,6 +47,7 @@ export interface UpdateUserDto {
 
 export interface CreateEventDto {
   code: string
+  suffix?: string
   name: string
   description?: string
   dependency?: string
@@ -64,6 +65,7 @@ export interface CreateEventDto {
 
 export interface UpdateEventDto {
   code?: string
+  suffix?: string
   name?: string
   description?: string
   dependency?: string

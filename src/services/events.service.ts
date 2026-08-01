@@ -33,6 +33,7 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
 function mapToCreateDto(event: Partial<Event>): CreateEventDto {
   return {
     code: event.numeroEvento || '',
+    suffix: event.sufijo || undefined,
     name: event.responsable || '',
     description: event.observaciones,
     dependency: event.dependencia || undefined,
