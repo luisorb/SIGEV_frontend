@@ -6,7 +6,7 @@ import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
 import { useAllies, useCreateAlly, useUpdateAlly } from '../../../hooks/useAllies'
 import { useDisbursements, useCreateDisbursement, useUpdateDisbursement } from '../../../hooks/useDisbursements'
-import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
+import { formatCurrencyCO } from '../../../utils/formatters'
 import type { Ally, Disbursement } from '../../../types'
 
 type Tab = 'tasas' | 'aliados' | 'desembolsos'
@@ -383,7 +383,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
 }
 
 function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'success' | 'error') => void }) {
-  const { data: desembolsos = [], isLoading, error } = useDisbursements()
+  const { data: desembolsos = [], isLoading, error } = useDisbursements({ all: true })
   const createDesembolso = useCreateDisbursement()
   const updateDesembolso = useUpdateDisbursement()
   const [search, setSearch] = useState('')
@@ -409,22 +409,22 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
     if (form.valorReferencia <= 0) newErrors.valorReferencia = 'El valor de referencia debe ser mayor a 0'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     try {
+      const payload = {
+        code: form.codigo,
+        name: form.nombre,
+        amount: form.valorReferencia,
+        year: Number(String(form.vigencia).slice(0, 4)),
+        percentageParticipation: form.porcentajeParticipacion,
+        disbursementDate: form.vigencia || undefined,
+      }
       if (editing) {
         await updateDesembolso.mutateAsync({
           id: editing.id,
-          data: {
-            name: form.nombre,
-            amount: form.valorReferencia,
-            year: Number(form.vigencia),
-          },
+          data: payload,
         })
         showToast(`Desembolso "${form.codigo}" actualizado correctamente`)
       } else {
-        await createDesembolso.mutateAsync({
-          name: form.nombre,
-          amount: form.valorReferencia,
-          year: Number(form.vigencia),
-        })
+        await createDesembolso.mutateAsync(payload)
         showToast(`Desembolso "${form.codigo}" creado correctamente`)
       }
       setModalOpen(false)
@@ -435,7 +435,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
 
   async function handleToggleActivo(d: Disbursement) {
     try {
-      await updateDesembolso.mutateAsync({ id: d.id, data: { active: !d.activo } })
+      await updateDesembolso.mutateAsync({ id: d.id, data: { isActive: !d.activo } })
       showToast(`Desembolso "${d.nombre}" ${d.activo ? 'inactivado' : 'activado'} correctamente`)
       setConfirmToggle(null)
     } catch {
@@ -543,7 +543,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                   <tr key={d.id} className={`hover:bg-slate-50 transition-colors ${!d.activo ? 'opacity-50' : ''}`}>
                     <td className="px-3 sm:px-4 py-3 font-medium text-slate-900 text-sm">{d.codigo}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.nombre}</td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.vigencia ? formatDateCO(d.vigencia) : '-'}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.vigencia || '-'}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center text-slate-600">{d.porcentajeParticipacion}%</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center font-medium text-slate-900 tabular-nums">{formatCurrencyCO(d.valorReferencia)}</td>
                     <td className="px-3 sm:px-4 py-3 text-center">

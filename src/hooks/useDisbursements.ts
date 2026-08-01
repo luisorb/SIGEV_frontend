@@ -5,23 +5,24 @@ import type { CreateDisbursementDto, UpdateDisbursementDto } from '../services/t
 
 const DISBURSEMENTS_KEY = ['disbursements']
 
-function mapDisbursementResponse(data: { id: string; name: string; amount: number; year: number; status?: string; active?: boolean }): Disbursement {
+function mapDisbursementResponse(data: { id: string; code?: string; name: string; amount: number; year: number; percentageParticipation?: number; disbursementDate?: string; status?: string; isActive?: boolean; active?: boolean }): Disbursement {
   return {
     id: data.id,
     nombre: data.name,
-    codigo: `D${data.year}`,
-    porcentajeParticipacion: 0,
-    vigencia: String(data.year),
+    codigo: data.code || `D${data.year}`,
+    porcentajeParticipacion: Number(data.percentageParticipation ?? 0),
+    vigencia: data.disbursementDate ? String(data.disbursementDate).slice(0, 10) : String(data.year),
     valorReferencia: data.amount,
-    activo: data.active ?? true,
+    activo: data.isActive ?? data.active ?? true,
   }
 }
 
-export function useDisbursements() {
+export function useDisbursements(options?: { all?: boolean }) {
+  const all = options?.all ?? false
   return useQuery({
-    queryKey: DISBURSEMENTS_KEY,
+    queryKey: ['disbursements', { all }],
     queryFn: async () => {
-      const data = await getDisbursementsApi()
+      const data = await getDisbursementsApi(all ? 'all' : undefined)
       return data.map(mapDisbursementResponse)
     },
   })

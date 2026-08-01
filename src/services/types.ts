@@ -53,6 +53,7 @@ export interface CreateEventDto {
   municipalityName?: string
   municipalityCategory?: string
   generalAllyId?: string
+  disbursementId?: string
   items?: CreateItemDto[]
 }
 
@@ -64,6 +65,7 @@ export interface UpdateEventDto {
   municipalityName?: string
   municipalityCategory?: string
   generalAllyId?: string
+  disbursementId?: string
   items?: CreateItemDto[]
 }
 
@@ -117,18 +119,24 @@ export interface UpdateAllyDto {
 }
 
 export interface CreateDisbursementDto {
+  code: string
   name: string
   amount: number
   year: number
+  percentageParticipation?: number
+  disbursementDate?: string
   status?: string
 }
 
 export interface UpdateDisbursementDto {
+  code?: string
   name?: string
   amount?: number
   year?: number
+  percentageParticipation?: number
+  disbursementDate?: string
   status?: string
-  active?: boolean
+  isActive?: boolean
 }
 
 export interface GenerateReportDto {

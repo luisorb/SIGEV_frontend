@@ -39,6 +39,7 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
     municipalityName: '',
     municipalityCategory: '',
     generalAllyId: event.aliadoId,
+    disbursementId: event.desembolsoId,
     items: event.items?.length ? event.items.map((i) => ({
       name: i.descripcion,
       quantity: i.cantidad,

@@ -3,15 +3,20 @@ import type { CreateDisbursementDto, UpdateDisbursementDto } from './types'
 
 export interface DisbursementResponse {
   id: string
+  code?: string
   name: string
   amount: number
   year: number
+  percentageParticipation?: number
+  disbursementDate?: string
   status?: string
+  isActive?: boolean
   active?: boolean
 }
 
-export async function getDisbursementsApi(): Promise<DisbursementResponse[]> {
-  const response = await api.get<DisbursementResponse[]>('/api/v1/disbursements')
+export async function getDisbursementsApi(active?: string): Promise<DisbursementResponse[]> {
+  const query = active ? `?active=${encodeURIComponent(active)}` : ''
+  const response = await api.get<DisbursementResponse[]>(`/api/v1/disbursements${query}`)
   return response.data
 }
 
