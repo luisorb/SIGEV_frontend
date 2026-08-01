@@ -1,7 +1,7 @@
 import { ChevronLeft, ShieldAlert } from 'lucide-react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { EventForm } from '../components/EventForm'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventApi, updateEventApi, getEventsApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
@@ -14,6 +14,7 @@ export function EventDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const queryClient = useQueryClient()
   const { can: userCan } = useRolePermissions()
 
   const { data: event, isLoading } = useQuery({
@@ -48,6 +49,9 @@ export function EventDetailPage() {
       longitud: data.longitud || undefined,
       observaciones: data.observaciones ?? '',
     })
+
+    await queryClient.invalidateQueries({ queryKey: ['events'] })
+    await queryClient.invalidateQueries({ queryKey: ['event', id] })
 
     toast.showToast(`Orden ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} actualizada correctamente`)
     navigate('/ordenes')

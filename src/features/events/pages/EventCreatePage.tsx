@@ -6,13 +6,14 @@ import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useToast } from '../../../components/ToastProvider'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Event } from '../../../types'
 
 export function EventCreatePage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const queryClient = useQueryClient()
 
   const { data: aliados = [] } = useAllies()
   const { data: desembolsos = [] } = useDisbursements()
@@ -39,6 +40,8 @@ export function EventCreatePage() {
     }
 
     const newEvent = await createEventApi(partial)
+
+    await queryClient.invalidateQueries({ queryKey: ['events'] })
 
     toast.showToast(`Orden ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creada correctamente`)
     navigate('/ordenes')
