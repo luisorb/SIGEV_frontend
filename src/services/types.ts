@@ -49,11 +49,16 @@ export interface CreateEventDto {
   code: string
   name: string
   description?: string
+  dependency?: string
+  hamlet?: string
+  attendees?: number
+  days?: number
   divipolaCode?: string
   municipalityName?: string
   municipalityCategory?: string
   generalAllyId?: string
   disbursementId?: string
+  startDate?: string
   items?: CreateItemDto[]
 }
 
@@ -61,11 +66,16 @@ export interface UpdateEventDto {
   code?: string
   name?: string
   description?: string
+  dependency?: string
+  hamlet?: string
+  attendees?: number
+  days?: number
   divipolaCode?: string
   municipalityName?: string
   municipalityCategory?: string
   generalAllyId?: string
   disbursementId?: string
+  startDate?: string
   items?: CreateItemDto[]
 }
 

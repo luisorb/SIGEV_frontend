@@ -21,6 +21,15 @@ export function formatNumberCO(amount: number): string {
 }
 
 export function formatDateCO(date: string | Date): string {
+  const dateOnly = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+  if (dateOnly) {
+    const [year, month, day] = date.split('-').map(Number)
+    return new Date(year, month - 1, day).toLocaleDateString(LOCAL_CONFIG.locale, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+  }
   const dateObj = typeof date === 'string' ? new Date(date) : date
   return dateObj.toLocaleDateString(LOCAL_CONFIG.locale, {
     timeZone: LOCAL_CONFIG.timeZone,
