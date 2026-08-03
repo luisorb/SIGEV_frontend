@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import type { ItemInput, ItemTotals, EventTotals } from '../../../types'
 import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
@@ -27,15 +27,25 @@ function toInput(item: StoredItem): ItemInput {
   }
 }
 
+function toStored(input: ItemInput): StoredItem {
+  return { ...input, id: generateId() }
+}
+
 export function useItems(initialItems?: ItemInput[]) {
   const params = useActiveCalculationParams()
   const [items, setItems] = useState<StoredItem[]>(
-    () =>
-      initialItems?.map((item) => ({
-        ...item,
-        id: generateId(),
-      })) ?? [],
+    () => initialItems?.map(toStored) ?? [],
   )
+
+  const baselineRef = useRef<string>(JSON.stringify(initialItems ?? []))
+
+  useEffect(() => {
+    const serialized = JSON.stringify(initialItems ?? [])
+    if (baselineRef.current === serialized) return
+    baselineRef.current = serialized
+    setItems((initialItems ?? []).map(toStored))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(initialItems ?? [])])
 
   function addItem(item: ItemInput) {
     setItems((prev) => [
