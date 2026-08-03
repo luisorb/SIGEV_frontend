@@ -8,6 +8,7 @@ import {
   Map,
   Settings,
   Users,
+  DatabaseBackup,
   ShieldAlert,
   ChevronLeft,
   ChevronRight,
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { label: 'Mapa', to: '/mapa', icon: Map },
   { label: 'Parámetros', to: '/parametros', icon: Settings, roles: ['functional_admin'] },
   { label: 'Usuarios', to: '/usuarios', icon: Users, roles: ['technical_admin'] },
+  { label: 'Respaldo', to: '/respaldo', icon: DatabaseBackup, roles: ['technical_admin'] },
   { label: 'Auditoría', to: '/auditoria', icon: ShieldAlert, roles: ['functional_admin', 'supervisor', 'approver', 'auditor'] },
 ]
 

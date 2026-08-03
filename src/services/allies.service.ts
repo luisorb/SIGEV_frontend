@@ -3,6 +3,7 @@ import type { CreateAllyDto, UpdateAllyDto } from './types'
 
 export interface AllyResponse {
   id: string
+  code: string
   name: string
   color?: string
   document?: string

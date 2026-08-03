@@ -38,6 +38,7 @@ export const ROLES_CAN_MANAGE_ALLIES = ['functional_admin'] as const
 export const ROLES_CAN_MANAGE_DISBURSEMENTS = ['functional_admin'] as const
 export const ROLES_CAN_MANAGE_PARAMETERS = ['functional_admin'] as const
 export const ROLES_CAN_MANAGE_TECH = ['technical_admin'] as const
+export const ROLES_CAN_MANAGE_BACKUP = ['technical_admin'] as const
 
 export function can(roles: string[], ...required: string[]): boolean {
   return required.some((role) => roles.includes(role))

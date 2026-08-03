@@ -13,10 +13,9 @@ export const DEFAULT_CALCULATION_PARAMS: CalculationParams = {
 export const TAX_CATEGORIES = ['IVA', 'Consumo', 'Tercero', 'Reembolso'] as const
 
 export const EVENT_STATES = [
-  'Postulado',
-  'En preparación',
-  'En revisión',
+  'Abierto',
   'En ejecución',
+  'Ejecutado',
   'Cerrado',
   'Legalizado',
   'Devuelto',

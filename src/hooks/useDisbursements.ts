@@ -5,13 +5,20 @@ import type { CreateDisbursementDto, UpdateDisbursementDto } from '../services/t
 
 const DISBURSEMENTS_KEY = ['disbursements']
 
-function mapDisbursementResponse(data: { id: string; code?: string; name: string; amount: number; year: number; percentageParticipation?: number; disbursementDate?: string; status?: string; isActive?: boolean; active?: boolean }): Disbursement {
+function mapDisbursementResponse(data: { id: string; code?: string; name: string; amount: number; year: number; percentageParticipation?: number; disbursementDate?: string; fechaInicio?: string; fechaFin?: string; status?: string; isActive?: boolean; active?: boolean }): Disbursement {
+  const inicio = data.fechaInicio ? String(data.fechaInicio).slice(0, 10) : undefined
+  const fin = data.fechaFin ? String(data.fechaFin).slice(0, 10) : undefined
+  const vigencia = inicio
+    ? (fin ? `${inicio} a ${fin}` : inicio)
+    : (data.disbursementDate ? String(data.disbursementDate).slice(0, 10) : String(data.year))
   return {
     id: data.id,
     nombre: data.name,
     codigo: data.code || `D${data.year}`,
     porcentajeParticipacion: Number(data.percentageParticipation ?? 0),
-    vigencia: data.disbursementDate ? String(data.disbursementDate).slice(0, 10) : String(data.year),
+    vigencia,
+    vigenciaInicio: inicio,
+    vigenciaFin: fin,
     valorReferencia: data.amount,
     activo: data.isActive ?? data.active ?? true,
   }

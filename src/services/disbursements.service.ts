@@ -9,6 +9,8 @@ export interface DisbursementResponse {
   year: number
   percentageParticipation?: number
   disbursementDate?: string
+  fechaInicio?: string
+  fechaFin?: string
   status?: string
   isActive?: boolean
   active?: boolean

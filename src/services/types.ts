@@ -88,7 +88,7 @@ export interface UpdateEventDto {
 }
 
 export interface ChangeStatusDto {
-  status: 'Postulado' | 'En preparación' | 'En revisión' | 'En ejecución' | 'Cerrado' | 'Legalizado' | 'Devuelto' | 'Rechazado'
+  status: 'Abierto' | 'En ejecución' | 'Ejecutado' | 'Cerrado' | 'Legalizado' | 'Devuelto' | 'Rechazado'
   observation?: string
   authorizeException?: boolean
 }
@@ -120,6 +120,7 @@ export interface UpdateItemDto {
 }
 
 export interface CreateAllyDto {
+  code: string
   name: string
   color?: string
   document?: string
@@ -128,6 +129,7 @@ export interface CreateAllyDto {
 }
 
 export interface UpdateAllyDto {
+  code?: string
   name?: string
   color?: string
   document?: string
@@ -143,6 +145,8 @@ export interface CreateDisbursementDto {
   year: number
   percentageParticipation?: number
   disbursementDate?: string
+  fechaInicio?: string
+  fechaFin?: string
   status?: string
 }
 
@@ -153,6 +157,8 @@ export interface UpdateDisbursementDto {
   year?: number
   percentageParticipation?: number
   disbursementDate?: string
+  fechaInicio?: string
+  fechaFin?: string
   status?: string
   isActive?: boolean
 }
@@ -161,6 +167,52 @@ export interface GenerateReportDto {
   format: 'pdf' | 'xlsx'
   type: 'offer' | 'matrix'
   eventId?: string
+}
+
+export interface CreateQuotationItemDto {
+  description?: string
+  quantity: number
+  unitPrice?: number
+  tariffId?: string
+  isTariffed?: boolean
+  ivaRate?: number
+  consumptionTaxRate?: number
+  feeRate?: number
+  feeIvaRate?: number
+  allyId?: string
+}
+
+export interface CreateQuotationDto {
+  code?: string
+  name: string
+  description?: string
+  cliente?: string
+  eventId?: string
+  allyId?: string
+  currency?: string
+  quotationDate?: string
+  validityDays?: number
+  observations?: string
+  items?: CreateQuotationItemDto[]
+}
+
+export interface UpdateQuotationDto {
+  code?: string
+  name?: string
+  description?: string
+  cliente?: string
+  eventId?: string
+  allyId?: string
+  currency?: string
+  quotationDate?: string
+  validityDays?: number
+  observations?: string
+  items?: CreateQuotationItemDto[]
+}
+
+export interface ChangeQuotationStatusDto {
+  status: string
+  observation?: string
 }
 
 export interface MunicipalityQuery {

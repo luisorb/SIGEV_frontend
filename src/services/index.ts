@@ -49,8 +49,9 @@ export {
   searchMunicipalitiesApi,
   getMunicipalityByCodeApi,
   getMunicipalitiesByCategoryApi,
+  getMunicipalityStatsApi,
 } from './map.service'
-export type { MunicipalityResponse } from './map.service'
+export type { MunicipalityResponse, MunicipalityStatsResponse, MunicipalityStatsQuery } from './map.service'
 
 export {
   getActiveParametersApi,

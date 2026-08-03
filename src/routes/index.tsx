@@ -14,6 +14,7 @@ import { KanbanPage } from '../features/kanban/pages/KanbanPage'
 import { MapPage } from '../features/map/pages/MapPage'
 import { ParametersPage } from '../features/parameters/pages/ParametersPage'
 import { AdminUsersPage } from '../pages/AdminUsersPage'
+import { BackupPage } from '../pages/BackupPage'
 import { AuditPage } from '../pages/AuditPage'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
@@ -84,6 +85,14 @@ export const router = createBrowserRouter([
             element: (
               <RoleRoute roles={['technical_admin']}>
                 <AdminUsersPage />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: 'respaldo',
+            element: (
+              <RoleRoute roles={['technical_admin']}>
+                <BackupPage />
               </RoleRoute>
             ),
           },

@@ -18,10 +18,9 @@ export interface Role {
 }
 
 export type EventState =
-  | 'Postulado'
-  | 'En preparación'
-  | 'En revisión'
+  | 'Abierto'
   | 'En ejecución'
+  | 'Ejecutado'
   | 'Cerrado'
   | 'Legalizado'
   | 'Devuelto'
@@ -63,6 +62,7 @@ export const SOPORTES_MODIFICABLES: TipoSoporte[] = [
 
 export interface Ally {
   id: string
+  codigo: string
   nombre: string
   nit: string
   contacto: string
@@ -78,6 +78,8 @@ export interface Disbursement {
   codigo: string
   porcentajeParticipacion: number
   vigencia: string
+  vigenciaInicio?: string
+  vigenciaFin?: string
   valorReferencia: number
   activo: boolean
 }
@@ -87,6 +89,8 @@ export interface Municipality {
   nombre: string
   departamento: string
   vereda?: string
+  lat?: number
+  lng?: number
 }
 
 export interface Item {
@@ -195,6 +199,7 @@ export interface Event {
   items: Item[]
   activo?: boolean
   eliminadoAt?: string
+  devolucionLegalizacion?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -246,11 +251,14 @@ export interface Soporte {
 
 export interface Attachment {
   id: string
-  name: string
-  url?: string
-  mimeType?: string
-  size?: number
-  createdAt?: string
+  originalName: string
+  storedPath: string
+  mimeType: string
+  fileSize: number
+  category?: string
+  eventId: string
+  uploadedById: string
+  createdAt: string
 }
 
 export interface Event {
@@ -276,6 +284,7 @@ export interface Event {
   soportes?: Soporte[]
   attachments?: Attachment[]
   cotizacionSeleccionadaId?: string
+  municipalityCategory?: string
   observation?: string
   activo?: boolean
   eliminadoAt?: string

@@ -5,9 +5,10 @@ import type { CreateAllyDto, UpdateAllyDto } from '../services/types'
 
 const ALLIES_KEY = ['allies']
 
-function mapAllyResponse(data: { id: string; name: string; color?: string; document?: string; contactName?: string; contactEmail?: string; active?: boolean }): Ally {
+function mapAllyResponse(data: { id: string; code: string; name: string; color?: string; document?: string; contactName?: string; contactEmail?: string; active?: boolean }): Ally {
   return {
     id: data.id,
+    codigo: data.code,
     nombre: data.name,
     nit: data.document ?? '',
     contacto: data.contactName ?? '',
