@@ -12,10 +12,10 @@ import type { Ally, Disbursement } from '../../../types'
 type Tab = 'tasas' | 'aliados' | 'desembolsos'
 
 type AllyForm = Omit<Ally, 'id' | 'telefono'>
-const EMPTY_ALLY: AllyForm = { nombre: '', nit: '', contacto: '', email: '', color: '#3B82F6', activo: true }
+const EMPTY_ALLY: AllyForm = { codigo: '', nombre: '', nit: '', contacto: '', email: '', color: '#3B82F6', activo: true }
 
 type DesForm = Omit<Disbursement, 'id'>
-const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', valorReferencia: 0, activo: true }
+const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', vigenciaInicio: '', vigenciaFin: '', valorReferencia: 0, activo: true }
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
   if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1 shrink-0" />
@@ -59,7 +59,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
   const createAlly = useCreateAlly()
   const updateAlly = useUpdateAlly()
   const [search, setSearch] = useState('')
-  const [sortColumn, setSortColumn] = useState<'nombre' | 'nit' | 'contacto' | 'email' | 'estado'>('nombre')
+  const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'nit' | 'contacto' | 'email' | 'estado'>('nombre')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [pageSize, setPageSize] = useState(8)
   const [page, setPage] = useState(0)
@@ -71,10 +71,11 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
 
   function openCreate() { setEditing(null); setForm(EMPTY_ALLY); setErrors({}); setModalOpen(true) }
 
-  function openEdit(a: Ally) { setEditing(a); setForm({ nombre: a.nombre, nit: a.nit, contacto: a.contacto, email: a.email, color: a.color, activo: a.activo }); setErrors({}); setModalOpen(true) }
+  function openEdit(a: Ally) { setEditing(a); setForm({ codigo: a.codigo, nombre: a.nombre, nit: a.nit, contacto: a.contacto, email: a.email, color: a.color, activo: a.activo }); setErrors({}); setModalOpen(true) }
 
   async function handleSave() {
     const newErrors: Partial<Record<keyof AllyForm, string>> = {}
+    if (!form.codigo.trim()) newErrors.codigo = 'El código es obligatorio'
     if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
     if (!form.nit.trim()) newErrors.nit = 'El NIT es obligatorio'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
@@ -83,6 +84,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
         await updateAlly.mutateAsync({
           id: editing.id,
           data: {
+            code: form.codigo,
             name: form.nombre,
             document: form.nit,
             contactName: form.contacto || undefined,
@@ -93,6 +95,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
         showToast(`Aliado "${form.nombre}" actualizado correctamente`)
       } else {
         await createAlly.mutateAsync({
+          code: form.codigo,
           name: form.nombre,
           document: form.nit,
           contactName: form.contacto || undefined,
@@ -121,7 +124,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
     return errors[field] ? inputBase + ' ' + inputError : inputBase
   }
 
-  function toggleSort(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'estado') {
+  function toggleSort(col: 'codigo' | 'nombre' | 'nit' | 'contacto' | 'email' | 'estado') {
     if (sortColumn === col) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
@@ -135,20 +138,23 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
     const q = search.toLowerCase()
     return [...aliados].filter((a) =>
       !search
+        || a.codigo.toLowerCase().includes(q)
         || a.nombre.toLowerCase().includes(q)
         || a.nit.toLowerCase().includes(q)
         || (a.contacto ?? '').toLowerCase().includes(q)
         || (a.email ?? '').toLowerCase().includes(q)
     ).sort((a, b) => {
-      const cmp = sortColumn === 'nombre'
-        ? a.nombre.localeCompare(b.nombre)
-        : sortColumn === 'nit'
-          ? a.nit.localeCompare(b.nit)
-          : sortColumn === 'contacto'
-            ? (a.contacto ?? '').localeCompare(b.contacto ?? '')
-            : sortColumn === 'email'
-              ? (a.email ?? '').localeCompare(b.email ?? '')
-              : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
+      const cmp = sortColumn === 'codigo'
+        ? a.codigo.localeCompare(b.codigo)
+        : sortColumn === 'nombre'
+          ? a.nombre.localeCompare(b.nombre)
+          : sortColumn === 'nit'
+            ? a.nit.localeCompare(b.nit)
+            : sortColumn === 'contacto'
+              ? (a.contacto ?? '').localeCompare(b.contacto ?? '')
+              : sortColumn === 'email'
+                ? (a.email ?? '').localeCompare(b.email ?? '')
+                : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
       return sortDir === 'asc' ? cmp : -cmp
     })
   }, [aliados, search, sortColumn, sortDir])
@@ -157,7 +163,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
   const safePage = Math.min(page, totalPages - 1)
   const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
-  function sortHeader(col: 'nombre' | 'nit' | 'contacto' | 'email' | 'estado', label: string, className = '') {
+  function sortHeader(col: 'codigo' | 'nombre' | 'nit' | 'contacto' | 'email' | 'estado', label: string, className = '') {
     const justify = className.includes('text-right') ? 'justify-end' : className.includes('text-center') ? 'justify-center' : ''
     return (
       <th
@@ -186,7 +192,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input type="text" placeholder="Buscar por nombre o NIT..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+          <input type="text" placeholder="Buscar por código, nombre o NIT..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
         </div>
         <button onClick={openCreate} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Aliado
@@ -197,6 +203,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
+                {sortHeader('codigo', 'Código')}
                 {sortHeader('nombre', 'Nombre')}
                 {sortHeader('nit', 'NIT')}
                 {sortHeader('contacto', 'Contacto')}
@@ -207,10 +214,11 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
               ) : (
                 paged.map((a) => (
                   <tr key={a.id} className={`hover:bg-slate-50 transition-colors ${!a.activo ? 'opacity-50' : ''}`}>
+                    <td className="px-3 sm:px-4 py-3 font-mono text-xs sm:text-sm text-slate-500">{a.codigo}</td>
                     <td className="px-3 sm:px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full inline-block shrink-0" style={{ backgroundColor: a.color }} />
@@ -309,10 +317,17 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
             <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
+                  <label className={labelBase}>Código {requiredMark}</label>
+                  <input type="text" value={form.codigo} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: ALY-001" className={inp('codigo')} />
+                  {errors.codigo && <p className="text-xs text-red-500">{errors.codigo}</p>}
+                </div>
+                <div className="space-y-1.5">
                   <label className={labelBase}>Nombre {requiredMark}</label>
                   <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Aliado SAS" className={inp('nombre')} />
                   {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
                 </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelBase}>NIT {requiredMark}</label>
                   <input type="text" value={form.nit} onChange={(e) => { setForm({ ...form, nit: e.target.value }); if (errors.nit) setErrors((prev) => ({ ...prev, nit: '' })) }} placeholder="Ej: 900.123.456-7" className={inp('nit')} />
@@ -399,23 +414,27 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
 
   function openCreate() { setEditing(null); setForm(EMPTY_DES); setErrors({}); setModalOpen(true) }
 
-  function openEdit(d: Disbursement) { setEditing(d); setForm({ nombre: d.nombre, codigo: d.codigo, porcentajeParticipacion: d.porcentajeParticipacion, vigencia: d.vigencia, valorReferencia: d.valorReferencia, activo: d.activo }); setErrors({}); setModalOpen(true) }
+  function openEdit(d: Disbursement) { setEditing(d); setForm({ nombre: d.nombre, codigo: d.codigo, porcentajeParticipacion: d.porcentajeParticipacion, vigencia: d.vigencia, vigenciaInicio: d.vigenciaInicio ?? '', vigenciaFin: d.vigenciaFin ?? '', valorReferencia: d.valorReferencia, activo: d.activo }); setErrors({}); setModalOpen(true) }
 
   async function handleSave() {
     const newErrors: Partial<Record<keyof DesForm, string>> = {}
     if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
     if (!form.codigo.trim()) newErrors.codigo = 'El código es obligatorio'
-    if (!form.vigencia) newErrors.vigencia = 'La vigencia es obligatoria'
+    if (!form.vigenciaInicio) newErrors.vigenciaInicio = 'La fecha de inicio es obligatoria'
+    if (form.vigenciaInicio && form.vigenciaFin && form.vigenciaFin < form.vigenciaInicio) newErrors.vigenciaFin = 'La fecha fin no puede ser anterior al inicio'
     if (form.valorReferencia <= 0) newErrors.valorReferencia = 'El valor de referencia debe ser mayor a 0'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     try {
+      const inicio = form.vigenciaInicio || undefined
       const payload = {
         code: form.codigo,
         name: form.nombre,
         amount: form.valorReferencia,
-        year: Number(String(form.vigencia).slice(0, 4)),
+        year: Number(String(inicio).slice(0, 4)),
         percentageParticipation: form.porcentajeParticipacion,
-        disbursementDate: form.vigencia || undefined,
+        disbursementDate: inicio,
+        fechaInicio: inicio,
+        fechaFin: form.vigenciaFin || undefined,
       }
       if (editing) {
         await updateDesembolso.mutateAsync({
@@ -647,10 +666,17 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className={labelBase}>Vigencia {requiredMark}</label>
-                  <input type="date" value={form.vigencia} onChange={(e) => { setForm({ ...form, vigencia: e.target.value }); if (errors.vigencia) setErrors((prev) => ({ ...prev, vigencia: '' })) }} className={inp('vigencia')} />
-                  {errors.vigencia && <p className="text-xs text-red-500">{errors.vigencia}</p>}
+                  <label className={labelBase}>Vigencia inicio {requiredMark}</label>
+                  <input type="date" value={form.vigenciaInicio} onChange={(e) => { setForm({ ...form, vigenciaInicio: e.target.value }); if (errors.vigenciaInicio) setErrors((prev) => ({ ...prev, vigenciaInicio: '' })) }} className={inp('vigenciaInicio')} />
+                  {errors.vigenciaInicio && <p className="text-xs text-red-500">{errors.vigenciaInicio}</p>}
                 </div>
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Vigencia fin</label>
+                  <input type="date" value={form.vigenciaFin} onChange={(e) => { setForm({ ...form, vigenciaFin: e.target.value }); if (errors.vigenciaFin) setErrors((prev) => ({ ...prev, vigenciaFin: '' })) }} className={inp('vigenciaFin')} />
+                  {errors.vigenciaFin && <p className="text-xs text-red-500">{errors.vigenciaFin}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelBase}>% Participación</label>
                   <input type="number" min={0} max={100} value={form.porcentajeParticipacion} onChange={(e) => setForm({ ...form, porcentajeParticipacion: Number(e.target.value) })} className={inputBase} />
@@ -725,6 +751,10 @@ export function ParametersPage() {
     nextVersion,
     aprobadoPor,
     setAprobadoPor,
+    vigenciaInicio,
+    setVigenciaInicio,
+    vigenciaFin,
+    setVigenciaFin,
     saveNewVersion,
     loadVersion,
     discardChanges,
@@ -791,14 +821,18 @@ export function ParametersPage() {
             {!loading && (
               <ParameterForm
                 editParams={editParams}
-                activeVersion={currentVersion ? { version: currentVersion.version } : null}
+                activeVersion={currentVersion ? { version: currentVersion.version, fechaInicio: currentVersion.fechaInicio, fechaFin: currentVersion.fechaFin } : null}
                 isDirty={isDirty}
                 nextVersion={nextVersion}
                 aprobadoPor={aprobadoPor}
+                vigenciaInicio={vigenciaInicio}
+                vigenciaFin={vigenciaFin}
                 saveMessage={saveMessage}
                 saving={saving}
                 onUpdateParam={updateParam}
                 onAprobadoPorChange={setAprobadoPor}
+                onVigenciaInicioChange={setVigenciaInicio}
+                onVigenciaFinChange={setVigenciaFin}
                 onSave={saveNewVersion}
                 onDiscard={discardChanges}
               />

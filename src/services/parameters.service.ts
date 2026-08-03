@@ -11,6 +11,8 @@ export interface ParametersResponse {
   applyFeeOnBase: boolean
   paramsVersion?: string
   aprobadoPor: string
+  fechaInicio?: string
+  fechaFin?: string
   fechaCreacion: string
   activo: boolean
 }
@@ -42,6 +44,8 @@ export async function createParameterVersionApi(data: {
   ivaFeeRate: number
   applyFeeOnBase: boolean
   aprobadoPor: string
+  fechaInicio?: string
+  fechaFin?: string
 }): Promise<ParametersResponse> {
   const response = await api.post<ParametersResponse>('/api/v1/parameters/versions', data)
   return response.data

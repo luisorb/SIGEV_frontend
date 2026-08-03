@@ -5,6 +5,8 @@ export interface ParamVersion {
   version: number
   params: CalculationParams
   aprobadoPor: string
+  fechaInicio?: string
+  fechaFin?: string
   fechaCreacion: string
   activo: boolean
 }

@@ -20,6 +20,8 @@ function mapResponseToParamVersion(data: ParametersResponse): ParamVersion {
       paramsVersion: data.paramsVersion ?? `${data.version}.0`,
     },
     aprobadoPor: data.aprobadoPor,
+    fechaInicio: data.fechaInicio ? String(data.fechaInicio).slice(0, 10) : undefined,
+    fechaFin: data.fechaFin ? String(data.fechaFin).slice(0, 10) : undefined,
     fechaCreacion: data.fechaCreacion,
     activo: data.activo,
   }
@@ -48,6 +50,8 @@ export function useParameters() {
   const [baseParams, setBaseParams] = useState<CalculationParams>(cloneParams(DEFAULT_CALCULATION_PARAMS))
   const [loadedVersionId, setLoadedVersionId] = useState<string | null>(null)
   const [aprobadoPor, setAprobadoPor] = useState(getCurrentUser())
+  const [vigenciaInicio, setVigenciaInicio] = useState('')
+  const [vigenciaFin, setVigenciaFin] = useState('')
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -67,6 +71,8 @@ export function useParameters() {
           setEditParams(p)
           setBaseParams(p)
           setLoadedVersionId(mapped.id)
+          setVigenciaInicio(mapped.fechaInicio ?? '')
+          setVigenciaFin(mapped.fechaFin ?? '')
         }
         setError(null)
       } catch {
@@ -85,7 +91,12 @@ export function useParameters() {
     return versions.find((v) => v.id === loadedVersionId) ?? activeVersion
   }, [versions, loadedVersionId, activeVersion])
 
-  const isDirty = useMemo(() => !paramsEqual(baseParams, editParams), [baseParams, editParams])
+  const isDirty = useMemo(
+    () => !paramsEqual(baseParams, editParams)
+      || vigenciaInicio !== (currentVersion?.fechaInicio ?? '')
+      || vigenciaFin !== (currentVersion?.fechaFin ?? ''),
+    [baseParams, editParams, vigenciaInicio, vigenciaFin, currentVersion],
+  )
 
   const nextVersion = useMemo(() => {
     if (versions.length === 0) return 1
@@ -106,6 +117,10 @@ export function useParameters() {
       setSaveMessage({ type: 'error', text: 'Debes ingresar quién aprueba los cambios.' })
       return
     }
+    if (!vigenciaInicio) {
+      setSaveMessage({ type: 'error', text: 'Debes indicar la fecha de inicio de vigencia.' })
+      return
+    }
 
     setSaving(true)
     try {
@@ -117,6 +132,8 @@ export function useParameters() {
         ivaFeeRate: Math.round(editParams.ivaFeeRate * 10000) / 10000,
         applyFeeOnBase: editParams.applyFeeOnBase,
         aprobadoPor: aprobadoPor.trim(),
+        fechaInicio: vigenciaInicio || undefined,
+        fechaFin: vigenciaFin || undefined,
       }
 
       const created = await createParameterVersionApi(roundedParams)
@@ -128,6 +145,8 @@ export function useParameters() {
       setEditParams(cloneParams(mapped.params))
       setBaseParams(cloneParams(mapped.params))
       setLoadedVersionId(mapped.id)
+      setVigenciaInicio(mapped.fechaInicio ?? '')
+      setVigenciaFin(mapped.fechaFin ?? '')
       setSaveMessage({ type: 'success', text: `Versión ${mapped.version} guardada exitosamente.` })
 
       addAuditEntry({
@@ -143,7 +162,7 @@ export function useParameters() {
     } finally {
       setSaving(false)
     }
-  }, [isDirty, aprobadoPor, editParams, versions])
+  }, [isDirty, aprobadoPor, editParams, versions, vigenciaInicio, vigenciaFin])
 
   function loadVersion(versionId: string) {
     const version = versions.find((v) => v.id === versionId)
@@ -153,6 +172,8 @@ export function useParameters() {
       setBaseParams(p)
       setLoadedVersionId(versionId)
       setAprobadoPor(version.aprobadoPor)
+      setVigenciaInicio(version.fechaInicio ?? '')
+      setVigenciaFin(version.fechaFin ?? '')
       setSaveMessage(null)
     }
   }
@@ -165,6 +186,8 @@ export function useParameters() {
     setBaseParams(p)
     setLoadedVersionId(activeVersion?.id ?? null)
     setAprobadoPor(activeVersion ? activeVersion.aprobadoPor : getCurrentUser())
+    setVigenciaInicio(activeVersion?.fechaInicio ?? '')
+    setVigenciaFin(activeVersion?.fechaFin ?? '')
     setSaveMessage(null)
   }
 
@@ -180,6 +203,10 @@ export function useParameters() {
     nextVersion,
     aprobadoPor,
     setAprobadoPor,
+    vigenciaInicio,
+    setVigenciaInicio,
+    vigenciaFin,
+    setVigenciaFin,
     saveNewVersion,
     loadVersion,
     discardChanges,

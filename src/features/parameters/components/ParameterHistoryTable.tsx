@@ -45,6 +45,8 @@ export function ParameterHistoryTable({ versions, currentVersionId, onLoadVersio
       `v${v.version}`.includes(q) ||
       v.aprobadoPor.toLowerCase().includes(q) ||
       v.fechaCreacion.toLowerCase().includes(q) ||
+      (v.fechaInicio ?? '').includes(q) ||
+      (v.fechaFin ?? '').includes(q) ||
       (v.params.ivaRate * 100).toFixed(2).includes(q) ||
       (v.params.impuestoConsumoRate * 100).toFixed(2).includes(q) ||
       (v.params.feeTarifadoRate * 100).toFixed(2).includes(q) ||
@@ -100,6 +102,13 @@ export function ParameterHistoryTable({ versions, currentVersionId, onLoadVersio
           {formatDateCO(currentVersion.fechaCreacion)}
           <span className="text-slate-300 mx-1">·</span>
           {currentVersion.aprobadoPor}
+          {currentVersion.fechaInicio && (
+            <>
+              <span className="text-slate-300 mx-1">·</span>
+              Vigencia {currentVersion.fechaInicio}
+              {currentVersion.fechaFin ? ` a ${currentVersion.fechaFin}` : ''}
+            </>
+          )}
         </div>
       )}
 
@@ -131,6 +140,7 @@ export function ParameterHistoryTable({ versions, currentVersionId, onLoadVersio
                   {sortHeader('version', 'Versión')}
                   {sortHeader('fechaCreacion', 'Fecha')}
                   {sortHeader('aprobadoPor', 'Aprobado por')}
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Vigencia</th>
                   {sortHeader('ivaRate', 'IVA')}
                   {sortHeader('impuestoConsumoRate', 'Consumo')}
                   {sortHeader('feeTarifadoRate', 'Fee Tarif.')}
@@ -156,6 +166,9 @@ export function ParameterHistoryTable({ versions, currentVersionId, onLoadVersio
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-500">{formatDateCO(v.fechaCreacion)}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{v.aprobadoPor}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">
+                        {v.fechaInicio ? `${v.fechaInicio}${v.fechaFin ? ` a ${v.fechaFin}` : ''}` : '—'}
+                      </td>
                       <td className="px-4 py-3 text-sm text-slate-600 font-medium tabular-nums">{(v.params.ivaRate * 100).toFixed(1)}%</td>
                       <td className="px-4 py-3 text-sm text-slate-600 font-medium tabular-nums">{(v.params.impuestoConsumoRate * 100).toFixed(1)}%</td>
                       <td className="px-4 py-3 text-sm text-slate-600 font-medium tabular-nums">{(v.params.feeTarifadoRate * 100).toFixed(1)}%</td>

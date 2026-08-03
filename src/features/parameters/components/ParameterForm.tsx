@@ -4,14 +4,18 @@ import type { ParamFieldKey } from '../types'
 
 interface ParameterFormProps {
   editParams: CalculationParams
-  activeVersion: { version?: number } | null
+  activeVersion: { version?: number; fechaInicio?: string; fechaFin?: string } | null
   isDirty: boolean
   nextVersion: number
   aprobadoPor: string
+  vigenciaInicio: string
+  vigenciaFin: string
   saveMessage: { type: 'success' | 'error'; text: string } | null
   saving?: boolean
   onUpdateParam: (key: keyof CalculationParams, value: number | boolean) => void
   onAprobadoPorChange: (value: string) => void
+  onVigenciaInicioChange: (value: string) => void
+  onVigenciaFinChange: (value: string) => void
   onSave: () => void
   onDiscard: () => void
 }
@@ -62,10 +66,14 @@ export function ParameterForm({
   isDirty,
   nextVersion,
   aprobadoPor,
+  vigenciaInicio,
+  vigenciaFin,
   saveMessage,
   saving,
   onUpdateParam,
   onAprobadoPorChange,
+  onVigenciaInicioChange,
+  onVigenciaFinChange,
   onSave,
   onDiscard,
 }: ParameterFormProps) {
@@ -182,6 +190,35 @@ export function ParameterForm({
       </div>
 
       <div className="px-4 sm:px-6 py-4 border-t border-slate-200 bg-slate-50/80 rounded-b-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Vigencia inicio</label>
+            <input
+              type="date"
+              value={vigenciaInicio}
+              onChange={(e) => onVigenciaInicioChange(e.target.value)}
+              className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Vigencia fin</label>
+            <input
+              type="date"
+              value={vigenciaFin}
+              onChange={(e) => onVigenciaFinChange(e.target.value)}
+              className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            />
+          </div>
+          <div className="flex flex-col justify-center gap-1 sm:col-span-2 lg:col-span-2">
+            <span className="text-xs text-slate-500">
+              {activeVersion?.version ? `Vigencia actual: v${activeVersion.version}` : 'Sin versión vigente'}
+              {activeVersion?.fechaInicio ? ` (${String(activeVersion.fechaInicio).slice(0, 10)}${activeVersion.fechaFin ? ` a ${String(activeVersion.fechaFin).slice(0, 10)}` : ''})` : ''}
+            </span>
+            {!vigenciaInicio && (
+              <span className="text-xs text-amber-600">La fecha de inicio es obligatoria para guardar una nueva versión.</span>
+            )}
+          </div>
+        </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
             <label className="text-sm font-medium text-slate-700 whitespace-nowrap">Aprobado por:</label>
