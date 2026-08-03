@@ -14,9 +14,9 @@ export interface TransitionRule {
 }
 
 const TRANSITIONS: Record<EventState, TransitionRule[]> = {
-  Postulado: [
+  Abierto: [
     {
-      to: 'En preparación',
+      to: 'En ejecución',
       roles: ['operator', 'functional_admin'],
       validate: () => null,
     },
@@ -33,12 +33,12 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       validate: () => null,
     },
   ],
-  'En preparación': [
+  'En ejecución': [
     {
-      to: 'En revisión',
+      to: 'Ejecutado',
       roles: ['operator', 'functional_admin'],
       validate: (event) => {
-        if (event.items.length === 0) return 'Debe tener al menos un ítem antes de enviar a revisión'
+        if (event.items.length === 0) return 'Debe tener al menos un ítem antes de marcar como ejecutado'
         return null
       },
     },
@@ -49,13 +49,13 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       validate: () => null,
     },
   ],
-  'En revisión': [
+  Ejecutado: [
     {
-      to: 'En ejecución',
+      to: 'Cerrado',
       roles: ['approver'],
       validate: (_event, ctx) => {
         if (ctx.attachmentsCount < 4 && !ctx.authorizeException) {
-          return `Se requieren al menos 4 cotizaciones para aprobar (actual: ${ctx.attachmentsCount})`
+          return `Se requieren al menos 4 cotizaciones para cerrar (actual: ${ctx.attachmentsCount})`
         }
         return null
       },
@@ -66,38 +66,11 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       isDevolucion: true,
       validate: () => null,
     },
-    {
-      to: 'Rechazado',
-      roles: ['approver'],
-      isRechazo: true,
-      validate: () => null,
-    },
   ],
   Devuelto: [
     {
-      to: 'En preparación',
+      to: 'En ejecución',
       roles: ['operator', 'analista', 'functional_admin'],
-      validate: () => null,
-    },
-    {
-      to: 'En revisión',
-      roles: ['operator', 'functional_admin'],
-      validate: (event) => {
-        if (event.items.length === 0) return 'Debe tener al menos un ítem antes de enviar a revisión'
-        return null
-      },
-    },
-  ],
-  'En ejecución': [
-    {
-      to: 'Cerrado',
-      roles: ['approver'],
-      validate: () => null,
-    },
-    {
-      to: 'Devuelto',
-      roles: ['supervisor'],
-      isDevolucion: true,
       validate: () => null,
     },
   ],
@@ -108,7 +81,14 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       validate: () => null,
     },
   ],
-  Legalizado: [],
+  Legalizado: [
+    {
+      to: 'Devuelto',
+      roles: ['approver'],
+      isDevolucion: true,
+      validate: () => null,
+    },
+  ],
   Rechazado: [],
 }
 

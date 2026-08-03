@@ -1,10 +1,9 @@
 import type { EventState } from '../../../types'
 
 export const KANBAN_COLUMNS: EventState[] = [
-  'Postulado',
-  'En preparación',
-  'En revisión',
+  'Abierto',
   'En ejecución',
+  'Ejecutado',
   'Cerrado',
   'Legalizado',
   'Devuelto',

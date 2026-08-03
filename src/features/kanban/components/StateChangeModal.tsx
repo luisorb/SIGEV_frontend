@@ -3,10 +3,9 @@ import { X, AlertTriangle } from 'lucide-react'
 import type { StateChangeRequest } from '../types'
 
 const stateLabels: Record<string, string> = {
-  Postulado: 'Postulado',
-  'En preparación': 'En preparación',
-  'En revisión': 'En revisión',
+  Abierto: 'Abierto',
   'En ejecución': 'En ejecución',
+  Ejecutado: 'Ejecutado',
   Cerrado: 'Cerrado',
   Legalizado: 'Legalizado',
   Devuelto: 'Devuelto',
