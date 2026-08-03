@@ -1,9 +1,11 @@
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { ChevronLeft, FileSpreadsheet } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { OfferForm } from '../components/OfferForm'
 import { useOffers } from '../hooks/useOffers'
 import { useToast } from '../../../components/ToastProvider'
-import type { Event } from '../../../types'
+import { getEventApi } from '../../../services/events.service'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
 
 export function OfferCreatePage() {
   const navigate = useNavigate()
@@ -11,6 +13,12 @@ export function OfferCreatePage() {
   const [searchParams] = useSearchParams()
   const eventoId = searchParams.get('eventoId')
   const { createOffer } = useOffers()
+
+  const { data: event } = useQuery({
+    queryKey: ['event', eventoId],
+    queryFn: () => getEventApi(eventoId!),
+    enabled: !!eventoId,
+  })
 
   let eventDefaults: Partial<{
     eventoId: string
@@ -23,29 +31,20 @@ export function OfferCreatePage() {
     esquema: string
   }> | undefined
 
-  if (eventoId) {
-    try {
-      const saved = localStorage.getItem('sigev-events')
-      if (saved) {
-        const events: Event[] = JSON.parse(saved)
-        const ev = events.find((e) => e.id === eventoId)
-        if (ev) {
-          eventDefaults = {
-            eventoId: ev.id,
-            numeroEvento: ev.numeroEvento + (ev.sufijo ? `-${ev.sufijo}` : ''),
-            responsable: ev.responsable,
-            dependencia: ev.dependencia,
-            municipio: ev.municipioId,
-            aliado: ev.aliadoId,
-            desembolso: ev.desembolsoId,
-            esquema: ev.esquema,
-          }
-        }
-      }
-    } catch { /* silent */ }
+  if (event) {
+    eventDefaults = {
+      eventoId: event.id,
+      numeroEvento: event.numeroEvento + (event.sufijo ? `-${event.sufijo}` : ''),
+      responsable: event.responsable,
+      dependencia: event.dependencia,
+      municipio: event.municipioId,
+      aliado: event.aliadoId,
+      desembolso: event.desembolsoId,
+      esquema: event.esquema,
+    }
   }
 
-  function handleSave(data: {
+  async function handleSave(data: {
     codigo: string
     nombre: string
     descripcion: string
@@ -59,9 +58,13 @@ export function OfferCreatePage() {
     desembolso?: string
     esquema?: string
   }) {
-    createOffer(data)
-    toast.showToast(`Oferta ${data.codigo} creada correctamente`)
-    navigate(eventoId ? `/ordenes/${eventoId}` : '/ofertas')
+    try {
+      await createOffer(data)
+      toast.showToast(`Oferta ${data.codigo} creada correctamente`)
+      navigate(eventoId ? `/ordenes/${eventoId}` : '/ofertas')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo crear la oferta'), 'error')
+    }
   }
 
   return (
@@ -79,7 +82,6 @@ export function OfferCreatePage() {
           <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
             <FileSpreadsheet className="w-4 h-4" />
             Asociada al evento {eventDefaults.numeroEvento}
-            {eventDefaults.municipio && <span>· {eventDefaults.municipio}</span>}
           </div>
         )}
       </div>

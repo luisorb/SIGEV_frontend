@@ -5,6 +5,7 @@ import { OfferForm } from '../components/OfferForm'
 import { OfferItems } from '../components/OfferItems'
 import { useOffers } from '../hooks/useOffers'
 import { useToast } from '../../../components/ToastProvider'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
 import type { OfferItemInput } from '../types'
 
 export function OfferEditPage() {
@@ -12,7 +13,7 @@ export function OfferEditPage() {
   const navigate = useNavigate()
   const toast = useToast()
 
-  const { getOffer, updateOffer, addItem, updateItem, removeItem } = useOffers()
+  const { getOffer, updateOffer, addItem, updateItem, removeItem, isLoading } = useOffers()
   const offer = id ? getOffer(id) : undefined
   const offerId = offer?.id
 
@@ -22,6 +23,14 @@ export function OfferEditPage() {
     valorUnitario: 0,
     categoriaTributaria: 'IVA',
   })
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-slate-500 text-lg">Cargando oferta...</p>
+      </div>
+    )
+  }
 
   if (!offer) {
     return (
@@ -38,7 +47,7 @@ export function OfferEditPage() {
     )
   }
 
-  function handleSave(data: {
+  async function handleSave(data: {
     codigo: string
     nombre: string
     descripcion: string
@@ -53,9 +62,13 @@ export function OfferEditPage() {
     esquema?: string
   }) {
     if (!offerId) return
-    updateOffer(offerId, data)
-    toast.showToast(`Oferta ${data.codigo} actualizada correctamente`)
-    navigate('/ofertas')
+    try {
+      await updateOffer(offerId, data)
+      toast.showToast(`Oferta ${data.codigo} actualizada correctamente`)
+      navigate('/ofertas')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo actualizar la oferta'), 'error')
+    }
   }
 
   function handleAddItem() {

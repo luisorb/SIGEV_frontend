@@ -10,6 +10,8 @@ import { exportOfferToPDF } from '../utils/pdfExport'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { OfferSummary } from '../components/OfferSummary'
+import { useToast } from '../../../components/ToastProvider'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
 import type { OfferState } from '../types'
 
 const catColors: Record<string, string> = {
@@ -21,7 +23,8 @@ const catColors: Record<string, string> = {
 
 export function OfferViewPage() {
   const { id } = useParams()
-  const { getOffer, changeState } = useOffers()
+  const toast = useToast()
+  const { getOffer, changeState, isLoading } = useOffers()
   const { can } = usePermissions()
 
   const offer = id ? getOffer(id) : undefined
@@ -29,6 +32,14 @@ export function OfferViewPage() {
   const [pendingState, setPendingState] = useState<OfferState | null>(null)
   const [validationError, setValidationError] = useState('')
   const [scheme, setScheme] = useState<'detalle' | 'cotizacion'>('detalle')
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-slate-500 text-lg">Cargando oferta...</p>
+      </div>
+    )
+  }
 
   if (!offer) {
     return (
@@ -53,10 +64,15 @@ export function OfferViewPage() {
     setPendingState(newState)
   }
 
-  function confirmStateChange() {
+  async function confirmStateChange() {
     if (!pendingState || !id) return
-    changeState(id, pendingState)
-    setPendingState(null)
+    try {
+      await changeState(id, pendingState)
+      setPendingState(null)
+      toast.showToast(`Estado cambiado a ${pendingState}`)
+    } catch (error) {
+      setValidationError(getApiErrorMessage(error, 'No se pudo cambiar el estado de la oferta'))
+    }
   }
 
   function handleExportExcel() {

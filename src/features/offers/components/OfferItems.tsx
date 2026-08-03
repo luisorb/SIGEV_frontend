@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import type { TaxCategory } from '../../../types'
 import type { Offer, OfferItemInput } from '../types'
 import { TAX_CATEGORIES } from '../../../config/constants'
 import { formatCurrencyCO } from '../../../utils/formatters'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { getTariffsApi, getTariffPriceApi } from '../../../services/tariffs.service'
 
 interface OfferItemsProps {
   offer: Offer
@@ -17,6 +19,39 @@ interface OfferItemsProps {
 
 export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newItem, onNewItemChange }: OfferItemsProps) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [resolvingTariff, setResolvingTariff] = useState(false)
+
+  const { data: tariffs = [] } = useQuery({
+    queryKey: ['tariffs'],
+    queryFn: () => getTariffsApi({ tariffType: 'TARIFADO' }),
+  })
+
+  async function handleSelectTariff(tariffId: string) {
+    if (!tariffId) {
+      onNewItemChange({ ...newItem, tariffId: undefined })
+      return
+    }
+    const tariff = tariffs.find((t) => t.id === tariffId)
+    if (!tariff) return
+    setResolvingTariff(true)
+    try {
+      const update: OfferItemInput = {
+        ...newItem,
+        tariffId,
+        descripcion: tariff.name,
+        valorUnitario: 0,
+      }
+      if (offer.municipalityCategory) {
+        const price = await getTariffPriceApi(tariffId, offer.municipalityCategory)
+        update.valorUnitario = price
+      }
+      onNewItemChange(update)
+    } catch {
+      onNewItemChange({ ...newItem, tariffId, descripcion: tariff.name })
+    } finally {
+      setResolvingTariff(false)
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl border border-slate-200">
@@ -118,6 +153,21 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
 
       <div className="border-t border-slate-200 px-4 py-3">
         <div className="flex flex-wrap items-end gap-3">
+          <div className="w-full sm:w-auto">
+            <label className="block text-xs text-slate-500 mb-1">Tarifario</label>
+            <select
+              value={newItem.tariffId ?? ''}
+              onChange={(e) => handleSelectTariff(e.target.value)}
+              className="px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary max-w-[280px]"
+            >
+              <option value="">Valor manual</option>
+              {tariffs.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.code} · {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs text-slate-500 mb-1">Descripción</label>
             <input
@@ -162,11 +212,11 @@ export function OfferItems({ offer, onAddItem, onUpdateItem, onRemoveItem, newIt
           </div>
           <button
             onClick={onAddItem}
-            disabled={!newItem.descripcion || newItem.cantidad < 1 || newItem.valorUnitario < 1}
+            disabled={!newItem.descripcion || newItem.cantidad < 1 || newItem.valorUnitario < 1 || resolvingTariff}
             className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Agregar
+            {resolvingTariff ? 'Cargando...' : 'Agregar'}
           </button>
         </div>
       </div>

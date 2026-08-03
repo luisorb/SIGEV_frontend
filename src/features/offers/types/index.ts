@@ -10,6 +10,7 @@ export interface OfferItem {
   valorUnitario: number
   categoriaTributaria: TaxCategory
   aliadoId?: string
+  tariffId?: string
   base: number
   iva: number
   impuestoConsumo: number
@@ -25,6 +26,7 @@ export interface OfferItemInput {
   valorUnitario: number
   categoriaTributaria: TaxCategory
   aliadoId?: string
+  tariffId?: string
 }
 
 export interface Offer {
@@ -41,6 +43,7 @@ export interface Offer {
   aliado?: string
   desembolso?: string
   esquema?: string
+  municipalityCategory?: string
   estado: OfferState
   items: OfferItem[]
   subtotal: number

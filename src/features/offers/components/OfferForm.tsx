@@ -5,6 +5,7 @@ import { useOfferForm } from '../hooks/useOfferForm'
 import type { Offer } from '../types'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
+import { getEventsApi } from '../../../services/events.service'
 
 interface OfferFormProps {
   offer?: Offer
@@ -37,7 +38,7 @@ interface OfferFormProps {
 
 export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormProps) {
   const { register, handleSubmit, errors, isSubmitting, form } = useOfferForm({ offer, initialData, onSave })
-  const { data: allEvents = [] } = useQuery({ queryKey: ['events'], queryFn: () => import('../../../services/events.service').then(m => m.getEventsApi()) })
+  const { data: allEvents = [] } = useQuery({ queryKey: ['events'], queryFn: () => getEventsApi() })
   const events = useMemo(() => allEvents.filter(e => e.activo !== false), [allEvents])
   const { data: aliadosList = [] } = useAllies()
   const { data: desembolsosList = [] } = useDisbursements()

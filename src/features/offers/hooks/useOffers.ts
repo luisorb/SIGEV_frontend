@@ -1,6 +1,18 @@
-import { useState, useMemo, useRef } from 'react'
-import type { Offer, OfferInput, OfferItemInput, OfferState } from '../types'
+import { useState, useMemo } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Offer, OfferInput, OfferItem, OfferItemInput, OfferState } from '../types'
+import {
+  getQuotationsApi,
+  createQuotationApi,
+  updateQuotationApi,
+  changeQuotationStatusApi,
+  selectQuotationApi,
+  deleteQuotationApi,
+  mapQuotationResponse,
+} from '../../../services/quotations.service'
 import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
+import type { CalculationParams } from '../../../types'
+import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { exportOfferToExcel } from '../utils/excelExport'
@@ -17,6 +29,8 @@ const PERMISSION_ROLES: Record<UserPermission, readonly string[]> = {
   export: ['technical_admin', 'functional_admin', 'approver', 'operator', 'solicitante', 'analista', 'supervisor', 'auditor', 'consulta'],
 }
 
+export const OFFERS_KEY = ['offers'] as const
+
 export function usePermissions(): {
   can: (perm: UserPermission) => boolean
 } {
@@ -25,15 +39,41 @@ export function usePermissions(): {
   return { can: (perm: UserPermission) => hasAnyRole(roleNames, PERMISSION_ROLES[perm]) }
 }
 
-export function useOffers() {
-  const [offers, setOffers] = useState<Offer[]>([])
-  const [search, setSearch] = useState('')
-  const idCounter = useRef(0)
-
-  function nextId(): string {
-    idCounter.current += 1
-    return idCounter.current.toString(36)
+function recomputeOffer(offer: Offer, items: OfferItem[], params: CalculationParams): Offer {
+  const { eventTotals } = calculateEventSummary(
+    items.map((it) => ({
+      descripcion: it.descripcion,
+      cantidad: it.cantidad,
+      valorUnitario: it.valorUnitario,
+      categoriaTributaria: it.categoriaTributaria,
+    })),
+    params,
+  )
+  return {
+    ...offer,
+    items,
+    subtotal: eventTotals.baseTotal,
+    ivaTotal: eventTotals.ivaTotal,
+    impuestoConsumoTotal: eventTotals.impuestoConsumoTotal,
+    feeTarifadoTotal: eventTotals.feeTarifadoTotal,
+    feeTercerosTotal: eventTotals.feeTercerosTotal,
+    ivaFeeTotal: eventTotals.ivaFeeTotal,
+    total: eventTotals.granTotal,
   }
+}
+
+export function useOffers() {
+  const queryClient = useQueryClient()
+  const [search, setSearch] = useState('')
+  const params = useActiveCalculationParams()
+
+  const { data: offers = [], isLoading, error } = useQuery({
+    queryKey: OFFERS_KEY,
+    queryFn: async () => {
+      const data = await getQuotationsApi()
+      return data.map(mapQuotationResponse)
+    },
+  })
 
   const filteredOffers = useMemo(() => {
     if (!search) return offers
@@ -53,74 +93,101 @@ export function useOffers() {
     return offers.find((o) => o.id === id)
   }
 
-  function createOffer(input: OfferInput): Offer {
-    const newOffer: Offer = {
-      id: `OFR-${nextId()}`,
-      ...input,
-      estado: 'Borrador',
-      items: [],
-      subtotal: 0,
-      ivaTotal: 0,
-      impuestoConsumoTotal: 0,
-      feeTarifadoTotal: 0,
-      feeTercerosTotal: 0,
-      ivaFeeTotal: 0,
-      total: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    setOffers((prev) => [newOffer, ...prev])
-    addAuditEntry({
-      accion: 'Creación de oferta',
-      entidad: 'Offer',
-      entidadId: newOffer.id,
-      usuario: getCurrentUser(),
-      fecha: new Date().toISOString(),
-      detalle: `Oferta ${newOffer.codigo} creada para cliente ${newOffer.cliente}`,
-    })
-    return newOffer
-  }
-
-  function updateOffer(id: string, input: Partial<OfferInput>) {
-    const prev = offers.find((o) => o.id === id)
-    setOffers((prevOffers) =>
-      prevOffers.map((o) =>
-        o.id === id ? { ...o, ...input, updatedAt: new Date().toISOString() } : o
-      )
-    )
-    if (prev) {
+  const createMutation = useMutation({
+    mutationFn: (input: OfferInput) => createQuotationApi(input),
+    onSuccess: async (data) => {
+      const offer = mapQuotationResponse(data)
+      queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) => [offer, ...(prev ?? [])])
       addAuditEntry({
-        accion: 'Edición de oferta',
+        accion: 'Creación de oferta',
         entidad: 'Offer',
-        entidadId: id,
+        entidadId: offer.id,
         usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
-        detalle: `Oferta ${prev.codigo} actualizada`,
+        detalle: `Oferta ${offer.codigo} creada para cliente ${offer.cliente}`,
       })
-    }
-  }
+    },
+  })
 
-  function changeState(id: string, estado: OfferState) {
-    const prev = offers.find((o) => o.id === id)
-    setOffers((prevOffers) =>
-      prevOffers.map((o) => (o.id === id ? { ...o, estado, updatedAt: new Date().toISOString() } : o))
-    )
-    if (prev) {
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<OfferInput> & { items?: OfferItem[] } }) =>
+      updateQuotationApi(id, input),
+    onSuccess: async (data) => {
+      const offer = mapQuotationResponse(data)
+      queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) =>
+        (prev ?? []).map((o) => (o.id === offer.id ? offer : o))
+      )
+    },
+  })
+
+  const stateMutation = useMutation({
+    mutationFn: ({ id, estado }: { id: string; estado: OfferState }) =>
+      changeQuotationStatusApi(id, estado),
+    onSuccess: async (data) => {
+      const offer = mapQuotationResponse(data)
+      queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) =>
+        (prev ?? []).map((o) => (o.id === offer.id ? offer : o))
+      )
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
       addAuditEntry({
         accion: 'Cambio de estado de oferta',
         entidad: 'Offer',
-        entidadId: id,
+        entidadId: offer.id,
         usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
-        detalle: `Oferta ${prev.codigo}: ${prev.estado} → ${estado}`,
+        detalle: `Oferta ${offer.codigo}: estado → ${offer.estado}`,
       })
-    }
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteQuotationApi(id),
+    onSuccess: async (_data, id) => {
+      queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) => (prev ?? []).filter((o) => o.id !== id))
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
+    },
+  })
+
+  const selectMutation = useMutation({
+    mutationFn: (id: string) => selectQuotationApi(id),
+    onSuccess: async (data) => {
+      const offer = mapQuotationResponse(data)
+      queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) =>
+        (prev ?? []).map((o) => (o.id === offer.id ? offer : o))
+      )
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
+    },
+  })
+
+  async function createOffer(input: OfferInput): Promise<Offer> {
+    const data = await createMutation.mutateAsync(input)
+    return mapQuotationResponse(data)
+  }
+
+  async function updateOffer(id: string, input: Partial<OfferInput>) {
+    const current = getOffer(id)
+    await updateMutation.mutateAsync({ id, input: { ...input, items: current?.items ?? [] } })
+    await queryClient.invalidateQueries({ queryKey: OFFERS_KEY })
+  }
+
+  async function changeState(id: string, estado: OfferState) {
+    await stateMutation.mutateAsync({ id, estado })
+  }
+
+  async function selectOffer(id: string) {
+    await selectMutation.mutateAsync(id)
+  }
+
+  async function removeOffer(id: string) {
+    await deleteMutation.mutateAsync(id)
   }
 
   function addItem(offerId: string, input: OfferItemInput) {
-    const totals = calculateItemPreview(input)
-    const newItem = {
-      id: `OFR-${offerId}-item-${nextId()}`,
+    const totals = calculateItemPreview(input, params)
+    const offer = getOffer(offerId)
+    if (!offer) return
+    const newItem: OfferItem = {
+      id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       ofertaId: offerId,
       ...input,
       base: totals.base,
@@ -131,30 +198,14 @@ export function useOffers() {
       ivaFee: totals.ivaFee,
       total: totals.total,
     }
-    setOffers((prev) =>
-      prev.map((o) =>
-        o.id === offerId
-          ? { ...o, items: [...o.items, newItem], updatedAt: new Date().toISOString() }
-          : o
-      )
+    queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) =>
+      (prev ?? []).map((o) => (o.id === offerId ? recomputeOffer(o, [...o.items, newItem], params) : o))
     )
-    recalcTotals(offerId)
-    const offer = offers.find((o) => o.id === offerId)
-    if (offer) {
-      addAuditEntry({
-        accion: 'Adición de ítem',
-        entidad: 'OfferItem',
-        entidadId: newItem.id,
-        usuario: getCurrentUser(),
-        fecha: new Date().toISOString(),
-        detalle: `Ítem "${newItem.descripcion}" agregado a oferta ${offer.codigo}`,
-      })
-    }
   }
 
   function updateItem(offerId: string, itemId: string, input: Partial<OfferItemInput>) {
-    setOffers((prev) =>
-      prev.map((o) => {
+    queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) =>
+      (prev ?? []).map((o) => {
         if (o.id !== offerId) return o
         const updatedItems = o.items.map((it) => {
           if (it.id !== itemId) return it
@@ -164,7 +215,7 @@ export function useOffers() {
             cantidad: merged.cantidad,
             valorUnitario: merged.valorUnitario,
             categoriaTributaria: merged.categoriaTributaria,
-          })
+          }, params)
           return {
             ...merged,
             base: totals.base,
@@ -176,63 +227,21 @@ export function useOffers() {
             total: totals.total,
           }
         })
-        return { ...o, items: updatedItems, updatedAt: new Date().toISOString() }
+        return recomputeOffer(o, updatedItems, params)
       })
     )
-    recalcTotals(offerId)
   }
 
   function removeItem(offerId: string, itemId: string) {
-    const offer = offers.find((o) => o.id === offerId)
-    const item = offer?.items.find((it) => it.id === itemId)
-    setOffers((prev) =>
-      prev.map((o) =>
-        o.id === offerId
-          ? { ...o, items: o.items.filter((it) => it.id !== itemId), updatedAt: new Date().toISOString() }
-          : o
+    queryClient.setQueryData<Offer[]>(OFFERS_KEY, (prev) =>
+      (prev ?? []).map((o) =>
+        o.id === offerId ? recomputeOffer(o, o.items.filter((it) => it.id !== itemId), params) : o
       )
-    )
-    recalcTotals(offerId)
-    if (offer && item) {
-      addAuditEntry({
-        accion: 'Eliminación de ítem',
-        entidad: 'OfferItem',
-        entidadId: itemId,
-        usuario: getCurrentUser(),
-        fecha: new Date().toISOString(),
-        detalle: `Ítem "${item.descripcion}" eliminado de oferta ${offer.codigo}`,
-      })
-    }
-  }
-
-  function recalcTotals(offerId: string) {
-    setOffers((prev) =>
-      prev.map((o) => {
-        if (o.id !== offerId) return o
-        const { eventTotals } = calculateEventSummary(
-          o.items.map((it) => ({
-            descripcion: it.descripcion,
-            cantidad: it.cantidad,
-            valorUnitario: it.valorUnitario,
-            categoriaTributaria: it.categoriaTributaria,
-          }))
-        )
-        return {
-          ...o,
-          subtotal: eventTotals.baseTotal,
-          ivaTotal: eventTotals.ivaTotal,
-          impuestoConsumoTotal: eventTotals.impuestoConsumoTotal,
-          feeTarifadoTotal: eventTotals.feeTarifadoTotal,
-          feeTercerosTotal: eventTotals.feeTercerosTotal,
-          ivaFeeTotal: eventTotals.ivaFeeTotal,
-          total: eventTotals.granTotal,
-        }
-      })
     )
   }
 
   function handleExport(offerId: string) {
-    const offer = offers.find((o) => o.id === offerId)
+    const offer = getOffer(offerId)
     if (!offer) return
     exportOfferToExcel(offer)
     addAuditEntry({
@@ -248,12 +257,16 @@ export function useOffers() {
   return {
     offers: filteredOffers,
     allOffers: offers,
+    isLoading,
+    error,
     search,
     setSearch,
     getOffer,
     createOffer,
     updateOffer,
     changeState,
+    selectOffer,
+    removeOffer,
     addItem,
     updateItem,
     removeItem,

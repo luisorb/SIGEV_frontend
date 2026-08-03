@@ -9,6 +9,8 @@ export function OffersPage() {
     offers,
     search,
     setSearch,
+    isLoading,
+    error,
   } = useOffers()
 
   const { can } = usePermissions()
@@ -25,6 +27,23 @@ export function OffersPage() {
       fecha: new Date().toISOString(),
       detalle: `Oferta ${offer.codigo} exportada a Excel`,
     })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-slate-500 text-lg">Cargando ofertas...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-red-500 text-lg">No se pudieron cargar las ofertas</p>
+        <p className="text-sm text-slate-400 mt-1">Verifique su conexión con el servidor</p>
+      </div>
+    )
   }
 
   return (
