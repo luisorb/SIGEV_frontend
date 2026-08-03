@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Event, EventState } from '../../../types'
 import type { KanbanGrouped, KanbanCardData, StateChangeRequest } from '../types'
 import { KANBAN_COLUMNS } from '../types'
@@ -14,7 +15,7 @@ interface UseKanbanOptions {
 
 export function useKanban({ events }: UseKanbanOptions) {
   const [pendingChange, setPendingChange] = useState<StateChangeRequest | null>(null)
-  const [localEvents, setLocalEvents] = useState<Event[]>(events)
+  const queryClient = useQueryClient()
   const { canTransition } = useStateMachine()
   const { roleNames } = useRolePermissions()
   const toast = useToast()
@@ -24,7 +25,7 @@ export function useKanban({ events }: UseKanbanOptions) {
     for (const col of KANBAN_COLUMNS) {
       groups[col] = []
     }
-    for (const event of localEvents) {
+    for (const event of events) {
       const card: KanbanCardData = {
         id: event.id,
         numeroEvento: event.numeroEvento,
@@ -40,7 +41,7 @@ export function useKanban({ events }: UseKanbanOptions) {
       groups[event.estado]?.push(card)
     }
     return groups
-  }, [localEvents])
+  }, [events])
 
   const counts = useMemo(() => {
     const result: Record<string, number> = {}
@@ -53,7 +54,7 @@ export function useKanban({ events }: UseKanbanOptions) {
   function handleDragEnd(activeId: string, overId?: string) {
     if (!overId || activeId === overId) return
 
-    const event = localEvents.find((e) => e.id === activeId)
+    const event = events.find((e) => e.id === activeId)
     if (!event) return
 
     const targetState = overId as EventState
@@ -79,8 +80,8 @@ export function useKanban({ events }: UseKanbanOptions) {
     const { eventId, to } = pendingChange
     try {
       await changeEventStatusApi(eventId, to, { observation: reason || undefined })
-      setLocalEvents((prev) =>
-        prev.map((e) =>
+      queryClient.setQueryData<Event[]>(['events'], (prev) =>
+        prev?.map((e) =>
           e.id === eventId
             ? { ...e, estado: to, updatedAt: new Date().toISOString() }
             : e,
@@ -91,7 +92,7 @@ export function useKanban({ events }: UseKanbanOptions) {
       toast.showToast(getApiErrorMessage(error, 'No se pudo cambiar el estado del evento'), 'error')
     }
     setPendingChange(null)
-  }, [pendingChange, toast])
+  }, [pendingChange, toast, queryClient])
 
   const cancelStateChange = useCallback(() => {
     setPendingChange(null)
