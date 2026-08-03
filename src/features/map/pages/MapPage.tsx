@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react'
-import { useMapMarkers } from '../hooks/useMapMarkers'
+import { useEffect, useMemo, useState } from 'react'
 import { ExecutionMap } from '../components/ExecutionMap'
 import { useQuery } from '@tanstack/react-query'
-import { getEventsApi } from '../../../services/events.service'
+import { getMunicipalityStatsApi, searchMunicipalitiesApi } from '../../../services/map.service'
+import type { MunicipalityResponse } from '../../../services/map.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { formatCurrencyCO } from '../../../utils/formatters'
+import { MapPin, X } from 'lucide-react'
 
 export function MapPage() {
-  const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
   const { data: aliados = [] } = useAllies()
   const { data: desembolsos = [] } = useDisbursements()
 
@@ -16,32 +16,62 @@ export function MapPage() {
   const [selectedAliado, setSelectedAliado] = useState('')
   const [selectedEstado, setSelectedEstado] = useState('')
 
-  const filteredEvents = useMemo(() => {
-    let result = events
-    if (selectedDesembolso) {
-      result = result.filter((e) => e.desembolsoId === selectedDesembolso)
-    }
-    if (selectedAliado) {
-      result = result.filter((e) => e.aliadoId === selectedAliado)
-    }
-    if (selectedEstado) {
-      result = result.filter((e) => e.estado === selectedEstado)
-    }
-    return result
-  }, [events, selectedDesembolso, selectedAliado, selectedEstado])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState<MunicipalityResponse[]>([])
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [selectedMunicipio, setSelectedMunicipio] = useState<MunicipalityResponse | null>(null)
 
-  const { groups } = useMapMarkers(filteredEvents, [])
+  const statsQuery = useQuery({
+    queryKey: ['map-stats', selectedDesembolso, selectedAliado, selectedEstado],
+    queryFn: () =>
+      getMunicipalityStatsApi({
+        disbursementId: selectedDesembolso || undefined,
+        generalAllyId: selectedAliado || undefined,
+        status: selectedEstado || undefined,
+      }),
+  })
 
-  const totalMunicipios = groups.length
-  const totalEventos = groups.reduce((s, g) => s + g.totalEventos, 0)
-  const totalValor = groups.reduce((s, g) => s + g.totalValor, 0)
+  const groups = useMemo(() => statsQuery.data ?? [], [statsQuery.data])
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-slate-500">Cargando mapa...</p>
-      </div>
-    )
+  useEffect(() => {
+    if (selectedMunicipio) return
+    const timer = setTimeout(async () => {
+      if (searchTerm.trim().length < 2) {
+        setSearchResults([])
+        setSearchOpen(false)
+        return
+      }
+      try {
+        const data = await searchMunicipalitiesApi({ name: searchTerm.trim() })
+        setSearchResults(data)
+        setSearchOpen(true)
+      } catch {
+        setSearchResults([])
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm, selectedMunicipio])
+
+  const visibleGroups = useMemo(() => {
+    if (!selectedMunicipio) return groups
+    const id = selectedMunicipio.divipolaCode ?? selectedMunicipio.id
+    return groups.filter((g) => g.municipioId === id)
+  }, [groups, selectedMunicipio])
+
+  const totalMunicipios = visibleGroups.length
+  const totalEventos = visibleGroups.reduce((s, g) => s + g.totalEventos, 0)
+  const totalValor = visibleGroups.reduce((s, g) => s + g.totalValor, 0)
+
+  function selectMunicipio(mun: MunicipalityResponse) {
+    setSelectedMunicipio(mun)
+    setSearchTerm(`${mun.name} (${mun.department})`)
+    setSearchOpen(false)
+  }
+
+  function clearMunicipio() {
+    setSelectedMunicipio(null)
+    setSearchTerm('')
+    setSearchOpen(false)
   }
 
   return (
@@ -54,6 +84,45 @@ export function MapPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-slate-200 px-5 py-3">
+        <div className="relative min-w-[240px] flex-1 max-w-sm">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar municipio..."
+            className="w-full pl-9 pr-9 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          />
+          {selectedMunicipio && (
+            <button
+              type="button"
+              onClick={clearMunicipio}
+              title="Limpiar búsqueda"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+          {searchOpen && searchResults.length > 0 && (
+            <ul className="absolute z-20 mt-1 w-full max-h-64 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+              {searchResults.map((m) => (
+                <li key={m.divipolaCode ?? m.id}>
+                  <button
+                    type="button"
+                    onClick={() => selectMunicipio(m)}
+                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    {m.name} ({m.department})
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {searchOpen && searchTerm.trim().length >= 2 && searchResults.length === 0 && (
+            <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 text-sm text-slate-500">
+              Sin resultados
+            </div>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <select value={selectedDesembolso} onChange={(e) => setSelectedDesembolso(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
             <option value="">Todos los desembolsos</option>
@@ -65,10 +134,9 @@ export function MapPage() {
           </select>
           <select value={selectedEstado} onChange={(e) => setSelectedEstado(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
             <option value="">Todos los estados</option>
-            <option value="Postulado">Postulado</option>
-            <option value="En preparación">En preparación</option>
-            <option value="En revisión">En revisión</option>
+            <option value="Abierto">Abierto</option>
             <option value="En ejecución">En ejecución</option>
+            <option value="Ejecutado">Ejecutado</option>
             <option value="Cerrado">Cerrado</option>
             <option value="Legalizado">Legalizado</option>
             <option value="Devuelto">Devuelto</option>
@@ -77,17 +145,22 @@ export function MapPage() {
         </div>
         <div className="flex items-center gap-4 text-sm text-slate-500 ml-auto">
           <span className="font-medium text-slate-700">Leyenda:</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-500" /> Postulado</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-500" /> En preparación</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-500" /> En revisión</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-primary" /> En ejecución</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-500" /> Abierto</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-500" /> En ejecución</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-500" /> Ejecutado</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-500" /> Devuelto</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-purple-500" /> Legalizado</span>
         </div>
       </div>
 
       <div className="h-[600px] rounded-xl overflow-hidden">
-        <ExecutionMap groups={groups} />
+        {statsQuery.isLoading && groups.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-slate-500">Cargando mapa...</p>
+          </div>
+        ) : (
+          <ExecutionMap groups={visibleGroups} />
+        )}
       </div>
     </div>
   )

@@ -10,10 +10,9 @@ interface ExecutionMapProps {
 }
 
 const stateBadge: Record<string, string> = {
-  Postulado: 'bg-yellow-500',
-  'En preparación': 'bg-blue-500',
-  'En revisión': 'bg-orange-500',
-  'En ejecución': 'bg-primary',
+  Abierto: 'bg-yellow-500',
+  'En ejecución': 'bg-blue-500',
+  Ejecutado: 'bg-orange-500',
   Cerrado: 'bg-slate-500',
   Legalizado: 'bg-purple-500',
   Devuelto: 'bg-amber-500',

@@ -11,6 +11,8 @@ export function useMunicipalities() {
         id: m.divipolaCode ?? m.id,
         nombre: m.name,
         departamento: m.department,
+        lat: m.latitude !== undefined ? Number(m.latitude) : undefined,
+        lng: m.longitude !== undefined ? Number(m.longitude) : undefined,
       }))
     },
     staleTime: 5 * 60 * 1000,
