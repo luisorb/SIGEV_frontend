@@ -8,6 +8,7 @@ import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useToast } from '../../../components/ToastProvider'
 import { useRolePermissions } from '../../auth/useRolePermissions'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
 import type { EventFormValues } from '../schemas/eventSchema'
 
 export function EventDetailPage() {
@@ -31,30 +32,34 @@ export function EventDetailPage() {
   async function handleSave(data: EventFormValues) {
     if (!event || !id) return
 
-    await updateEventApi(id, {
-      ...event,
-      numeroEvento: data.numeroEvento,
-      sufijo: data.sufijo ?? '',
-      responsable: data.responsable,
-      dependencia: data.dependencia ?? '',
-      municipioId: data.municipioId,
-      aliadoId: data.aliadoId,
-      desembolsoId: data.desembolsoId,
-      esquema: data.esquema,
-      fechaEvento: data.fechaEvento ?? '',
-      asistentes: data.asistentes ?? 0,
-      dias: data.dias ?? 0,
-      vereda: data.vereda ?? '',
-      latitud: data.latitud || undefined,
-      longitud: data.longitud || undefined,
-      observaciones: data.observaciones ?? '',
-    })
+    try {
+      await updateEventApi(id, {
+        ...event,
+        numeroEvento: data.numeroEvento,
+        sufijo: data.sufijo ?? '',
+        responsable: data.responsable,
+        dependencia: data.dependencia ?? '',
+        municipioId: data.municipioId,
+        aliadoId: data.aliadoId,
+        desembolsoId: data.desembolsoId,
+        esquema: data.esquema,
+        fechaEvento: data.fechaEvento ?? '',
+        asistentes: data.asistentes ?? 0,
+        dias: data.dias ?? 0,
+        vereda: data.vereda ?? '',
+        latitud: data.latitud || undefined,
+        longitud: data.longitud || undefined,
+        observaciones: data.observaciones ?? '',
+      })
 
-    await queryClient.invalidateQueries({ queryKey: ['events'] })
-    await queryClient.invalidateQueries({ queryKey: ['event', id] })
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
+      await queryClient.invalidateQueries({ queryKey: ['event', id] })
 
-    toast.showToast(`Orden ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} actualizada correctamente`)
-    navigate('/ordenes')
+      toast.showToast(`Orden ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} actualizada correctamente`)
+      navigate('/ordenes')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo actualizar la orden'), 'error')
+    }
   }
 
   if (isLoading) {

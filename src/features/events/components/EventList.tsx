@@ -12,10 +12,9 @@ import { useRolePermissions } from '../../auth/useRolePermissions'
 import type { PageSize } from '../hooks/useEventList'
 
 const stateColors: Record<string, string> = {
-  Postulado: 'bg-yellow-100 text-yellow-800',
-  'En preparación': 'bg-blue-100 text-blue-800',
-  'En revisión': 'bg-orange-100 text-orange-800',
-  'En ejecución': 'bg-red-100 text-red-800',
+  Abierto: 'bg-yellow-100 text-yellow-800',
+  'En ejecución': 'bg-blue-100 text-blue-800',
+  Ejecutado: 'bg-orange-100 text-orange-800',
   Cerrado: 'bg-slate-100 text-slate-800',
   Legalizado: 'bg-purple-100 text-purple-800',
   Devuelto: 'bg-amber-100 text-amber-800',
@@ -187,6 +186,7 @@ export function EventList({
               <tr>
                 <SortHeader column="numeroEvento" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Evento</SortHeader>
                 <SortHeader column="responsable" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Responsable</SortHeader>
+                <SortHeader column="municipioId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Municipio</SortHeader>
                 <SortHeader column="fechaEvento" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Fecha</SortHeader>
                 <SortHeader column="estado" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Estado</SortHeader>
                 <SortHeader column="aliadoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Aliado</SortHeader>
@@ -200,7 +200,7 @@ export function EventList({
             <tbody className="divide-y divide-slate-100">
               {_events.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={11} className="px-4 py-12 text-center text-slate-500">
                     No hay órdenes registradas. Crea la primera orden.
                   </td>
                 </tr>
@@ -209,6 +209,7 @@ export function EventList({
                   const eventTotal = event.items.reduce((s, i) => s + i.total, 0)
                   const aliado = aliados.find((a) => a.id === event.aliadoId)
                   const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
+                  const municipio = municipios.find((m) => m.id === event.municipioId)
                   return (
                     <tr key={event.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
@@ -217,6 +218,7 @@ export function EventList({
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600">{event.responsable}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{event.fechaEvento ? formatDateCO(event.fechaEvento) : '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${stateColors[event.estado] || ''}`}>
@@ -252,7 +254,7 @@ export function EventList({
                             <button
                               onClick={() => onDeleteRequest(event.id)}
                               className="p-1.5 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
-                              title="Eliminar"
+                              title="Anular"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

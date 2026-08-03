@@ -9,6 +9,7 @@ import { useToast } from '../../../components/ToastProvider'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Event } from '../../../types'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
 
 export function EventCreatePage() {
   const navigate = useNavigate()
@@ -21,30 +22,34 @@ export function EventCreatePage() {
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
 
   async function handleSave(data: EventFormValues) {
-    const partial: Partial<Event> = {
-      numeroEvento: data.numeroEvento,
-      sufijo: data.sufijo ?? '',
-      responsable: data.responsable,
-      dependencia: data.dependencia ?? '',
-      municipioId: data.municipioId,
-      aliadoId: data.aliadoId,
-      desembolsoId: data.desembolsoId,
-      esquema: data.esquema,
-      fechaEvento: data.fechaEvento ?? '',
-      asistentes: data.asistentes ?? 0,
-      dias: data.dias ?? 0,
-      vereda: data.vereda ?? '',
-      latitud: data.latitud || undefined,
-      longitud: data.longitud || undefined,
-      observaciones: data.observaciones ?? '',
+    try {
+      const partial: Partial<Event> = {
+        numeroEvento: data.numeroEvento,
+        sufijo: data.sufijo ?? '',
+        responsable: data.responsable,
+        dependencia: data.dependencia ?? '',
+        municipioId: data.municipioId,
+        aliadoId: data.aliadoId,
+        desembolsoId: data.desembolsoId,
+        esquema: data.esquema,
+        fechaEvento: data.fechaEvento ?? '',
+        asistentes: data.asistentes ?? 0,
+        dias: data.dias ?? 0,
+        vereda: data.vereda ?? '',
+        latitud: data.latitud || undefined,
+        longitud: data.longitud || undefined,
+        observaciones: data.observaciones ?? '',
+      }
+
+      const newEvent = await createEventApi(partial)
+
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
+
+      toast.showToast(`Orden ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creada correctamente`)
+      navigate('/ordenes')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo crear la orden'), 'error')
     }
-
-    const newEvent = await createEventApi(partial)
-
-    await queryClient.invalidateQueries({ queryKey: ['events'] })
-
-    toast.showToast(`Orden ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creada correctamente`)
-    navigate('/ordenes')
   }
 
   return (

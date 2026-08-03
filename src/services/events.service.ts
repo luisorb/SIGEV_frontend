@@ -45,13 +45,17 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     aliadoId: String(data.generalAllyId ?? data.aliadoId ?? ''),
     desembolsoId: String(data.disbursementId ?? data.desembolsoId ?? ''),
     esquema: (data.schemaType ?? data.esquema ?? 'cotizacion') as SchemaType,
-    estado: (data.status ?? data.estado ?? 'Postulado') as EventState,
+    municipalityCategory: String(data.municipalityCategory ?? ''),
+    estado: (data.status ?? data.estado ?? 'Abierto') as EventState,
     items: Array.isArray(data.items)
       ? (data.items as Record<string, unknown>[]).map(mapBackendItem)
       : [],
     asignadoA: String(data.assignedTo ?? data.asignadoA ?? ''),
     attachments: (data.attachments as Attachment[] | undefined) ?? undefined,
     observation: String(data.observation ?? data.motivoDevolucion ?? '') || undefined,
+    activo: data.isActive !== false,
+    eliminadoAt: data.deletedAt ? String(data.deletedAt) : undefined,
+    devolucionLegalizacion: data.devolucionLegalizacion === true,
     createdAt: String(data.createdAt ?? new Date().toISOString()),
     updatedAt: String(data.updatedAt ?? new Date().toISOString()),
   }

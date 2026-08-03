@@ -15,7 +15,7 @@ const base = {
   aliadoId: '1',
   desembolsoId: '1',
   esquema: 'cotizacion' as const,
-  estado: 'Postulado' as const,
+  estado: 'Abierto' as const,
 }
 
 describe('eventSchema latitud/longitud', () => {

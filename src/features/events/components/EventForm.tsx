@@ -1,8 +1,10 @@
-import { AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, MapPin } from 'lucide-react'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
 import { checkDuplicateEventNumber } from '../utils/duplicateCheck'
+import { LocationPicker } from './LocationPicker'
 
 interface EventFormProps {
   event?: Event
@@ -38,10 +40,12 @@ export function EventForm({
   onSave,
   onCancel,
 }: EventFormProps) {
-  const { register, handleSubmit, errors, isSubmitting, watchedValues } = useEventForm({
+  const { register, handleSubmit, errors, isSubmitting, watchedValues, setValue } = useEventForm({
     event,
     onSave,
   })
+
+  const [showPicker, setShowPicker] = useState(false)
 
   const duplicate = checkDuplicateEventNumber(
     events,
@@ -123,6 +127,24 @@ export function EventForm({
             <label className={labelBase}>Longitud</label>
             <input type="number" step="any" {...register('longitud', { valueAsNumber: true })} className={inputBase} placeholder="-74.0721" />
           </div>
+          <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
+            <label className={labelBase}>Ubicación en el mapa</label>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPicker(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                <MapPin className="w-4 h-4" />
+                Seleccionar ubicación en el mapa
+              </button>
+              <span className="text-sm text-slate-500">
+                {watchedValues.latitud !== undefined && watchedValues.longitud !== undefined
+                  ? `${watchedValues.latitud}, ${watchedValues.longitud}`
+                  : 'Sin ubicación asignada'}
+              </span>
+            </div>
+          </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Aliado {requiredMark}</label>
             <select {...register('aliadoId')} className={field('aliadoId')}>
@@ -179,6 +201,20 @@ export function EventForm({
           {event ? 'Guardar Cambios' : 'Crear Orden'}
         </button>
       </div>
+
+      {showPicker && (
+        <LocationPicker
+          latitud={watchedValues.latitud}
+          longitud={watchedValues.longitud}
+          municipio={municipios.find((m) => m.id === watchedValues.municipioId)}
+          onSelect={(lat, lng) => {
+            setValue('latitud', lat, { shouldValidate: true })
+            setValue('longitud', lng, { shouldValidate: true })
+            setShowPicker(false)
+          }}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
     </form>
   )
 }
