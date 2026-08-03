@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react'
+import { Plus, FileSpreadsheet, Trash2, Save } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { ItemInput, EventTotals, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'
@@ -17,6 +17,8 @@ interface ItemManagerProps {
   onOpenImport?: () => void
   readOnly?: boolean
   eventAliadoId?: string
+  onSaveItems?: () => void
+  savingItems?: boolean
 }
 
 export function ItemManager({
@@ -29,6 +31,8 @@ export function ItemManager({
   onOpenImport,
   readOnly = false,
   eventAliadoId,
+  onSaveItems,
+  savingItems = false,
 }: ItemManagerProps) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<ManagedItem | null>(null)
@@ -98,6 +102,16 @@ export function ItemManager({
           </div>
           {!readOnly && (
             <div className="flex items-center gap-2">
+              {onSaveItems && (
+                <button
+                  onClick={onSaveItems}
+                  disabled={savingItems}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 active:scale-[0.98] transition-all duration-150 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingItems ? 'Guardando...' : 'Guardar ítems'}
+                </button>
+              )}
               {onOpenImport && (
                 <button
                   onClick={onOpenImport}

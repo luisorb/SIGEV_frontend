@@ -1,6 +1,6 @@
 import { useRef } from 'react'
-import { FileText, Upload, Trash2, Lock } from 'lucide-react'
-import type { Soporte, TipoSoporte } from '../../../types'
+import { FileText, Upload, Trash2, Lock, Download } from 'lucide-react'
+import type { Soporte, TipoSoporte, Attachment, EventState } from '../../../types'
 import { SOPORTES_REQUERIDOS, SOPORTES_ESTATICOS, SOPORTES_MODIFICABLES } from '../../../types'
 import { formatDateCO } from '../../../utils/formatters'
 
@@ -19,13 +19,27 @@ function getFolderDescription(tipo: TipoSoporte): string {
 
 interface SupportDocumentsProps {
   soportes: Soporte[]
+  attachments?: Attachment[]
   readOnly?: boolean
   soloModificables?: boolean
+  eventStatus?: EventState
+  devolucionLegalizacion?: boolean
   onUpload: (tipo: TipoSoporte, file: File) => void
-  onDelete: (soporteId: string) => void
+  onDelete: (attachmentId: string) => void
+  onDownload?: (attachment: Attachment) => void
 }
 
-export function SupportDocuments({ soportes, readOnly = false, soloModificables = false, onUpload, onDelete }: SupportDocumentsProps) {
+export function SupportDocuments({
+  soportes,
+  attachments = [],
+  readOnly = false,
+  soloModificables = false,
+  eventStatus = 'Abierto',
+  devolucionLegalizacion = false,
+  onUpload,
+  onDelete,
+  onDownload,
+}: SupportDocumentsProps) {
   const fileInputRef = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
   const folderList = soloModificables ? SOPORTES_MODIFICABLES : SOPORTES_REQUERIDOS
@@ -34,8 +48,30 @@ export function SupportDocuments({ soportes, readOnly = false, soloModificables 
     return soportes.find((s) => s.tipo === tipo)
   }
 
+  function getBackendAttachment(tipo: TipoSoporte): Attachment | undefined {
+    return attachments.find((a) => a.category === tipo)
+  }
+
   function isEstatico(tipo: TipoSoporte): boolean {
     return (SOPORTES_ESTATICOS as readonly TipoSoporte[]).includes(tipo)
+  }
+
+  function isFolderEditable(tipo: TipoSoporte): boolean {
+    if (readOnly) return false
+    if (isEstatico(tipo)) {
+      return (
+        eventStatus === 'Abierto' ||
+        eventStatus === 'En ejecución' ||
+        (eventStatus === 'Devuelto' && !devolucionLegalizacion)
+      )
+    }
+    return (
+      eventStatus === 'Abierto' ||
+      eventStatus === 'En ejecución' ||
+      eventStatus === 'Ejecutado' ||
+      eventStatus === 'Cerrado' ||
+      eventStatus === 'Devuelto'
+    )
   }
 
   function handleFileChange(tipo: TipoSoporte, e: React.ChangeEvent<HTMLInputElement>) {
@@ -46,6 +82,8 @@ export function SupportDocuments({ soportes, readOnly = false, soloModificables 
       fileInputRef.current[tipo]!.value = ''
     }
   }
+
+  const loadedCount = folderList.filter((tipo) => !!getSoporte(tipo) || !!getBackendAttachment(tipo)).length
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -63,23 +101,30 @@ export function SupportDocuments({ soportes, readOnly = false, soloModificables 
       <div className="divide-y divide-slate-100">
         {folderList.map((tipo) => {
           const soporte = getSoporte(tipo)
-          const isLocked = readOnly || (isEstatico(tipo) && !soloModificables)
+          const backendAttachment = getBackendAttachment(tipo)
+          const hasContent = !!soporte || !!backendAttachment
+          const editable = isFolderEditable(tipo)
+          const locked = hasContent && !editable
 
           return (
             <div key={tipo} className="px-6 py-4 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
               <div className="flex items-start gap-3 min-w-0 flex-1">
-                <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${soporte ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
-                  {soporte ? <FileText className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${hasContent ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                  {hasContent ? <FileText className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-slate-900">{tipo}</p>
-                    {isLocked && soporte && (
-                      <Lock className="w-3 h-3 text-slate-300" />
-                    )}
+                    {locked && <Lock className="w-3 h-3 text-slate-300" />}
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">{getFolderDescription(tipo)}</p>
-                  {soporte ? (
+                  {backendAttachment ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-green-600 font-medium truncate max-w-[200px]">{backendAttachment.originalName}</span>
+                      <span className="text-[10px] text-slate-400">({(backendAttachment.fileSize / 1024).toFixed(1)} KB)</span>
+                      <span className="text-[10px] text-slate-400">· {formatDateCO(backendAttachment.createdAt)}</span>
+                    </div>
+                  ) : soporte ? (
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-green-600 font-medium truncate max-w-[200px]">{soporte.nombre}</span>
                       <span className="text-[10px] text-slate-400">({(soporte.tamanio / 1024).toFixed(1)} KB)</span>
@@ -91,7 +136,17 @@ export function SupportDocuments({ soportes, readOnly = false, soloModificables 
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {!isLocked && (
+                {backendAttachment && onDownload && (
+                  <button
+                    onClick={() => onDownload(backendAttachment)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors"
+                    title="Descargar adjunto"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Descargar
+                  </button>
+                )}
+                {editable && (
                   <>
                     <input
                       ref={(el) => { fileInputRef.current[tipo] = el }}
@@ -105,13 +160,13 @@ export function SupportDocuments({ soportes, readOnly = false, soloModificables 
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      {soporte ? 'Reemplazar' : 'Cargar'}
+                      {hasContent ? 'Reemplazar' : 'Cargar'}
                     </button>
                   </>
                 )}
-                {soporte && !isLocked && (
+                {hasContent && editable && (
                   <button
-                    onClick={() => onDelete(soporte.id)}
+                    onClick={() => onDelete(backendAttachment?.id ?? soporte!.id)}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                     title="Eliminar soporte"
                   >
@@ -125,7 +180,7 @@ export function SupportDocuments({ soportes, readOnly = false, soloModificables 
       </div>
       <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100">
         <p className="text-xs text-slate-400">
-          {soportes.length} de {soloModificables ? SOPORTES_MODIFICABLES.length : SOPORTES_REQUERIDOS.length} carpetas cargadas
+          {loadedCount} de {soloModificables ? SOPORTES_MODIFICABLES.length : SOPORTES_REQUERIDOS.length} carpetas cargadas
           {soloModificables && ' (solo modificables)'}
         </p>
       </div>

@@ -1,10 +1,15 @@
 import { useState, useMemo } from 'react'
 import type { ItemInput, ItemTotals, EventTotals } from '../../../types'
 import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
+import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 
 export interface ManagedItem extends ItemInput {
   id: string
   totals: ItemTotals
+}
+
+interface StoredItem extends ItemInput {
+  id: string
 }
 
 let nextId = 1
@@ -12,20 +17,30 @@ function generateId() {
   return `item-${nextId++}`
 }
 
+function toInput(item: StoredItem): ItemInput {
+  return {
+    descripcion: item.descripcion,
+    cantidad: item.cantidad,
+    valorUnitario: item.valorUnitario,
+    categoriaTributaria: item.categoriaTributaria,
+    aliadoId: item.aliadoId,
+  }
+}
+
 export function useItems(initialItems?: ItemInput[]) {
-  const [items, setItems] = useState<ManagedItem[]>(
+  const params = useActiveCalculationParams()
+  const [items, setItems] = useState<StoredItem[]>(
     () =>
       initialItems?.map((item) => ({
         ...item,
         id: generateId(),
-        totals: calculateItemPreview(item),
       })) ?? [],
   )
 
   function addItem(item: ItemInput) {
     setItems((prev) => [
       ...prev,
-      { ...item, id: generateId(), totals: calculateItemPreview(item) },
+      { ...item, id: generateId() },
     ])
   }
 
@@ -33,8 +48,7 @@ export function useItems(initialItems?: ItemInput[]) {
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item
-        const updated = { ...item, ...updates }
-        return { ...updated, totals: calculateItemPreview(updated) }
+        return { ...item, ...updates }
       }),
     )
   }
@@ -43,24 +57,19 @@ export function useItems(initialItems?: ItemInput[]) {
     setItems((prev) => prev.filter((item) => item.id !== id))
   }
 
-  const itemsInput = useMemo<ItemInput[]>(
-    () =>
-      items.map((item) => ({
-        descripcion: item.descripcion,
-        cantidad: item.cantidad,
-        valorUnitario: item.valorUnitario,
-        categoriaTributaria: item.categoriaTributaria,
-        aliadoId: item.aliadoId,
-      })),
-    [items],
+  const managedItems = useMemo<ManagedItem[]>(
+    () => items.map((item) => ({ ...item, totals: calculateItemPreview(toInput(item), params) })),
+    [items, params],
   )
 
-  const summary = useMemo(() => calculateEventSummary(itemsInput), [itemsInput])
+  const itemsInput = useMemo<ItemInput[]>(() => items.map(toInput), [items])
+
+  const summary = useMemo(() => calculateEventSummary(itemsInput, params), [itemsInput, params])
 
   const eventTotals: EventTotals = summary.eventTotals
 
   return {
-    items,
+    items: managedItems,
     addItem,
     updateItem,
     removeItem,

@@ -8,8 +8,8 @@ import { ImportExcelModal } from '../components/ImportExcelModal'
 import { useItems } from '../hooks/useItems'
 import { useStateMachine } from '../hooks/useStateMachine'
 import { useOffers } from '../../offers/hooks/useOffers'
-import { useQuery } from '@tanstack/react-query'
-import { getEventApi, changeEventStatusApi } from '../../../services/events.service'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { getEventApi, changeEventStatusApi, updateEventApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
@@ -18,29 +18,30 @@ import { addAuditEntry } from '../../../lib/auditStore'
 import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
 import { exportBudgetPDF } from '../../../utils/pdfExport'
+import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
-import type { Event, EventState, Soporte, TipoSoporte } from '../../../types'
+import type { Event, EventState, TipoSoporte, Attachment } from '../../../types'
 
 const ESTADO_COLORS: Record<string, string> = {
-  Postulado: 'bg-yellow-100 text-yellow-800',
-  'En preparación': 'bg-blue-100 text-blue-800',
-  'En revisión': 'bg-orange-100 text-orange-800',
-  'En ejecución': 'bg-red-100 text-red-800',
+  Abierto: 'bg-yellow-100 text-yellow-800',
+  'En ejecución': 'bg-blue-100 text-blue-800',
+  Ejecutado: 'bg-orange-100 text-orange-800',
   Cerrado: 'bg-slate-100 text-slate-800',
   Legalizado: 'bg-purple-100 text-purple-800',
   Devuelto: 'bg-amber-100 text-amber-800',
   Rechazado: 'bg-rose-100 text-rose-800',
 }
 
-const TERMINAL_STATES: EventState[] = ['Cerrado', 'Legalizado', 'Rechazado']
+const TERMINAL_STATES: EventState[] = ['Rechazado']
 
 export function EventViewPage() {
   const { id } = useParams()
   const toast = useToast()
+  const queryClient = useQueryClient()
   const { getTransitionRules, isDevolucion, validateTransition } = useStateMachine()
   const { roleNames, can: userCan } = useRolePermissions()
-  const { allOffers: offers } = useOffers()
+  const { allOffers: offers, selectOffer } = useOffers()
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
@@ -61,6 +62,7 @@ export function EventViewPage() {
   const [confirming, setConfirming] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [savingItems, setSavingItems] = useState(false)
 
   const {
     items,
@@ -104,25 +106,41 @@ export function EventViewPage() {
   }, [event, localOverrides, items])
 
   const stateHistory = event ? getStateHistory(event.id) : []
-  const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Postulado') as EventState
+  const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Abierto') as EventState
   const attachmentsCount = event?.attachments?.length ?? 0
 
-  function updateEvent(partial: Partial<Event>) {
-    setLocalOverrides((prev) => ({ ...prev, ...partial, updatedAt: new Date().toISOString() }))
+  async function handleSaveItems() {
+    if (!event || !localEvent) return
+    setSavingItems(true)
+    try {
+      await updateEventApi(event.id, localEvent)
+      await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
+      toast.showToast('Ítems guardados correctamente')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudieron guardar los ítems'), 'error')
+    } finally {
+      setSavingItems(false)
+    }
   }
 
-  function handleSelectOffer(offerId: string) {
+  async function handleSelectOffer(offerId: string) {
     if (!event) return
-    updateEvent({ cotizacionSeleccionadaId: offerId })
-    addAuditEntry({
-      accion: 'Selección de oferta económica',
-      entidad: 'Event',
-      entidadId: event.id,
-      usuario: '',
-      fecha: new Date().toISOString(),
-      detalle: `Oferta ${offerId} seleccionada como aprobada`,
-    })
-    toast.showToast('Oferta seleccionada')
+    try {
+      await selectOffer(offerId)
+      await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
+      addAuditEntry({
+        accion: 'Selección de oferta económica',
+        entidad: 'Event',
+        entidadId: event.id,
+        usuario: '',
+        fecha: new Date().toISOString(),
+        detalle: `Oferta ${offerId} seleccionada como aprobada`,
+      })
+      toast.showToast('Oferta seleccionada')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo seleccionar la oferta'), 'error')
+    }
   }
 
   function handleExportPDF(offerId: string) {
@@ -141,25 +159,11 @@ export function EventViewPage() {
     toast.showToast('Presupuesto PDF generado')
   }
 
-  function handleUploadSoporte(tipo: TipoSoporte, file: File) {
+  async function handleUploadSoporte(tipo: TipoSoporte, file: File) {
     if (!event) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const newSoporte: Soporte = {
-        id: `sop-${Date.now()}`,
-        eventoId: event.id,
-        tipo,
-        nombre: file.name,
-        archivo: reader.result as string,
-        tamanio: file.size,
-        mimeType: file.type,
-        version: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      const existing = event.soportes || []
-      const filtered = existing.filter((s) => s.tipo !== tipo)
-      updateEvent({ soportes: [...filtered, newSoporte] })
+    try {
+      await uploadAttachmentApi(event.id, tipo, file)
+      await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       addAuditEntry({
         accion: 'Carga de soporte documental',
         entidad: 'Event',
@@ -169,15 +173,45 @@ export function EventViewPage() {
         detalle: `Soporte "${tipo}" cargado: ${file.name}`,
       })
       toast.showToast(`Soporte "${tipo}" cargado`)
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, `No se pudo cargar el soporte "${tipo}"`), 'error')
     }
-    reader.readAsDataURL(file)
   }
 
-  function handleDeleteSoporte(soporteId: string) {
+  async function handleDeleteSoporte(soporteId: string) {
     if (!event) return
-    const soportes = (event.soportes || []).filter((s) => s.id !== soporteId)
-    updateEvent({ soportes })
-    toast.showToast('Soporte eliminado')
+    try {
+      await deleteAttachmentApi(soporteId)
+      await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
+      addAuditEntry({
+        accion: 'Eliminación de soporte documental',
+        entidad: 'Event',
+        entidadId: event.id,
+        usuario: '',
+        fecha: new Date().toISOString(),
+        detalle: `Soporte eliminado del evento ${event.numeroEvento}`,
+      })
+      toast.showToast('Soporte eliminado')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo eliminar el soporte'), 'error')
+    }
+  }
+
+  async function handleDownloadAttachment(attachment: Attachment) {
+    if (!event) return
+    try {
+      await downloadAttachment(attachment.id, attachment.originalName)
+      addAuditEntry({
+        accion: 'Descarga de adjunto',
+        entidad: 'Attachment',
+        entidadId: attachment.id,
+        usuario: '',
+        fecha: new Date().toISOString(),
+        detalle: `Adjunto "${attachment.originalName}" descargado del evento ${event.numeroEvento}`,
+      })
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo descargar el adjunto'), 'error')
+    }
   }
 
   function requestTransition(newEstado: EventState) {
@@ -209,7 +243,7 @@ export function EventViewPage() {
     try {
       await changeEventStatusApi(event.id, newEstado, {
         observation: motivo || undefined,
-        authorizeException: newEstado === 'En ejecución' && authorizeException ? true : undefined,
+        authorizeException: newEstado === 'Cerrado' && authorizeException ? true : undefined,
       })
 
       const oldEstado = event.estado
@@ -272,6 +306,7 @@ export function EventViewPage() {
   const municipio = municipios.find((m) => m.id === event.municipioId)
   const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
   const isDevuelto = displayEstado === 'Devuelto'
+  const esDevolucionLegalizacion = isDevuelto && localEvent?.devolucionLegalizacion === true
 
   const canEdit =
     userCan('functional_admin', 'operator', 'supervisor') ||
@@ -284,7 +319,7 @@ export function EventViewPage() {
   const canManageOffers = userCan('functional_admin', 'operator')
   const offersReadOnly = !canManageOffers || TERMINAL_STATES.includes(displayEstado)
 
-  const soportesVisible = ['En ejecución', 'Cerrado', 'Devuelto'].includes(displayEstado)
+  const soportesVisible = ['En ejecución', 'Ejecutado', 'Cerrado', 'Devuelto'].includes(displayEstado)
   const soportesReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
 
   const itemsReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
@@ -353,13 +388,23 @@ export function EventViewPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-6 py-4 flex items-start gap-3">
           <ArrowLeftCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-amber-800">Evento devuelto para corrección</p>
+            <p className="text-sm font-semibold text-amber-800">
+              {esDevolucionLegalizacion
+                ? 'Evento devuelto para corrección de legalización'
+                : 'Evento devuelto para corrección'}
+            </p>
             {event.observation && (
               <p className="text-xs text-amber-700 mt-0.5">Motivo: {event.observation}</p>
             )}
-            <p className="text-xs text-amber-600 mt-0.5">
-              Pueden corregir: {canEdit ? 'su rol puede editar el evento en este estado.' : 'solo operador, analista o solicitante.'}
-            </p>
+            {esDevolucionLegalizacion ? (
+              <p className="text-xs text-amber-600 mt-0.5">
+                Solo puede corregir las carpetas de legalización (facturas normalizadas, registro fotográfico y listado de asistencia); las carpetas 1-4 quedan bloqueadas.
+              </p>
+            ) : (
+              <p className="text-xs text-amber-600 mt-0.5">
+                Pueden corregir: {canEdit ? 'su rol puede editar el evento en este estado.' : 'solo operador, analista o solicitante.'}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -461,9 +506,14 @@ export function EventViewPage() {
       {soportesVisible && (
         <SupportDocuments
           soportes={event.soportes || []}
+          attachments={event.attachments ?? []}
           readOnly={soportesReadOnly}
+          soloModificables={esDevolucionLegalizacion}
+          eventStatus={displayEstado}
+          devolucionLegalizacion={esDevolucionLegalizacion}
           onUpload={handleUploadSoporte}
           onDelete={handleDeleteSoporte}
+          onDownload={handleDownloadAttachment}
         />
       )}
 
@@ -476,6 +526,8 @@ export function EventViewPage() {
         eventTotals={eventTotals}
         onOpenImport={!itemsReadOnly ? () => setShowImportModal(true) : undefined}
         readOnly={itemsReadOnly}
+        onSaveItems={!itemsReadOnly ? handleSaveItems : undefined}
+        savingItems={savingItems}
       />
 
       <ImportExcelModal
@@ -523,10 +575,10 @@ export function EventViewPage() {
                   </div>
                 )}
 
-                {pendingEstado === 'En ejecución' && needsExceptionApproval && (
+                {pendingEstado === 'Cerrado' && needsExceptionApproval && (
                   <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-xs text-amber-800 mb-2">
-                      El evento tiene {attachmentsCount} cotización{attachmentsCount !== 1 ? 'es' : ''} y se requieren al menos 4 para aprobar.
+                      El evento tiene {attachmentsCount} cotización{attachmentsCount !== 1 ? 'es' : ''} y se requieren al menos 4 para cerrar.
                     </p>
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input
@@ -536,7 +588,7 @@ export function EventViewPage() {
                         className="mt-0.5 w-4 h-4 rounded border-amber-300 text-primary focus:ring-primary"
                       />
                       <span className="text-xs text-amber-800">
-                        Autorizar excepción y aprobar con menos de 4 cotizaciones
+                        Autorizar excepción y cerrar con menos de 4 cotizaciones
                       </span>
                     </label>
                   </div>
