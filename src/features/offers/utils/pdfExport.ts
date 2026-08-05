@@ -1,11 +1,17 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Offer } from '../types'
+import type { Ally } from '../../../types'
 import { formatCurrencyCO } from '../../../utils/formatters'
 
-export function exportOfferToPDF(offer: Offer): void {
+export function exportOfferToPDF(offer: Offer, aliados: Ally[] = []): void {
   const doc = new jsPDF()
   const pageW = doc.internal.pageSize.getWidth()
+
+  const aliadoName = (aliadoId?: string): string => {
+    if (!aliadoId) return offer.aliado || 'General'
+    return aliados.find((a) => a.id === aliadoId)?.nombre ?? aliadoId
+  }
 
   doc.setFontSize(16)
   doc.text('OFERTA ECONÓMICA - SIGEV', pageW / 2, 20, { align: 'center' })
@@ -42,6 +48,7 @@ export function exportOfferToPDF(offer: Offer): void {
 
   const body = offer.items.map((item) => [
     item.descripcion,
+    aliadoName(item.aliadoId),
     String(item.cantidad),
     formatCurrencyCO(item.valorUnitario),
     item.categoriaTributaria,
@@ -54,11 +61,11 @@ export function exportOfferToPDF(offer: Offer): void {
 
   autoTable(doc, {
     startY: y,
-    head: [['Descripción', 'Cant.', 'Vr. Unitario', 'Cat.', 'Base', 'Impuesto', 'Fee', 'IVA Fee', 'Total']],
+    head: [['Descripción', 'Aliado', 'Cant.', 'Vr. Unitario', 'Cat.', 'Base', 'Impuesto', 'Fee', 'IVA Fee', 'Total']],
     body,
     foot: [
       [
-        { content: 'TOTALES', colSpan: 4, styles: { fontStyle: 'bold', fontSize: 9 } },
+        { content: 'TOTALES', colSpan: 5, styles: { fontStyle: 'bold', fontSize: 9 } },
         '',
         formatCurrencyCO(offer.subtotal),
         formatCurrencyCO(offer.ivaTotal + offer.impuestoConsumoTotal),
@@ -71,12 +78,13 @@ export function exportOfferToPDF(offer: Offer): void {
     headStyles: { fillColor: [51, 65, 85] },
     footStyles: { fillColor: [243, 244, 246], textColor: [0, 0, 0] },
     columnStyles: {
-      0: { cellWidth: 50 },
-      4: { halign: 'right' },
+      0: { cellWidth: 42 },
+      1: { cellWidth: 18 },
       5: { halign: 'right' },
       6: { halign: 'right' },
       7: { halign: 'right' },
       8: { halign: 'right' },
+      9: { halign: 'right' },
     },
   })
 

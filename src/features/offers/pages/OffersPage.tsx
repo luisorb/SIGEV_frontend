@@ -3,6 +3,9 @@ import { OfferList } from '../components/OfferList'
 import { exportOfferToExcel } from '../utils/excelExport'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
+import { useToast } from '../../../components/ToastProvider'
+import { getApiErrorMessage } from '../../../lib/apiErrors'
+import type { OfferState } from '../types'
 
 export function OffersPage() {
   const {
@@ -11,9 +14,11 @@ export function OffersPage() {
     setSearch,
     isLoading,
     error,
+    changeState,
   } = useOffers()
 
   const { can } = usePermissions()
+  const toast = useToast()
 
   function handleExport(id: string) {
     const offer = offers.find((o) => o.id === id)
@@ -27,6 +32,15 @@ export function OffersPage() {
       fecha: new Date().toISOString(),
       detalle: `Oferta ${offer.codigo} exportada a Excel`,
     })
+  }
+
+  async function handleChangeState(id: string, estado: OfferState) {
+    try {
+      await changeState(id, estado)
+      toast.showToast(`Estado cambiado a ${estado}`)
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo cambiar el estado de la oferta'), 'error')
+    }
   }
 
   if (isLoading) {
@@ -52,9 +66,11 @@ export function OffersPage() {
       search={search}
       onSearchChange={setSearch}
       onExport={handleExport}
+      onChangeState={handleChangeState}
       canExport={can('export')}
       canCreate={can('create')}
       canEdit={can('edit')}
+      canChangeState={can('changeState')}
     />
   )
 }

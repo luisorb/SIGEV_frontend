@@ -1,8 +1,14 @@
 import * as XLSX from 'xlsx'
 import type { Offer } from '../types'
+import type { Ally } from '../../../types'
 
-export function exportOfferToExcel(offer: Offer): void {
+export function exportOfferToExcel(offer: Offer, aliados: Ally[] = []): void {
   const wb = XLSX.utils.book_new()
+
+  const aliadoName = (aliadoId?: string): string => {
+    if (!aliadoId) return offer.aliado || 'General'
+    return aliados.find((a) => a.id === aliadoId)?.nombre ?? aliadoId
+  }
 
   const header = [
     ['OFERTA ECONÓMICA - SIGEV'],
@@ -19,41 +25,40 @@ export function exportOfferToExcel(offer: Offer): void {
 
   const itemHeader = [
     'Descripción',
+    'Aliado',
     'Cant.',
     'Vr. Unitario',
     'Cat. Tributaria',
     'Base',
     'IVA',
     'Imp. Consumo',
-    'Fee Tarifado',
-    'Fee Terceros',
+    'Fee',
     'IVA Fee',
     'Total',
   ]
 
   const itemRows = offer.items.map((item) => [
     item.descripcion,
+    aliadoName(item.aliadoId),
     item.cantidad,
     item.valorUnitario,
     item.categoriaTributaria,
     item.base,
     item.iva,
     item.impuestoConsumo,
-    item.feeTarifado,
-    item.feeTerceros,
+    item.feeTarifado + item.feeTerceros,
     item.ivaFee,
     item.total,
   ])
 
+  const pad = Array(itemHeader.length - 1).fill('')
   const totalsRows = [
-    [],
-    ['SUBTOTAL', '', '', '', '', offer.subtotal],
-    ['IVA TOTAL', '', '', '', '', offer.ivaTotal],
-    ['IMP. CONSUMO TOTAL', '', '', '', '', offer.impuestoConsumoTotal],
-    ['FEE TARIFADO TOTAL', '', '', '', '', offer.feeTarifadoTotal],
-    ['FEE TERCEROS TOTAL', '', '', '', '', offer.feeTercerosTotal],
-    ['IVA FEE TOTAL', '', '', '', '', offer.ivaFeeTotal],
-    ['TOTAL OFERTA', '', '', '', '', offer.total],
+    ['SUBTOTAL', ...pad, offer.subtotal],
+    ['IVA TOTAL', ...pad, offer.ivaTotal],
+    ['IMP. CONSUMO TOTAL', ...pad, offer.impuestoConsumoTotal],
+    ['FEE TOTAL', ...pad, offer.feeTarifadoTotal + offer.feeTercerosTotal],
+    ['IVA FEE TOTAL', ...pad, offer.ivaFeeTotal],
+    ['TOTAL OFERTA', ...pad, offer.total],
   ]
 
   const sheetData = [...header, itemHeader, ...itemRows, ...totalsRows]
@@ -62,11 +67,11 @@ export function exportOfferToExcel(offer: Offer): void {
 
   ws['!cols'] = [
     { wch: 36 },
+    { wch: 20 },
     { wch: 8 },
     { wch: 14 },
     { wch: 16 },
     { wch: 16 },
-    { wch: 14 },
     { wch: 14 },
     { wch: 14 },
     { wch: 14 },

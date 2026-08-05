@@ -1,18 +1,15 @@
-import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, FileDown, FileText, Layers, List } from 'lucide-react'
+import { ChevronLeft, FileDown, FileText } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useOffers, usePermissions } from '../hooks/useOffers'
-import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
-import { formatCurrencyCO, formatDateTimeCO } from '../../../utils/formatters'
-import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { formatCurrencyCO, formatDateTimeCO, formatDateCO } from '../../../utils/formatters'
 import { exportOfferToExcel } from '../utils/excelExport'
 import { exportOfferToPDF } from '../utils/pdfExport'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
-import { OfferSummary } from '../components/OfferSummary'
-import { useToast } from '../../../components/ToastProvider'
-import { getApiErrorMessage } from '../../../lib/apiErrors'
-import type { OfferState } from '../types'
+import { getEventApi } from '../../../services/events.service'
+import { useAllies } from '../../../hooks/useAllies'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
 
 const catColors: Record<string, string> = {
   IVA: 'bg-blue-50 text-blue-700',
@@ -21,17 +18,31 @@ const catColors: Record<string, string> = {
   Reembolso: 'bg-teal-50 text-teal-700',
 }
 
+const eventStateColors: Record<string, string> = {
+  Abierto: 'bg-yellow-100 text-yellow-800',
+  'En ejecución': 'bg-blue-100 text-blue-800',
+  Ejecutado: 'bg-orange-100 text-orange-800',
+  Cerrado: 'bg-slate-100 text-slate-800',
+  Legalizado: 'bg-purple-100 text-purple-800',
+  Devuelto: 'bg-amber-100 text-amber-800',
+  Rechazado: 'bg-rose-100 text-rose-800',
+}
+
 export function OfferViewPage() {
   const { id } = useParams()
-  const toast = useToast()
-  const { getOffer, changeState, isLoading } = useOffers()
+  const { getOffer, isLoading } = useOffers()
   const { can } = usePermissions()
 
   const offer = id ? getOffer(id) : undefined
 
-  const [pendingState, setPendingState] = useState<OfferState | null>(null)
-  const [validationError, setValidationError] = useState('')
-  const [scheme, setScheme] = useState<'detalle' | 'cotizacion'>('detalle')
+  const { data: event } = useQuery({
+    queryKey: ['event', offer?.eventoId],
+    queryFn: () => getEventApi(offer!.eventoId!),
+    enabled: !!offer?.eventoId,
+  })
+
+  const { data: aliados = [] } = useAllies()
+  const { data: municipios = [] } = useMunicipalities()
 
   if (isLoading) {
     return (
@@ -56,28 +67,9 @@ export function OfferViewPage() {
     )
   }
 
-  function handleStateChangeRequest(newState: OfferState) {
-    if ((newState === 'Enviada' || newState === 'Aprobada') && (!offer?.aliado || !offer?.desembolso)) {
-      setValidationError('La oferta debe tener Aliado y Desembolso asignados para poder ser aprobada.')
-      return
-    }
-    setPendingState(newState)
-  }
-
-  async function confirmStateChange() {
-    if (!pendingState || !id) return
-    try {
-      await changeState(id, pendingState)
-      setPendingState(null)
-      toast.showToast(`Estado cambiado a ${pendingState}`)
-    } catch (error) {
-      setValidationError(getApiErrorMessage(error, 'No se pudo cambiar el estado de la oferta'))
-    }
-  }
-
   function handleExportExcel() {
     if (!offer) return
-    exportOfferToExcel(offer)
+    exportOfferToExcel(offer, aliados)
     addAuditEntry({
       accion: 'Exportación de oferta a Excel',
       entidad: 'Offer',
@@ -90,7 +82,7 @@ export function OfferViewPage() {
 
   function handleExportPDF() {
     if (!offer) return
-    exportOfferToPDF(offer)
+    exportOfferToPDF(offer, aliados)
     addAuditEntry({
       accion: 'Exportación de oferta a PDF',
       entidad: 'Offer',
@@ -107,6 +99,31 @@ export function OfferViewPage() {
 
   const value = (text: string) => (
     <p className="text-sm font-medium text-slate-900">{text}</p>
+  )
+
+  const eventMunicipio = event ? municipios.find((m) => m.id === event.municipioId) : undefined
+  const eventMunicipioLabel = eventMunicipio
+    ? `${eventMunicipio.nombre} (${eventMunicipio.departamento})`
+    : event?.municipioId ?? offer.municipio ?? '—'
+
+  function aliadoName(aliadoId?: string): string | undefined {
+    if (!aliadoId) return undefined
+    const a = aliados.find((x) => x.id === aliadoId)
+    return a?.nombre ?? aliadoId
+  }
+
+  const displayItems = event?.items?.length ? event.items : offer.items
+
+  const orderTotals = displayItems.reduce(
+    (acc, item) => ({
+      subtotal: acc.subtotal + item.base,
+      iva: acc.iva + item.iva,
+      impuestoConsumo: acc.impuestoConsumo + item.impuestoConsumo,
+      fee: acc.fee + item.feeTarifado + item.feeTerceros,
+      ivaFee: acc.ivaFee + item.ivaFee,
+      total: acc.total + item.total,
+    }),
+    { subtotal: 0, iva: 0, impuestoConsumo: 0, fee: 0, ivaFee: 0, total: 0 },
   )
 
   return (
@@ -139,9 +156,8 @@ export function OfferViewPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
               <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Detalles de la Oferta</h2>
             </div>
@@ -156,34 +172,12 @@ export function OfferViewPage() {
                 {value(offer.cliente)}
               </div>
               <div>
-                {label('N° Evento')}
-                {value(offer.numeroEvento || '—')}
-              </div>
-              <div>
-                {label('Responsable')}
-                {value(offer.responsable || '—')}
-              </div>
-              <div>
-                {label('Dependencia')}
-                {value(offer.dependencia || '—')}
-              </div>
-              <div>
-                {label('Municipio')}
-                {value(offer.municipio || '—')}
-              </div>
-              <div>
-                {label('Aliado')}
-                {value(offer.aliado || '—')}
+                {label('Nombre de la oferta')}
+                {value(offer.nombre)}
               </div>
               <div>
                 {label('Desembolso')}
                 {value(offer.desembolso || '—')}
-              </div>
-              <div>
-                {label('Esquema')}
-                <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded capitalize">
-                  {offer.esquema === 'cotizacion' ? 'Cotización' : offer.esquema === 'detalle' ? 'Detalle' : '—'}
-                </span>
               </div>
               <div>
                 {label('Creada')}
@@ -207,197 +201,135 @@ export function OfferViewPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-slate-100 rounded-lg p-1">
-              <button
-                onClick={() => setScheme('detalle')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  scheme === 'detalle'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                Detalle
-              </button>
-              <button
-                onClick={() => setScheme('cotizacion')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  scheme === 'cotizacion'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                Cotización
-              </button>
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Información de la Orden</h2>
             </div>
-            {scheme === 'cotizacion' && (
-              <span className="text-xs text-slate-400">Vista resumida · solo totales</span>
-            )}
+            <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-4">
+              <div>
+                {label('Número')}
+                {value((event?.numeroEvento ?? offer.numeroEvento) || '—')}
+              </div>
+              <div>
+                {label('Sufijo')}
+                {value(event?.sufijo || '—')}
+              </div>
+              <div>
+                {label('Responsable')}
+                {value((event?.responsable ?? offer.responsable) || '—')}
+              </div>
+              <div>
+                {label('Dependencia')}
+                {value((event?.dependencia ?? offer.dependencia) || '—')}
+              </div>
+              <div>
+                {label('Fecha del evento')}
+                {value(event?.fechaEvento ? formatDateCO(event.fechaEvento) : '—')}
+              </div>
+              <div>
+                {label('Municipio')}
+                {value(eventMunicipioLabel)}
+              </div>
+              <div>
+                {label('Vereda')}
+                {value(event?.vereda || '—')}
+              </div>
+              <div>
+                {label('Esquema')}
+                <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded capitalize">
+                  {event?.esquema ?? offer.esquema ?? '—'}
+                </span>
+              </div>
+              <div>
+                {label('Asistentes')}
+                {value(event ? String(event.asistentes) : '—')}
+              </div>
+              <div>
+                {label('Días')}
+                {value(event ? String(event.dias) : '—')}
+              </div>
+              <div>
+                {label('Estado')}
+                {event ? (
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${eventStateColors[event.estado] || 'bg-slate-100 text-slate-700'}`}>
+                    {event.estado}
+                  </span>
+                ) : value('—')}
+              </div>
+              <div>
+                {label('Aliado general')}
+                {value((aliadoName(event?.aliadoId) ?? offer.aliado) || '—')}
+              </div>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            {scheme === 'detalle' ? (
-              <>
-                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                  <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Ítems de la Oferta</h2>
-                </div>
-                {offer.items.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50">
-                        <tr>
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">Descripción</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Cant.</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Vr. Unitario</th>
-                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">Cat.</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Base</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">IVA</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Imp. Consumo</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Fee</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">IVA Fee</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {offer.items.map((item) => (
-                          <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-4 py-2 text-slate-900">{item.descripcion}</td>
-                            <td className="px-4 py-2 text-right text-slate-600">{item.cantidad}</td>
-                            <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.valorUnitario)}</td>
-                            <td className="px-4 py-2 text-center">
-                              <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${catColors[item.categoriaTributaria] || 'bg-slate-100 text-slate-600'}`}>
-                                {item.categoriaTributaria}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.base)}</td>
-                            <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.iva)}</td>
-                            <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.impuestoConsumo)}</td>
-                            <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.feeTarifado + item.feeTerceros)}</td>
-                            <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.ivaFee)}</td>
-                            <td className="px-4 py-2 text-right font-semibold text-slate-900">{formatCurrencyCO(item.total)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot className="bg-slate-50 border-t-2 border-slate-200">
-                        <tr>
-                          <td colSpan={4} className="px-4 py-2.5 text-sm font-semibold text-slate-900">Totales</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(offer.subtotal)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(offer.ivaTotal)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(offer.impuestoConsumoTotal)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(offer.feeTarifadoTotal + offer.feeTercerosTotal)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(offer.ivaFeeTotal)}</td>
-                          <td className="px-4 py-2.5 text-right font-bold text-primary">{formatCurrencyCO(offer.total)}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-400 italic px-6 py-4">Sin ítems</p>
-                )}
-              </>
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Items de la Orden</h2>
+            </div>
+            {displayItems.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">Descripción</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">Aliado</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Cant.</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Vr. Unitario</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">Cat.</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Base</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">IVA</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Imp. Consumo</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Fee</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">IVA Fee</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {displayItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-2 text-slate-900">{item.descripcion}</td>
+                        <td className="px-4 py-2 text-slate-600">
+                          {item.aliadoId ? (
+                            aliadoName(item.aliadoId)
+                          ) : (
+                            <span className="text-slate-400">{(aliadoName(event?.aliadoId) ?? offer.aliado) || 'General'}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-right text-slate-600">{item.cantidad}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.valorUnitario)}</td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${catColors[item.categoriaTributaria] || 'bg-slate-100 text-slate-600'}`}>
+                            {item.categoriaTributaria}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.base)}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.iva)}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.impuestoConsumo)}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.feeTarifado + item.feeTerceros)}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.ivaFee)}</td>
+                        <td className="px-4 py-2 text-right font-semibold text-slate-900">{formatCurrencyCO(item.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-slate-50 border-t-2 border-slate-200">
+                    <tr>
+                      <td colSpan={5} className="px-4 py-2.5 text-sm font-semibold text-slate-900">Totales</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.subtotal)}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.iva)}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.impuestoConsumo)}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.fee)}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.ivaFee)}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-primary">{formatCurrencyCO(orderTotals.total)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             ) : (
-              <OfferSummary offer={offer} />
+              <p className="text-sm text-slate-400 italic px-6 py-4">Sin ítems</p>
             )}
           </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 className="text-sm font-semibold text-slate-900 mb-4">Estado de la Oferta</h3>
-            <div className="flex items-center gap-3 mb-4">
-              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${OFFER_STATE_COLORS[offer.estado]}`}>
-                {offer.estado}
-              </span>
-            </div>
-            {can('changeState') && (
-              <div className="space-y-3">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cambiar estado</label>
-                <div className="flex flex-wrap gap-2">
-                  {OFFER_STATES.filter((s) => s !== offer.estado).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => handleStateChangeRequest(s)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                        s === 'Aprobada'
-                          ? 'border-green-300 text-green-700 hover:bg-green-50'
-                          : s === 'Rechazada'
-                            ? 'border-red-300 text-red-700 hover:bg-red-50'
-                            : s === 'Enviada'
-                              ? 'border-amber-300 text-amber-700 hover:bg-amber-50'
-                              : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {scheme === 'detalle' && (
-            <div className="bg-white rounded-xl border border-slate-200">
-              <div className="px-5 py-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-900">Resumen Rápido</h3>
-              </div>
-              <div className="p-5 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Base</span>
-                  <span className="font-medium text-slate-900">{formatCurrencyCO(offer.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">IVA</span>
-                  <span className="font-medium text-slate-900">{formatCurrencyCO(offer.ivaTotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Imp. Consumo</span>
-                  <span className="font-medium text-slate-900">{formatCurrencyCO(offer.impuestoConsumoTotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Fee</span>
-                  <span className="font-medium text-slate-900">{formatCurrencyCO(offer.feeTarifadoTotal + offer.feeTercerosTotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">IVA Fee</span>
-                  <span className="font-medium text-slate-900">{formatCurrencyCO(offer.ivaFeeTotal)}</span>
-                </div>
-                <hr className="border-slate-200" />
-                <div className="flex justify-between text-sm font-bold">
-                  <span className="text-slate-900">Total</span>
-                  <span className="text-primary">{formatCurrencyCO(offer.total)}</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
-
-      {validationError && (
-        <ConfirmDialog
-          isOpen
-          title="Validación"
-          message={validationError}
-          confirmLabel="Entendido"
-          variant="warning"
-          onConfirm={() => setValidationError('')}
-          onCancel={() => setValidationError('')}
-        />
-      )}
-
-      {pendingState && !validationError && (
-        <ConfirmDialog
-          isOpen
-          title="Cambiar estado"
-          message={`¿Estás seguro de cambiar la oferta ${offer.codigo} de ${offer.estado} a ${pendingState}?`}
-          confirmLabel={`Cambiar a ${pendingState}`}
-          cancelLabel="Cancelar"
-          variant={pendingState === 'Rechazada' ? 'danger' : 'warning'}
-          onConfirm={confirmStateChange}
-          onCancel={() => setPendingState(null)}
-        />
-      )}
-    </div>
   )
 }
