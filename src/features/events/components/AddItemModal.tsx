@@ -12,7 +12,6 @@ interface AddItemModalProps {
   editItem?: { id: string } & ItemInput
   aliados?: Ally[]
   eventAliadoId?: string
-  municipalityCategory?: string
 }
 
 const emptyItem: ItemInput = {
@@ -34,7 +33,7 @@ const taxCategoryLabels: Record<TaxCategory, string> = {
   Reembolso: 'Reembolso (0%)',
 }
 
-export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados, municipalityCategory }: AddItemModalProps) {
+export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados }: AddItemModalProps) {
   if (!open) return null
   return (
     <AddItemModalContent
@@ -42,7 +41,6 @@ export function AddItemModal({ open, onClose, onAdd, onEdit, editItem, aliados, 
       initialItem={editItem ?? emptyItem}
       isEditing={!!editItem}
       aliados={aliados}
-      municipalityCategory={municipalityCategory}
       onCancel={onClose}
       onSubmit={(data) => {
         if (editItem && onEdit) onEdit(editItem.id, data)
@@ -57,12 +55,11 @@ interface AddItemModalContentProps {
   initialItem: ItemInput
   isEditing: boolean
   aliados?: Ally[]
-  municipalityCategory?: string
   onCancel: () => void
   onSubmit: (data: ItemInput) => void
 }
 
-function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCategory, onCancel, onSubmit }: AddItemModalContentProps) {
+function AddItemModalContent({ initialItem, isEditing, aliados, onCancel, onSubmit }: AddItemModalContentProps) {
   const [form, setForm] = useState<ItemInput>(initialItem)
   const [errors, setErrors] = useState<Partial<Record<keyof ItemInput, string>>>({})
   const [tariffs, setTariffs] = useState<TariffResponse[]>([])
@@ -94,7 +91,6 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
     if (!form.isTariffed && !form.nombre?.trim()) errs.nombre = 'El nombre del servicio es obligatorio'
     if (form.cantidad < 1) errs.cantidad = 'Debe ser mayor a 0'
     if (form.isTariffed && !form.tariffId) errs.tariffId = 'Seleccione un servicio del tarifario'
-    if (!form.isTariffed && form.valorUnitario < 0) errs.valorUnitario = 'No puede ser negativo'
     if (!form.categoriaTributaria) errs.categoriaTributaria = 'Seleccione una categoría'
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -125,28 +121,17 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
   }
 
   function selectTariff(tariff: TariffResponse) {
-    const priceColumn = getpriceColumnForCategory(municipalityCategory)
-    const price = priceColumn ? Number(tariff[priceColumn] ?? 0) : 0
     setForm((prev) => ({
       ...prev,
       tariffId: tariff.id,
       nombre: tariff.name,
       descripcion: tariff.description ?? '',
       unidadMedida: tariff.unitMeasure ?? prev.unidadMedida,
-      valorUnitario: price,
       isTariffed: true,
     }))
     setShowTariffList(false)
     setTariffSearch('')
     if (errors.tariffId) setErrors((prev) => ({ ...prev, tariffId: undefined }))
-  }
-
-  function getpriceColumnForCategory(category?: string): keyof TariffResponse | null {
-    if (!category) return null
-    if (category === 'Especial' || category === 'Primera') return 'priceEspecialPrimera'
-    if (category === 'Segunda' || category === 'Tercera' || category === 'Cuarta') return 'priceSegundaCuarta'
-    if (category === 'Quinta' || category === 'Sexta') return 'priceQuintaSexta'
-    return null
   }
 
   const filteredTariffs = tariffSearch
@@ -320,23 +305,9 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Valor Unitario</label>
-              <input
-                type="number"
-                min={0}
-                value={form.valorUnitario || ''}
-                onChange={(e) => {
-                  if (!form.isTariffed || !form.tariffId) {
-                    const val = e.target.value === '' ? 0 : Number(e.target.value)
-                    update('valorUnitario', isNaN(val) ? 0 : val)
-                  }
-                }}
-                readOnly={form.isTariffed && !!form.tariffId}
-                className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent ${errors.valorUnitario ? 'border-red-300 bg-red-50' : 'border-slate-300'} ${form.isTariffed && form.tariffId ? 'bg-slate-50 text-slate-600 cursor-not-allowed' : ''}`}
-              />
-              {errors.valorUnitario && <p className="text-xs text-red-500 mt-1">{errors.valorUnitario}</p>}
-              {form.isTariffed && form.tariffId && (
-                <p className="text-xs text-slate-500 mt-1">Precio según categoría {municipalityCategory}</p>
-              )}
+              <div className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-500">
+                <span className="italic">Pendiente por cotizar</span>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Categoría Tributaria</label>

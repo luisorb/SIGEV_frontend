@@ -16,7 +16,6 @@ interface ItemManagerProps {
   onOpenImport?: () => void
   readOnly?: boolean
   eventAliadoId?: string
-  municipalityCategory?: string
 }
 
 export function ItemManager({
@@ -29,7 +28,6 @@ export function ItemManager({
   onOpenImport,
   readOnly = false,
   eventAliadoId,
-  municipalityCategory,
 }: ItemManagerProps) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<ManagedItem | null>(null)
@@ -63,7 +61,6 @@ export function ItemManager({
         onAdd={handleAddItem}
         aliados={aliados}
         eventAliadoId={eventAliadoId}
-        municipalityCategory={municipalityCategory}
       />
       <AddItemModal
         open={!!editingItem}
@@ -72,7 +69,6 @@ export function ItemManager({
         onEdit={handleEditItem}
         aliados={aliados}
         eventAliadoId={eventAliadoId}
-        municipalityCategory={municipalityCategory}
       />
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center justify-between">

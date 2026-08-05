@@ -554,7 +554,6 @@ export function EventViewPage() {
         onOpenImport={!itemsReadOnly ? () => setShowImportModal(true) : undefined}
         readOnly={itemsReadOnly}
         eventAliadoId={event.aliadoId}
-        municipalityCategory={event.municipalityCategory}
       />
 
       <ImportExcelModal
