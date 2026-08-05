@@ -1,5 +1,7 @@
 import { useLocation, Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Home } from 'lucide-react'
+import { getEventsApi } from '../services/events.service'
 
 const routeLabels: Record<string, string> = {
   '/': 'Panel',
@@ -17,6 +19,28 @@ const routeLabels: Record<string, string> = {
 export function Breadcrumbs() {
   const { pathname } = useLocation()
 
+  const orderMatch = pathname.match(/^\/ordenes\/([^/]+)(?:\/)?/)
+  const orderId = orderMatch?.[1] && orderMatch[1] !== 'nueva' ? orderMatch[1] : undefined
+
+  const { data: events = [] } = useQuery({
+    queryKey: ['events'],
+    queryFn: getEventsApi,
+    enabled: Boolean(orderId),
+  })
+
+  function resolveLabel(segment: string): string {
+    const direct = routeLabels[segment]
+    if (direct) return direct
+    const orderSegment = segment.match(/^\/ordenes\/([^/]+)$/)
+    if (orderSegment && orderSegment[1] !== 'nueva') {
+      const event = events.find((e) => e.id === orderSegment[1])
+      if (event) return event.numeroEvento
+      return orderSegment[1]
+    }
+    const lastPart = segment.split('/').pop() ?? ''
+    return lastPart === 'editar' ? 'Editar' : lastPart
+  }
+
   const parts = pathname.split('/').filter(Boolean)
   const segments = parts.map((_, i) => '/' + parts.slice(0, i + 1).join('/'))
 
@@ -33,11 +57,7 @@ export function Breadcrumbs() {
               : segments
             return mobileSegments.map((segment, idx, arr) => {
               const isLast = idx === arr.length - 1
-              let label = routeLabels[segment]
-              if (!label) {
-                const lastPart = segment.split('/').pop() ?? ''
-                label = lastPart === 'editar' ? 'Editar' : lastPart
-              }
+              const label = resolveLabel(segment)
               return (
                 <span key={segment} className="flex items-center gap-1 min-w-0">
                   <ChevronRight className="w-3 h-3 shrink-0" />
@@ -53,11 +73,7 @@ export function Breadcrumbs() {
       <div className="hidden lg:flex items-center gap-1 min-w-0">
         {segments.map((segment, idx) => {
           const isLast = idx === segments.length - 1
-          let label = routeLabels[segment]
-          if (!label) {
-            const lastPart = segment.split('/').pop() ?? ''
-            label = lastPart === 'editar' ? 'Editar' : lastPart
-          }
+          const label = resolveLabel(segment)
           return (
             <span key={segment} className="flex items-center gap-1 min-w-0">
               <ChevronRight className="w-3.5 h-3.5 shrink-0" />
