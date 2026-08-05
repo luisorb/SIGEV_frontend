@@ -1,28 +1,18 @@
-import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { OfferForm } from '../components/OfferForm'
-import { OfferItems } from '../components/OfferItems'
 import { useOffers } from '../hooks/useOffers'
 import { useToast } from '../../../components/ToastProvider'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
-import type { OfferItemInput } from '../types'
 
 export function OfferEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
 
-  const { getOffer, updateOffer, addItem, updateItem, removeItem, isLoading } = useOffers()
+  const { getOffer, updateOffer, isLoading } = useOffers()
   const offer = id ? getOffer(id) : undefined
   const offerId = offer?.id
-
-  const [newItem, setNewItem] = useState<OfferItemInput>({
-    descripcion: '',
-    cantidad: 1,
-    valorUnitario: 0,
-    categoriaTributaria: 'IVA',
-  })
 
   if (isLoading) {
     return (
@@ -40,7 +30,7 @@ export function OfferEditPage() {
           to="/ofertas"
           className="inline-flex items-center gap-1.5 text-primary hover:text-primary-dark text-sm font-medium mt-3 transition-colors"
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className="w-4 h-4" />
           Volver a ofertas
         </Link>
       </div>
@@ -71,22 +61,6 @@ export function OfferEditPage() {
     }
   }
 
-  function handleAddItem() {
-    if (!offerId) return
-    addItem(offerId, newItem)
-    setNewItem({ descripcion: '', cantidad: 1, valorUnitario: 0, categoriaTributaria: 'IVA' })
-  }
-
-  function handleUpdateItem(itemId: string, input: Partial<OfferItemInput>) {
-    if (!offerId) return
-    updateItem(offerId, itemId, input)
-  }
-
-  function handleRemoveItem(itemId: string) {
-    if (!offerId) return
-    removeItem(offerId, itemId)
-  }
-
   const aliadoName = offer?.aliado
   const municipioName = offer?.municipio
 
@@ -103,21 +77,12 @@ export function OfferEditPage() {
         <h1 className="text-2xl font-bold text-slate-900">Editar {offer.codigo}</h1>
         {offer && (
           <p className="text-sm text-slate-500">
-            {aliadoName || ''}{aliadoName && municipioName ? ' · ' : ''}{municipioName || ''}{offer.items.length ? ` · ${offer.items.length} ítems` : ''}
+            {aliadoName || ''}{aliadoName && municipioName ? ' · ' : ''}{municipioName || ''}
           </p>
         )}
       </div>
 
       <OfferForm offer={offer} onSave={handleSave} onCancel={() => navigate(`/ofertas/${offer.id}`)} />
-
-      <OfferItems
-        offer={offer}
-        onAddItem={handleAddItem}
-        onUpdateItem={handleUpdateItem}
-        onRemoveItem={handleRemoveItem}
-        newItem={newItem}
-        onNewItemChange={setNewItem}
-      />
     </div>
   )
 }
