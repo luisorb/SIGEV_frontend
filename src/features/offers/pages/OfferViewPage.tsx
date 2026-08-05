@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Pencil, ChevronLeft, FileDown, FileText, Tag, MapPin, Layers, List } from 'lucide-react'
+import { ChevronLeft, FileDown, FileText, Layers, List } from 'lucide-react'
 import { useOffers, usePermissions } from '../hooks/useOffers'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateTimeCO } from '../../../utils/formatters'
@@ -111,68 +111,32 @@ export function OfferViewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 bg-white rounded-xl border border-slate-200 p-6">
-        <div className="min-w-0">
-          <Link
-            to="/ofertas"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium mb-3 transition-colors"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Volver a ofertas
-          </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">
-            {offer.nombre}
-          </h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
-            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${OFFER_STATE_COLORS[offer.estado]}`}>
-              {offer.estado}
-            </span>
-            {offer.aliado && (
-              <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                <Tag className="w-3.5 h-3.5" />
-                {offer.aliado}
-              </div>
-            )}
-            {offer.municipio && (
-              <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                <MapPin className="w-3.5 h-3.5" />
-                {offer.municipio}
-              </div>
-            )}
-            <div className="text-sm text-slate-500">
-              {offer.items.length} ítem{offer.items.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {can('export') && (
-            <>
-              <button
-                onClick={handleExportExcel}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-              >
-                <FileDown className="w-4 h-4" />
-                Excel
-              </button>
-              <button
-                onClick={handleExportPDF}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-              >
-                <FileText className="w-4 h-4" />
-                PDF
-              </button>
-            </>
-          )}
-          {can('edit') && (
-            <Link
-              to={`/ofertas/${offer.id}/editar`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <Link
+          to="/ofertas"
+          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium transition-colors"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+          Volver a ofertas
+        </Link>
+        {can('export') && (
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleExportExcel}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
             >
-              <Pencil className="w-4 h-4" />
-              Editar
-            </Link>
-          )}
-        </div>
+              <FileDown className="w-4 h-4" />
+              Excel
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              PDF
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
