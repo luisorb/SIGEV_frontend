@@ -54,6 +54,7 @@ export function EventDetailPage() {
 
       await queryClient.invalidateQueries({ queryKey: ['events'] })
       await queryClient.invalidateQueries({ queryKey: ['event', id] })
+      await queryClient.invalidateQueries({ queryKey: ['map-stats'] })
 
       toast.showToast(`Orden ${data.numeroEvento}${data.sufijo ? `-${data.sufijo}` : ''} actualizada correctamente`)
       navigate('/ordenes')

@@ -10,6 +10,8 @@ export interface EventMapGroup {
     responsable: string
     estado: string
     total: number
+    lat?: number
+    lng?: number
   }>
   totalEventos: number
   totalValor: number

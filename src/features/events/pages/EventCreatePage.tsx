@@ -44,6 +44,7 @@ export function EventCreatePage() {
       const newEvent = await createEventApi(partial)
 
       await queryClient.invalidateQueries({ queryKey: ['events'] })
+      await queryClient.invalidateQueries({ queryKey: ['map-stats'] })
 
       toast.showToast(`Orden ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creada correctamente`)
       navigate('/ordenes')

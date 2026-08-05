@@ -43,6 +43,8 @@ export interface MunicipalityStatsEntry {
   responsable: string
   estado: string
   total: number
+  lat?: number
+  lng?: number
 }
 
 export interface MunicipalityStatsResponse {

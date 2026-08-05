@@ -19,7 +19,15 @@ export function LocationPicker({ latitud, longitud, municipio, onSelect, onClose
   const markerRef = useRef<L.Marker | null>(null)
 
   const initialPosition =
-    typeof latitud === 'number' && typeof longitud === 'number' ? { lat: latitud, lng: longitud } : null
+    latitud !== undefined && latitud !== null && String(latitud).trim() !== '' &&
+    Number.isFinite(Number(latitud)) &&
+    longitud !== undefined && longitud !== null && String(longitud).trim() !== '' &&
+    Number.isFinite(Number(longitud))
+      ? {
+          lat: Number(latitud),
+          lng: Number(longitud),
+        }
+      : null
 
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(initialPosition)
 
