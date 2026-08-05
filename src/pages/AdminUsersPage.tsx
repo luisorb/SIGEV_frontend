@@ -464,6 +464,7 @@ export function AdminUsersPage() {
                   <label className="block text-sm font-medium text-slate-700">Identificador <span className="text-red-400 ml-0.5">*</span></label>
                   <input
                     type="text"
+                    maxLength={50}
                     value={newUser.identificador}
                     onChange={(e) => { setNewUser((p) => ({ ...p, identificador: e.target.value })); if (errors.identificador) setErrors((prev) => ({ ...prev, identificador: '' })) }}
                     className={`w-full px-3 py-2.5 border rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 ${errors.identificador ? 'border-red-400' : 'border-slate-300'}`}
@@ -475,6 +476,7 @@ export function AdminUsersPage() {
                   <label className="block text-sm font-medium text-slate-700">Contraseña <span className="text-red-400 ml-0.5">*</span></label>
                   <input
                     type="password"
+                    maxLength={50}
                     value={newUser.password}
                     onChange={(e) => { setNewUser((p) => ({ ...p, password: e.target.value })); if (errors.password) setErrors((prev) => ({ ...prev, password: '' })) }}
                     className={`w-full px-3 py-2.5 border rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 ${errors.password ? 'border-red-400' : 'border-slate-300'}`}
@@ -488,6 +490,7 @@ export function AdminUsersPage() {
                   <label className="block text-sm font-medium text-slate-700">Nombre <span className="text-red-400 ml-0.5">*</span></label>
                   <input
                     type="text"
+                    maxLength={50}
                     value={newUser.nombre}
                     onChange={(e) => { setNewUser((p) => ({ ...p, nombre: e.target.value })); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }}
                     className={`w-full px-3 py-2.5 border rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 ${errors.nombre ? 'border-red-400' : 'border-slate-300'}`}
@@ -499,6 +502,7 @@ export function AdminUsersPage() {
                   <label className="block text-sm font-medium text-slate-700">Correo <span className="text-red-400 ml-0.5">*</span></label>
                   <input
                     type="email"
+                    maxLength={50}
                     value={newUser.email}
                     onChange={(e) => { setNewUser((p) => ({ ...p, email: e.target.value })); if (errors.email) setErrors((prev) => ({ ...prev, email: '' })) }}
                     className={`w-full px-3 py-2.5 border rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 ${errors.email ? 'border-red-400' : 'border-slate-300'}`}
