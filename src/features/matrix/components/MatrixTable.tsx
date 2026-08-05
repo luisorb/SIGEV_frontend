@@ -127,7 +127,7 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
       {isFullscreen && onExitFullscreen && (
         <button
           onClick={onExitFullscreen}
-          className="absolute top-3 right-3 z-50 inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-300 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 shadow-sm transition-colors"
+          className="absolute top-7 right-3 z-50 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/60 border border-slate-300 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 shadow-sm transition-colors"
         >
           <Minimize2 className="w-3.5 h-3.5" />
           Salir
