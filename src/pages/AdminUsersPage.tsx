@@ -124,6 +124,8 @@ export function AdminUsersPage() {
     if (!editingUser && !cleanedUser.password) newErrors.password = 'La contraseña es obligatoria'
     else if (cleanedUser.password && cleanedUser.password.length < 8) newErrors.password = 'Mínimo 8 caracteres'
     if (cleanedUser.roles.length === 0) newErrors.roles = 'Seleccione al menos un rol'
+    if (cleanedUser.identificador && users.some(u => u.id !== editingUser?.id && u.identificador.toLowerCase() === cleanedUser.identificador.toLowerCase())) newErrors.identificador = 'El identificador ya está en uso'
+    if (cleanedUser.email && users.some(u => u.id !== editingUser?.id && u.email.toLowerCase() === cleanedUser.email.toLowerCase())) newErrors.email = 'El correo ya está en uso'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
 
     try {
