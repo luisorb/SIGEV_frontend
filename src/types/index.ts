@@ -96,6 +96,7 @@ export interface Municipality {
 export interface Item {
   id: string
   eventoId: string
+  nombre: string
   descripcion: string
   unidadMedida?: string
   cantidad: number
@@ -114,6 +115,7 @@ export interface Item {
 }
 
 export interface ItemInput {
+  nombre: string
   descripcion: string
   unidadMedida?: string
   cantidad: number

@@ -19,6 +19,7 @@ function generateId() {
 
 function toInput(item: StoredItem): ItemInput {
   return {
+    nombre: item.nombre,
     descripcion: item.descripcion,
     unidadMedida: item.unidadMedida,
     cantidad: item.cantidad,

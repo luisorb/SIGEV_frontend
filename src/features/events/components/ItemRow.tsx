@@ -24,10 +24,13 @@ export function ItemRow({ item, aliados, onEdit, onRemove, readOnly = false, ind
   return (
     <tr className={`transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'} hover:bg-blue-50/20 ${isLocked ? 'opacity-80' : ''}`}>
       <td className="px-5 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-900">{item.descripcion}</span>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-slate-900">{item.nombre}</span>
+          {item.descripcion && (
+            <span className="text-xs text-slate-500 mt-0.5">{item.descripcion}</span>
+          )}
           {item.isTariffed && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-green-50 text-green-700 rounded ring-1 ring-green-200">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-green-50 text-green-700 rounded ring-1 ring-green-200 w-fit mt-1">
               <Lock className="w-2.5 h-2.5" />
               Tarifado
             </span>

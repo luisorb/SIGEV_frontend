@@ -12,7 +12,8 @@ function mapBackendItem(data: Record<string, unknown>): Item {
   return {
     id: String(data.id ?? ''),
     eventoId: String(data.eventId ?? ''),
-    descripcion: String(data.name ?? data.description ?? ''),
+    nombre: String(data.name ?? ''),
+    descripcion: String(data.description ?? data.name ?? ''),
     unidadMedida: data.unitMeasure ? String(data.unitMeasure) : undefined,
     cantidad: Number(data.quantity ?? 0),
     valorUnitario: Number(data.unitPrice ?? 0),
@@ -102,7 +103,8 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
     disbursementId: event.desembolsoId,
     startDate: event.fechaEvento || undefined,
     items: event.items?.length ? event.items.map((i) => ({
-      name: i.descripcion,
+      name: i.nombre,
+      description: i.descripcion,
       quantity: i.cantidad,
       ...(i.valorUnitario ? { unitPrice: i.valorUnitario } : {}),
       ...(i.unidadMedida ? { unitMeasure: i.unidadMedida } : {}),

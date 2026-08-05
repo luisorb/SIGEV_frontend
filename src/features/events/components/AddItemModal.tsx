@@ -16,6 +16,7 @@ interface AddItemModalProps {
 }
 
 const emptyItem: ItemInput = {
+  nombre: '',
   descripcion: '',
   unidadMedida: '',
   cantidad: 1,
@@ -90,6 +91,7 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
   function validate(): boolean {
     const errs: Partial<Record<keyof ItemInput, string>> = {}
     if (!form.descripcion.trim()) errs.descripcion = 'La descripción es obligatoria'
+    if (!form.isTariffed && !form.nombre.trim()) errs.nombre = 'El nombre del servicio es obligatorio'
     if (form.cantidad < 1) errs.cantidad = 'Debe ser mayor a 0'
     if (form.isTariffed && !form.tariffId) errs.tariffId = 'Seleccione un servicio del tarifario'
     if (!form.isTariffed && form.valorUnitario < 0) errs.valorUnitario = 'No puede ser negativo'
@@ -103,6 +105,7 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
     if (!validate()) return
     const data: ItemInput = {
       ...form,
+      nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
       aliadoId: form.aliadoId || undefined,
       tariffId: form.tariffId || undefined,
@@ -127,7 +130,8 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
     setForm((prev) => ({
       ...prev,
       tariffId: tariff.id,
-      descripcion: tariff.name,
+      nombre: tariff.name,
+      descripcion: tariff.description ?? '',
       unidadMedida: tariff.unitMeasure ?? prev.unidadMedida,
       valorUnitario: price,
       isTariffed: true,
@@ -255,15 +259,38 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
             </div>
           )}
 
+          {form.isTariffed && form.tariffId && (
+            <div>
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Servicio del Tarifario</label>
+              <div className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-700">
+                {form.nombre}
+              </div>
+            </div>
+          )}
+
+          {!form.isTariffed && (
+            <div>
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Servicio</label>
+              <input
+                type="text"
+                value={form.nombre}
+                onChange={(e) => update('nombre', e.target.value)}
+                placeholder="Nombre del servicio no tarifado"
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent ${errors.nombre ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
+              />
+              {errors.nombre && <p className="text-xs text-red-500 mt-1">{errors.nombre}</p>}
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Descripción Técnica</label>
-            <input
-              type="text"
+            <textarea
+              rows={3}
               value={form.descripcion}
               onChange={(e) => update('descripcion', e.target.value)}
-              placeholder="Descripción del ítem"
+              placeholder={form.isTariffed && form.tariffId ? '' : 'Descripción técnica del servicio'}
               readOnly={form.isTariffed && !!form.tariffId}
-              className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent ${errors.descripcion ? 'border-red-300 bg-red-50' : 'border-slate-300'} ${form.isTariffed && form.tariffId ? 'bg-slate-50 text-slate-600' : ''}`}
+              className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${errors.descripcion ? 'border-red-300 bg-red-50' : 'border-slate-300'} ${form.isTariffed && form.tariffId ? 'bg-slate-50 text-slate-600' : ''}`}
             />
             {errors.descripcion && <p className="text-xs text-red-500 mt-1">{errors.descripcion}</p>}
           </div>
