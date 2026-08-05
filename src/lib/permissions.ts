@@ -25,7 +25,7 @@ export const ALL_ROLES: RoleName[] = [
 ]
 
 export const ROLES_CAN_MANAGE_USERS = ['technical_admin'] as const
-export const ROLES_CAN_READ_AUDIT = ['functional_admin', 'supervisor', 'approver', 'auditor'] as const
+export const ROLES_CAN_READ_AUDIT = ['technical_admin', 'functional_admin', 'supervisor', 'approver', 'auditor'] as const
 export const ROLES_CAN_SEE_REPORTS = ['functional_admin', 'supervisor', 'operator', 'analista', 'consulta', 'auditor', 'approver'] as const
 
 export const ROLES_CAN_CREATE_EVENT = ['functional_admin', 'operator', 'solicitante'] as const

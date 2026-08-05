@@ -99,7 +99,7 @@ export const router = createBrowserRouter([
           {
             path: 'auditoria',
             element: (
-              <RoleRoute roles={['functional_admin', 'supervisor', 'approver', 'auditor']}>
+              <RoleRoute roles={['technical_admin', 'functional_admin', 'supervisor', 'approver', 'auditor']}>
                 <AuditPage />
               </RoleRoute>
             ),
