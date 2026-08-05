@@ -32,17 +32,19 @@ export const eventSchema = z.object({
     .string()
     .default(''),
   latitud: z.preprocess(
-    (value) =>
-      value === '' || value === null || (typeof value === 'number' && Number.isNaN(value))
-        ? undefined
-        : value,
+    (value) => {
+      if (value === '' || value === null || value === undefined) return undefined
+      const num = typeof value === 'number' ? value : Number(value)
+      return Number.isNaN(num) ? undefined : num
+    },
     z.number().optional(),
   ),
   longitud: z.preprocess(
-    (value) =>
-      value === '' || value === null || (typeof value === 'number' && Number.isNaN(value))
-        ? undefined
-        : value,
+    (value) => {
+      if (value === '' || value === null || value === undefined) return undefined
+      const num = typeof value === 'number' ? value : Number(value)
+      return Number.isNaN(num) ? undefined : num
+    },
     z.number().optional(),
   ),
   observaciones: z

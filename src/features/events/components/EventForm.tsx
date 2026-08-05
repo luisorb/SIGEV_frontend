@@ -59,12 +59,32 @@ export function EventForm({
     return errors[name] ? inputBase + ' ' + inputError : inputBase
   }
 
-  function numericField(name: 'dias' | 'asistentes' | 'latitud' | 'longitud') {
+  function numericField(name: 'dias' | 'asistentes') {
     const { onChange, ...rest } = register(name, { valueAsNumber: true })
     return {
       ...rest,
       onChange: (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.value.length > 15) e.target.value = e.target.value.slice(0, 15)
+        onChange(e)
+      },
+    }
+  }
+
+  function coordinateField(name: 'latitud' | 'longitud') {
+    const { onChange, ...rest } = register(name)
+    return {
+      ...rest,
+      onChange: (e: ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value
+        const negative = raw.trimStart().startsWith('-')
+        let value = raw.replace(/[^0-9.]/g, '')
+        const dotIndex = value.indexOf('.')
+        if (dotIndex !== -1) {
+          value = value.slice(0, dotIndex + 1) + value.slice(dotIndex + 1).replace(/\./g, '')
+        }
+        value = (negative ? '-' : '') + value
+        value = value.slice(0, 15)
+        e.target.value = value
         onChange(e)
       },
     }
@@ -132,30 +152,23 @@ export function EventForm({
             <input {...register('vereda')} maxLength={100} className={inputBase} placeholder="Nombre de la vereda (opcional)" />
           </div>
           <div className="space-y-1.5">
+            <label className={labelBase}>Ubicación en el mapa</label>
+            <button
+              type="button"
+              onClick={() => setShowPicker(true)}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+            >
+              <MapPin className="w-4 h-4 shrink-0" />
+              Seleccionar ubicación en el mapa
+            </button>
+          </div>
+          <div className="space-y-1.5">
             <label className={labelBase}>Latitud</label>
-            <input type="number" step="any" {...numericField('latitud')} className={inputBase} placeholder="4.7110" />
+            <input type="text" inputMode="decimal" autoComplete="off" {...coordinateField('latitud')} className={inputBase} placeholder="4.7110" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Longitud</label>
-            <input type="number" step="any" {...numericField('longitud')} className={inputBase} placeholder="-74.0721" />
-          </div>
-          <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
-            <label className={labelBase}>Ubicación en el mapa</label>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowPicker(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
-              >
-                <MapPin className="w-4 h-4" />
-                Seleccionar ubicación en el mapa
-              </button>
-              <span className="text-sm text-slate-500">
-                {watchedValues.latitud !== undefined && watchedValues.longitud !== undefined
-                  ? `${watchedValues.latitud}, ${watchedValues.longitud}`
-                  : 'Sin ubicación asignada'}
-              </span>
-            </div>
+            <input type="text" inputMode="decimal" autoComplete="off" {...coordinateField('longitud')} className={inputBase} placeholder="-74.0721" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Aliado {requiredMark}</label>
