@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, Tag, MapPin, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { AssociatedOffers } from '../components/AssociatedOffers'
 import { SupportDocuments } from '../components/SupportDocuments'
@@ -340,39 +340,14 @@ export function EventViewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 bg-white rounded-xl border border-slate-200 p-6">
-        <div className="min-w-0">
-          <Link
-            to="/ordenes"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium mb-3 transition-colors"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Volver a órdenes
-          </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">
-            Orden {event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}
-          </h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
-            {aliado && (
-              <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                <Tag className="w-3.5 h-3.5" />
-                {aliado.nombre}
-              </div>
-            )}
-            {municipio && (
-              <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                <MapPin className="w-3.5 h-3.5" />
-                {municipio.nombre}
-              </div>
-            )}
-            <div className="flex items-center gap-1.5 text-sm text-slate-500">
-              {event.items.length} ítem{event.items.length !== 1 ? 's' : ''}
-            </div>
-            <div className="flex items-center gap-1.5 text-sm text-slate-500">
-              {attachmentsCount} cotización{attachmentsCount !== 1 ? 'es' : ''}
-            </div>
-          </div>
-        </div>
+      <div>
+        <Link
+          to="/ordenes"
+          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium transition-colors"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+          Volver a órdenes
+        </Link>
       </div>
 
       {isDevuelto && (
@@ -416,7 +391,8 @@ export function EventViewPage() {
         </div>
 
         <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-5 gap-y-4">
-          <div>{label('Número')}{value(`${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''}`)}</div>
+          <div>{label('Número')}{value(event.numeroEvento)}</div>
+          <div>{label('Sufijo')}{value(event.sufijo || '-')}</div>
           <div>{label('Responsable')}{value(event.responsable || '-')}</div>
           <div>{label('Dependencia')}{value(event.dependencia || '-')}</div>
           <div>{label('Fecha')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
