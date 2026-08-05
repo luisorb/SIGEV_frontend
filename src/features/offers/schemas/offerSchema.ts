@@ -5,7 +5,7 @@ export const offerSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio'),
   descripcion: z.string(),
   cliente: z.string().min(1, 'El cliente es obligatorio'),
-  eventoId: z.string().optional(),
+  eventoId: z.string().min(1, 'El evento asociado es obligatorio'),
   numeroEvento: z.string().optional(),
   responsable: z.string().optional(),
   dependencia: z.string().optional(),

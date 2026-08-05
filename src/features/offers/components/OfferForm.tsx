@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { Save, X, FileSpreadsheet } from 'lucide-react'
+import { Save, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useOfferForm } from '../hooks/useOfferForm'
+import { EventSelect } from './EventSelect'
 import type { Offer } from '../types'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
@@ -150,22 +151,15 @@ export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormPro
       </div>
 
       <div className="border border-slate-200 rounded-lg p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <FileSpreadsheet className="w-4 h-4 text-slate-500" />
-          <label className="text-sm font-medium text-slate-700">Evento asociado (opcional)</label>
-        </div>
-        <select
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          Evento asociado <span className="text-red-500">*</span>
+        </label>
+        <EventSelect
           value={form.watch('eventoId') || ''}
-          onChange={(e) => handleEventSelect(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-        >
-          <option value="">Sin evento asociado</option>
-          {events.map((ev) => (
-            <option key={ev.id} value={ev.id}>
-              {ev.numeroEvento}{ev.sufijo ? `-${ev.sufijo}` : ''} - {ev.responsable} ({ev.estado})
-            </option>
-          ))}
-        </select>
+          events={events}
+          onChange={handleEventSelect}
+          error={errors.eventoId?.message as string | undefined}
+        />
         {form.watch('eventoId') && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-sm">
             <div>
