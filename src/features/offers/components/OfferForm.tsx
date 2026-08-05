@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Save, X } from 'lucide-react'
+import { Save } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useOfferForm } from '../hooks/useOfferForm'
 import { EventSelect } from './EventSelect'
@@ -75,19 +75,6 @@ export function OfferForm({ offer, initialData, onSave, onCancel }: OfferFormPro
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900">
-          {offer ? 'Editar Oferta' : 'Nueva Oferta'}
-        </h2>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="block text-sm font-medium text-slate-700">

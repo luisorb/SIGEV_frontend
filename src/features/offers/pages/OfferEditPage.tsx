@@ -61,28 +61,25 @@ export function OfferEditPage() {
     }
   }
 
-  const aliadoName = offer?.aliado
   const municipioName = offer?.municipio
 
   return (
     <div className="space-y-6">
       <div>
         <Link
-          to={`/ofertas/${offer.id}`}
+          to="/ofertas"
           className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary-dark font-medium mb-2 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          Volver a detalle
+          Volver a ofertas
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">Editar {offer.codigo}</h1>
-        {offer && (
-          <p className="text-sm text-slate-500">
-            {aliadoName || ''}{aliadoName && municipioName ? ' · ' : ''}{municipioName || ''}
-          </p>
+        {municipioName && (
+          <p className="text-sm text-slate-500">{municipioName}</p>
         )}
       </div>
 
-      <OfferForm offer={offer} onSave={handleSave} onCancel={() => navigate(`/ofertas/${offer.id}`)} />
+      <OfferForm offer={offer} onSave={handleSave} onCancel={() => navigate('/ofertas')} />
     </div>
   )
 }
