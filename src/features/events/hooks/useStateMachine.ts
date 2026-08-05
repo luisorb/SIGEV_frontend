@@ -1,7 +1,7 @@
 import type { Event, EventState } from '../../../types'
 
 export interface TransitionContext {
-  attachmentsCount: number
+  quotationsCount: number
   authorizeException?: boolean
 }
 
@@ -54,8 +54,8 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       to: 'Cerrado',
       roles: ['approver'],
       validate: (_event, ctx) => {
-        if (ctx.attachmentsCount < 4 && !ctx.authorizeException) {
-          return `Se requieren al menos 4 cotizaciones para cerrar (actual: ${ctx.attachmentsCount})`
+        if (ctx.quotationsCount < 3 && !ctx.authorizeException) {
+          return `Se requieren al menos 3 cotizaciones para cerrar (actual: ${ctx.quotationsCount})`
         }
         return null
       },

@@ -17,6 +17,7 @@ interface ItemManagerProps {
   onOpenImport?: () => void
   readOnly?: boolean
   eventAliadoId?: string
+  municipalityCategory?: string
   onSaveItems?: () => void
   savingItems?: boolean
 }
@@ -31,6 +32,7 @@ export function ItemManager({
   onOpenImport,
   readOnly = false,
   eventAliadoId,
+  municipalityCategory,
   onSaveItems,
   savingItems = false,
 }: ItemManagerProps) {
@@ -82,6 +84,7 @@ export function ItemManager({
         onAdd={handleAddItem}
         aliados={aliados}
         eventAliadoId={eventAliadoId}
+        municipalityCategory={municipalityCategory}
       />
       <AddItemModal
         open={!!editingItem}
@@ -90,6 +93,7 @@ export function ItemManager({
         onEdit={handleEditItem}
         aliados={aliados}
         eventAliadoId={eventAliadoId}
+        municipalityCategory={municipalityCategory}
       />
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center justify-between">
@@ -140,10 +144,11 @@ export function ItemManager({
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción</th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Tipo</th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Unidad</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Cant.</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Vr. Unitario</th>
               <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Categoría</th>
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Aliado</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28 border-l border-slate-200/60">Base</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Impuestos</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Fee</th>
@@ -154,7 +159,7 @@ export function ItemManager({
           <tbody className="divide-y divide-slate-100">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={readOnly ? 9 : 10} className="px-5 py-16 text-center">
+                <td colSpan={readOnly ? 10 : 11} className="px-5 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     <p className="text-sm text-slate-400">
@@ -180,7 +185,7 @@ export function ItemManager({
           {items.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-slate-200 bg-slate-50">
-                <td colSpan={5} className="px-5 py-4 text-sm font-semibold text-slate-700">
+                <td colSpan={6} className="px-5 py-4 text-sm font-semibold text-slate-700">
                   Totales del Evento
                 </td>
                 <td className="px-5 py-4 text-sm text-right font-semibold text-slate-900 tabular-nums border-l border-slate-200/60">

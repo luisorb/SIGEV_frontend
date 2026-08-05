@@ -97,7 +97,7 @@ export interface CreateItemDto {
   name: string
   description?: string
   quantity: number
-  unitPrice: number
+  unitPrice?: number
   ivaRate?: number
   consumptionTaxRate?: number
   feeRate?: number

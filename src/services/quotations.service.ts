@@ -5,7 +5,7 @@ import type {
   ChangeQuotationStatusDto,
   CreateQuotationItemDto,
 } from './types'
-import type { Offer, OfferItem, OfferState, OfferInput } from '../features/offers/types'
+import type { Offer, OfferItem, OfferItemInput, OfferState, OfferInput } from '../features/offers/types'
 import type { TaxCategory } from '../types'
 
 export interface QuotationItemResponse {
@@ -131,15 +131,13 @@ export function mapQuotationResponse(data: QuotationResponse): Offer {
   }
 }
 
-export function mapOfferItemToCreateDto(item: OfferItem): CreateQuotationItemDto {
+export function mapOfferItemToCreateDto(item: OfferItem | OfferItemInput): CreateQuotationItemDto {
   return {
     description: item.descripcion,
     quantity: item.cantidad,
     unitPrice: item.valorUnitario,
-    ...(item.aliadoId ? { allyId: item.aliadoId } : {}),
-    ...(item.tariffId ? { tariffId: item.tariffId, isTariffed: true } : {}),
-    ...(item.categoriaTributaria === 'IVA' ? { ivaRate: 0.19 } : {}),
-    ...(item.categoriaTributaria === 'Consumo' ? { consumptionTaxRate: 0.08 } : {}),
+    ...('aliadoId' in item && item.aliadoId ? { allyId: item.aliadoId } : {}),
+    ...('tariffId' in item && item.tariffId ? { tariffId: item.tariffId, isTariffed: true } : {}),
   }
 }
 
@@ -150,6 +148,7 @@ function mapOfferInputToCreateDto(input: OfferInput): CreateQuotationDto {
     description: input.descripcion || undefined,
     cliente: input.cliente || undefined,
     ...(input.eventoId ? { eventId: input.eventoId } : {}),
+    ...(input.items?.length ? { items: input.items.map(mapOfferItemToCreateDto) } : {}),
   }
 }
 

@@ -97,10 +97,13 @@ export interface Item {
   id: string
   eventoId: string
   descripcion: string
+  unidadMedida?: string
   cantidad: number
   valorUnitario: number
   categoriaTributaria: TaxCategory
   aliadoId?: string
+  tariffId?: string
+  isTariffed?: boolean
   base: number
   iva: number
   impuestoConsumo: number
@@ -112,10 +115,13 @@ export interface Item {
 
 export interface ItemInput {
   descripcion: string
+  unidadMedida?: string
   cantidad: number
   valorUnitario: number
   categoriaTributaria: TaxCategory
   aliadoId?: string
+  tariffId?: string
+  isTariffed?: boolean
 }
 
 export interface CalculationParam {
@@ -261,6 +267,22 @@ export interface Attachment {
   createdAt: string
 }
 
+export interface Quotation {
+  id: string
+  code: string
+  name: string
+  description?: string
+  cliente?: string
+  eventId?: string
+  allyId?: string
+  amount: number
+  currency: string
+  status: string
+  isDefinitive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Event {
   id: string
   numeroEvento: string
@@ -283,6 +305,7 @@ export interface Event {
   asignadoA?: string
   soportes?: Soporte[]
   attachments?: Attachment[]
+  quotations?: Quotation[]
   cotizacionSeleccionadaId?: string
   municipalityCategory?: string
   observation?: string

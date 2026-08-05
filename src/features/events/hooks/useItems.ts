@@ -20,10 +20,13 @@ function generateId() {
 function toInput(item: StoredItem): ItemInput {
   return {
     descripcion: item.descripcion,
+    unidadMedida: item.unidadMedida,
     cantidad: item.cantidad,
     valorUnitario: item.valorUnitario,
     categoriaTributaria: item.categoriaTributaria,
     aliadoId: item.aliadoId,
+    tariffId: item.tariffId,
+    isTariffed: item.isTariffed,
   }
 }
 

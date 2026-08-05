@@ -70,6 +70,7 @@ export interface OfferInput {
   aliado?: string
   desembolso?: string
   esquema?: string
+  items?: OfferItemInput[]
 }
 
 export const OFFER_STATES: OfferState[] = ['Borrador', 'Enviada', 'Aprobada', 'Rechazada']

@@ -107,7 +107,7 @@ export function EventViewPage() {
 
   const stateHistory = event ? getStateHistory(event.id) : []
   const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Abierto') as EventState
-  const attachmentsCount = event?.attachments?.length ?? 0
+  const quotationsCount = event?.quotations?.length ?? 0
 
   async function handleSaveItems() {
     if (!event || !localEvent) return
@@ -233,7 +233,7 @@ export function EventViewPage() {
       return
     }
 
-    const error = validateTransition(event, newEstado, { attachmentsCount, authorizeException }, roleNames)
+    const error = validateTransition(event, newEstado, { quotationsCount, authorizeException }, roleNames)
     if (error) {
       setTransitionError(error)
       return
@@ -325,7 +325,7 @@ export function EventViewPage() {
   const itemsReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
 
   const availableTransitions = getTransitionRules(displayEstado, roleNames)
-  const needsExceptionApproval = attachmentsCount < 4
+  const needsExceptionApproval = quotationsCount < 3
   const pendingRule = pendingEstado
     ? availableTransitions.find((r) => r.to === pendingEstado)
     : undefined
@@ -493,6 +493,8 @@ export function EventViewPage() {
         eventTotals={eventTotals}
         onOpenImport={!itemsReadOnly ? () => setShowImportModal(true) : undefined}
         readOnly={itemsReadOnly}
+        eventAliadoId={event.aliadoId}
+        municipalityCategory={event.municipalityCategory}
         onSaveItems={!itemsReadOnly ? handleSaveItems : undefined}
         savingItems={savingItems}
       />
@@ -545,7 +547,7 @@ export function EventViewPage() {
                 {pendingEstado === 'Cerrado' && needsExceptionApproval && (
                   <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-xs text-amber-800 mb-2">
-                      El evento tiene {attachmentsCount} cotización{attachmentsCount !== 1 ? 'es' : ''} y se requieren al menos 4 para cerrar.
+                      El evento tiene {quotationsCount} cotización{quotationsCount !== 1 ? 'es' : ''} y se requieren al menos 3 para cerrar.
                     </p>
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input
@@ -555,7 +557,7 @@ export function EventViewPage() {
                         className="mt-0.5 w-4 h-4 rounded border-amber-300 text-primary focus:ring-primary"
                       />
                       <span className="text-xs text-amber-800">
-                        Autorizar excepción y cerrar con menos de 4 cotizaciones
+                        Autorizar excepción y cerrar con menos de 3 cotizaciones
                       </span>
                     </label>
                   </div>
