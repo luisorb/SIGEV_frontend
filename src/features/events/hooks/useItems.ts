@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import type { ItemInput, ItemTotals, EventTotals } from '../../../types'
+import type { ItemInput, ItemTotals, EventTotals, CalculationParams } from '../../../types'
 import { calculateItemPreview, calculateEventSummary } from '../../../utils/calculationEngine'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 
@@ -35,13 +35,23 @@ function toStored(input: ItemInput): StoredItem {
   return { ...input, id: generateId() }
 }
 
+function toManaged(list: StoredItem[], params: CalculationParams): ManagedItem[] {
+  return list.map((item) => ({ ...item, totals: calculateItemPreview(toInput(item), params) }))
+}
+
 export function useItems(initialItems?: ItemInput[]) {
   const params = useActiveCalculationParams()
   const [items, setItems] = useState<StoredItem[]>(
     () => initialItems?.map(toStored) ?? [],
   )
 
+  const itemsRef = useRef<StoredItem[]>(items)
+
   const baselineRef = useRef<string>(JSON.stringify(initialItems ?? []))
+
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
 
   useEffect(() => {
     const serialized = JSON.stringify(initialItems ?? [])
@@ -51,30 +61,31 @@ export function useItems(initialItems?: ItemInput[]) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(initialItems ?? [])])
 
-  function addItem(item: ItemInput) {
-    setItems((prev) => [
-      ...prev,
-      { ...item, id: generateId() },
-    ])
+  function addItem(item: ItemInput): ManagedItem[] {
+    const next = [...itemsRef.current, { ...item, id: generateId() }]
+    itemsRef.current = next
+    setItems(next)
+    return toManaged(next, params)
   }
 
-  function updateItem(id: string, updates: Partial<ItemInput>) {
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item
-        return { ...item, ...updates }
-      }),
-    )
+  function updateItem(id: string, updates: Partial<ItemInput>): ManagedItem[] {
+    const next = itemsRef.current.map((item) => {
+      if (item.id !== id) return item
+      return { ...item, ...updates }
+    })
+    itemsRef.current = next
+    setItems(next)
+    return toManaged(next, params)
   }
 
-  function removeItem(id: string) {
-    setItems((prev) => prev.filter((item) => item.id !== id))
+  function removeItem(id: string): ManagedItem[] {
+    const next = itemsRef.current.filter((item) => item.id !== id)
+    itemsRef.current = next
+    setItems(next)
+    return toManaged(next, params)
   }
 
-  const managedItems = useMemo<ManagedItem[]>(
-    () => items.map((item) => ({ ...item, totals: calculateItemPreview(toInput(item), params) })),
-    [items, params],
-  )
+  const managedItems = useMemo<ManagedItem[]>(() => toManaged(items, params), [items, params])
 
   const itemsInput = useMemo<ItemInput[]>(() => items.map(toInput), [items])
 

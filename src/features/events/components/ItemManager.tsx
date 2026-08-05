@@ -1,25 +1,22 @@
 import { useState } from 'react'
-import { Plus, FileSpreadsheet, Trash2, Save } from 'lucide-react'
+import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { ItemInput, EventTotals, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'
 import { formatCurrencyCO } from '../../../utils/formatters'
 import { AddItemModal } from './AddItemModal'
-import { useToast } from '../../../components/ToastProvider'
 
 interface ItemManagerProps {
   items: ManagedItem[]
   aliados?: Ally[]
-  onAddItem?: (item: ItemInput) => void
-  onUpdateItem?: (id: string, updates: Partial<ItemInput>) => void
-  onRemoveItem?: (id: string) => void
+  onAddItem?: (item: ItemInput) => void | Promise<void>
+  onUpdateItem?: (id: string, updates: ItemInput) => void | Promise<void>
+  onRemoveItem?: (id: string) => void | Promise<void>
   eventTotals: EventTotals
   onOpenImport?: () => void
   readOnly?: boolean
   eventAliadoId?: string
   municipalityCategory?: string
-  onSaveItems?: () => void
-  savingItems?: boolean
 }
 
 export function ItemManager({
@@ -33,30 +30,17 @@ export function ItemManager({
   readOnly = false,
   eventAliadoId,
   municipalityCategory,
-  onSaveItems,
-  savingItems = false,
 }: ItemManagerProps) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<ManagedItem | null>(null)
   const [deletingItem, setDeletingItem] = useState<ManagedItem | null>(null)
-  const toast = useToast()
 
-  function handleAddItem(item: ItemInput) {
-    try {
-      onAddItem?.(item)
-      toast.showToast('Ítem agregado correctamente')
-    } catch {
-      toast.showToast('No se pudo agregar el ítem', 'error')
-    }
+  async function handleAddItem(item: ItemInput) {
+    await onAddItem?.(item)
   }
 
-  function handleEditItem(id: string, updates: ItemInput) {
-    try {
-      onUpdateItem?.(id, updates)
-      toast.showToast('Ítem actualizado correctamente')
-    } catch {
-      toast.showToast('No se pudo actualizar el ítem', 'error')
-    }
+  async function handleEditItem(id: string, updates: ItemInput) {
+    await onUpdateItem?.(id, updates)
   }
 
   function handleDeleteRequest(id: string) {
@@ -64,14 +48,9 @@ export function ItemManager({
     if (item) setDeletingItem(item)
   }
 
-  function handleDeleteConfirm() {
+  async function handleDeleteConfirm() {
     if (deletingItem) {
-      try {
-        onRemoveItem?.(deletingItem.id)
-        toast.showToast('Ítem eliminado correctamente')
-      } catch {
-        toast.showToast('No se pudo eliminar el ítem', 'error')
-      }
+      await onRemoveItem?.(deletingItem.id)
       setDeletingItem(null)
     }
   }
@@ -106,16 +85,6 @@ export function ItemManager({
           </div>
           {!readOnly && (
             <div className="flex items-center gap-2">
-              {onSaveItems && (
-                <button
-                  onClick={onSaveItems}
-                  disabled={savingItems}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 active:scale-[0.98] transition-all duration-150 disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  {savingItems ? 'Guardando...' : 'Guardar ítems'}
-                </button>
-              )}
               {onOpenImport && (
                 <button
                   onClick={onOpenImport}

@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ChevronLeft, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { AssociatedOffers } from '../components/AssociatedOffers'
 import { SupportDocuments } from '../components/SupportDocuments'
 import { ImportExcelModal } from '../components/ImportExcelModal'
-import { useItems } from '../hooks/useItems'
+import { useItems, type ManagedItem } from '../hooks/useItems'
 import { useStateMachine } from '../hooks/useStateMachine'
 import { useOffers } from '../../offers/hooks/useOffers'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -21,7 +21,7 @@ import { exportBudgetPDF } from '../../../utils/pdfExport'
 import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
-import type { Event, EventState, TipoSoporte, Attachment } from '../../../types'
+import type { Event, EventState, TipoSoporte, Attachment, Item, ItemInput } from '../../../types'
 
 const ESTADO_COLORS: Record<string, string> = {
   Abierto: 'bg-yellow-100 text-yellow-800',
@@ -62,7 +62,6 @@ export function EventViewPage() {
   const [confirming, setConfirming] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
-  const [savingItems, setSavingItems] = useState(false)
 
   const {
     items,
@@ -72,11 +71,15 @@ export function EventViewPage() {
     eventTotals,
   } = useItems(
     event?.items.map((i) => ({
+      nombre: i.nombre,
       descripcion: i.descripcion,
+      unidadMedida: i.unidadMedida,
       cantidad: i.cantidad,
       valorUnitario: i.valorUnitario,
       categoriaTributaria: i.categoriaTributaria,
       aliadoId: i.aliadoId,
+      tariffId: i.tariffId,
+      isTariffed: i.isTariffed,
     })),
   )
 
@@ -109,18 +112,75 @@ export function EventViewPage() {
   const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Abierto') as EventState
   const quotationsCount = event?.quotations?.length ?? 0
 
-  async function handleSaveItems() {
-    if (!event || !localEvent) return
-    setSavingItems(true)
-    try {
-      await updateEventApi(event.id, localEvent)
+  const persistChainRef = useRef<Promise<void>>(Promise.resolve())
+
+  function buildItemsPayload(nextItems: ManagedItem[]): Item[] {
+    if (!event) return []
+    return nextItems.map((i) => ({
+      id: i.id,
+      eventoId: event.id,
+      nombre: i.nombre,
+      descripcion: i.descripcion,
+      unidadMedida: i.unidadMedida,
+      cantidad: i.cantidad,
+      valorUnitario: i.valorUnitario,
+      categoriaTributaria: i.categoriaTributaria,
+      aliadoId: i.aliadoId,
+      tariffId: i.tariffId,
+      isTariffed: i.isTariffed,
+      base: i.totals.base,
+      iva: i.totals.iva,
+      impuestoConsumo: i.totals.impuestoConsumo,
+      feeTarifado: i.totals.feeTarifado,
+      feeTerceros: i.totals.feeTerceros,
+      ivaFee: i.totals.ivaFee,
+      total: i.totals.total,
+    }))
+  }
+
+  function persistItems(nextItems: ManagedItem[]): Promise<void> {
+    if (!event) return Promise.resolve()
+    const task = persistChainRef.current.then(async () => {
+      await updateEventApi(event.id, {
+        ...event,
+        ...localOverrides,
+        updatedAt: localOverrides.updatedAt ?? event.updatedAt,
+        items: buildItemsPayload(nextItems),
+      })
       await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       await queryClient.invalidateQueries({ queryKey: ['events'] })
-      toast.showToast('Ítems guardados correctamente')
+    })
+    persistChainRef.current = task.catch(() => {})
+    return task
+  }
+
+  async function handleAddItem(item: ItemInput) {
+    if (!event) return
+    try {
+      await persistItems(addItem(item))
+      toast.showToast('Ítem agregado correctamente')
     } catch (error) {
-      toast.showToast(getApiErrorMessage(error, 'No se pudieron guardar los ítems'), 'error')
-    } finally {
-      setSavingItems(false)
+      toast.showToast(getApiErrorMessage(error, 'No se pudo agregar el ítem'), 'error')
+    }
+  }
+
+  async function handleUpdateItem(id: string, updates: ItemInput) {
+    if (!event) return
+    try {
+      await persistItems(updateItem(id, updates))
+      toast.showToast('Ítem actualizado correctamente')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo actualizar el ítem'), 'error')
+    }
+  }
+
+  async function handleRemoveItem(id: string) {
+    if (!event) return
+    try {
+      await persistItems(removeItem(id))
+      toast.showToast('Ítem eliminado correctamente')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo eliminar el ítem'), 'error')
     }
   }
 
@@ -487,22 +547,28 @@ export function EventViewPage() {
       <ItemManager
         items={items}
         aliados={aliados}
-        onAddItem={addItem}
-        onUpdateItem={updateItem}
-        onRemoveItem={removeItem}
+        onAddItem={handleAddItem}
+        onUpdateItem={handleUpdateItem}
+        onRemoveItem={handleRemoveItem}
         eventTotals={eventTotals}
         onOpenImport={!itemsReadOnly ? () => setShowImportModal(true) : undefined}
         readOnly={itemsReadOnly}
         eventAliadoId={event.aliadoId}
         municipalityCategory={event.municipalityCategory}
-        onSaveItems={!itemsReadOnly ? handleSaveItems : undefined}
-        savingItems={savingItems}
       />
 
       <ImportExcelModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
-        onImport={(importedItems) => importedItems.forEach(addItem)}
+        onImport={(importedItems) => {
+          let nextItems: ManagedItem[] = []
+          for (const item of importedItems) {
+            nextItems = addItem(item)
+          }
+          persistItems(nextItems).catch((error) => {
+            toast.showToast(getApiErrorMessage(error, 'No se pudieron guardar los ítems importados'), 'error')
+          })
+        }}
       />
 
       {pendingEstado && (
