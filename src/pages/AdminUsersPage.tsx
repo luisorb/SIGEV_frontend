@@ -33,6 +33,10 @@ const roleColors: Record<string, string> = {
 
 const adminRoles = ['technical_admin', 'functional_admin']
 
+function normalizeSpaces(value: string): string {
+  return value.trim().replace(/\s+/g, ' ')
+}
+
 function roleLabel(role: string): string {
   return ROLE_LABELS[role as keyof typeof ROLE_LABELS] ?? role
 }
@@ -103,39 +107,46 @@ export function AdminUsersPage() {
   const [pageSize, setPageSize] = useState<PageSize>(10)
 
   async function handleSave() {
+    const cleanedUser: Omit<User, 'id'> = {
+      ...newUser,
+      identificador: normalizeSpaces(newUser.identificador),
+      nombre: normalizeSpaces(newUser.nombre),
+      email: normalizeSpaces(newUser.email),
+    }
+    setNewUser(cleanedUser)
     const newErrors: Partial<Record<keyof Omit<User, 'id'>, string>> = {}
-    if (!newUser.identificador.trim()) newErrors.identificador = 'El identificador es obligatorio'
-    else if (newUser.identificador.trim().length < 5) newErrors.identificador = 'Mínimo 5 caracteres'
-    if (!newUser.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
-    if (!newUser.email.trim()) newErrors.email = 'El correo es obligatorio'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUser.email)) newErrors.email = 'Formato de correo inválido'
-    if (!editingUser && !newUser.password) newErrors.password = 'La contraseña es obligatoria'
-    else if (newUser.password && newUser.password.length < 8) newErrors.password = 'Mínimo 8 caracteres'
-    if (newUser.roles.length === 0) newErrors.roles = 'Seleccione al menos un rol'
+    if (!cleanedUser.identificador.trim()) newErrors.identificador = 'El identificador es obligatorio'
+    else if (cleanedUser.identificador.trim().length < 5) newErrors.identificador = 'Mínimo 5 caracteres'
+    if (!cleanedUser.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
+    if (!cleanedUser.email.trim()) newErrors.email = 'El correo es obligatorio'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedUser.email)) newErrors.email = 'Formato de correo inválido'
+    if (!editingUser && !cleanedUser.password) newErrors.password = 'La contraseña es obligatoria'
+    else if (cleanedUser.password && cleanedUser.password.length < 8) newErrors.password = 'Mínimo 8 caracteres'
+    if (cleanedUser.roles.length === 0) newErrors.roles = 'Seleccione al menos un rol'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
 
     try {
       if (editingUser) {
         const updateData: UpdateUserDto = {
-          document: newUser.identificador,
-          fullName: newUser.nombre,
-          email: newUser.email,
-          roles: newUser.roles,
+          document: cleanedUser.identificador,
+          fullName: cleanedUser.nombre,
+          email: cleanedUser.email,
+          roles: cleanedUser.roles,
         }
-        if (newUser.password) updateData.password = newUser.password
+        if (cleanedUser.password) updateData.password = cleanedUser.password
         await updateUserApi(editingUser.id, updateData)
-        toast.showToast(`Usuario "${newUser.nombre}" actualizado correctamente`)
+        toast.showToast(`Usuario "${cleanedUser.nombre}" actualizado correctamente`)
       } else {
         const createDto: CreateUserDto = {
-          document: newUser.identificador,
+          document: cleanedUser.identificador,
           documentType: 'CC',
-          fullName: newUser.nombre,
-          email: newUser.email,
-          password: newUser.password,
-          roles: newUser.roles,
+          fullName: cleanedUser.nombre,
+          email: cleanedUser.email,
+          password: cleanedUser.password,
+          roles: cleanedUser.roles,
         }
         await createUserApi(createDto)
-        toast.showToast(`Usuario "${newUser.nombre}" creado correctamente`)
+        toast.showToast(`Usuario "${cleanedUser.nombre}" creado correctamente`)
       }
 
       const updated = await getUsersApi()
