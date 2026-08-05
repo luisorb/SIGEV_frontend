@@ -259,15 +259,6 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
             </div>
           )}
 
-          {form.isTariffed && form.tariffId && (
-            <div>
-              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Servicio del Tarifario</label>
-              <div className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-700">
-                {form.nombre}
-              </div>
-            </div>
-          )}
-
           {!form.isTariffed && (
             <div>
               <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Servicio</label>
