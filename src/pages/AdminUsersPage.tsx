@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Plus, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff } from 'lucide-react'
+import { Plus, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../components/ToastProvider'
 import { USER_ROLES } from '../config/constants'
 import { getUsersApi, createUserApi, updateUserApi } from '../services/users.service'
@@ -99,6 +99,7 @@ export function AdminUsersPage() {
   const [newUser, setNewUser] = useState<Omit<User, 'id'>>(EMPTY_USER)
 
   const [isCreating, setIsCreating] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [confirmToggle, setConfirmToggle] = useState<User | null>(null)
   const [search, setSearch] = useState('')
   const [sortColumn, setSortColumn] = useState('')
@@ -173,6 +174,7 @@ export function AdminUsersPage() {
     setIsCreating(true)
     setNewUser(EMPTY_USER)
     setErrors({})
+    setShowPassword(false)
   }
 
   function openEdit(user: User) {
@@ -187,6 +189,7 @@ export function AdminUsersPage() {
       activo: user.activo,
     })
     setErrors({})
+    setShowPassword(false)
   }
 
   async function handleToggleActive() {
@@ -474,14 +477,24 @@ export function AdminUsersPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-slate-700">Contraseña <span className="text-red-400 ml-0.5">*</span></label>
-                  <input
-                    type="password"
-                    maxLength={50}
-                    value={newUser.password}
-                    onChange={(e) => { setNewUser((p) => ({ ...p, password: e.target.value })); if (errors.password) setErrors((prev) => ({ ...prev, password: '' })) }}
-                    className={`w-full px-3 py-2.5 border rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 ${errors.password ? 'border-red-400' : 'border-slate-300'}`}
-                    placeholder="Mínimo 8 caracteres"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      maxLength={50}
+                      value={newUser.password}
+                      onChange={(e) => { setNewUser((p) => ({ ...p, password: e.target.value })); if (errors.password) setErrors((prev) => ({ ...prev, password: '' })) }}
+                      className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 ${errors.password ? 'border-red-400' : 'border-slate-300'}`}
+                      placeholder="Mínimo 8 caracteres"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((p) => !p)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+                      title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                   {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
                 </div>
               </div>
