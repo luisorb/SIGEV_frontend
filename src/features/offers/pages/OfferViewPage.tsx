@@ -10,6 +10,7 @@ import { getCurrentUser } from '../../../config/constants'
 import { getEventApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
+import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 
 const catColors: Record<string, string> = {
   IVA: 'bg-blue-50 text-blue-700',
@@ -43,6 +44,7 @@ export function OfferViewPage() {
 
   const { data: aliados = [] } = useAllies()
   const { data: municipios = [] } = useMunicipalities()
+  const rates = useActiveCalculationParams()
 
   if (isLoading) {
     return (
@@ -69,7 +71,15 @@ export function OfferViewPage() {
 
   function handleExportExcel() {
     if (!offer) return
-    exportOfferToExcel(offer, aliados)
+    exportOfferToExcel(offer, {
+      event,
+      aliados,
+      municipios,
+      rates,
+      usuario: getCurrentUser(),
+      fechaCorte: new Date(),
+      filtros: 'Ninguno',
+    })
     addAuditEntry({
       accion: 'Exportación de oferta a Excel',
       entidad: 'Offer',
@@ -82,7 +92,15 @@ export function OfferViewPage() {
 
   function handleExportPDF() {
     if (!offer) return
-    exportOfferToPDF(offer, aliados)
+    exportOfferToPDF(offer, {
+      event,
+      aliados,
+      municipios,
+      rates,
+      usuario: getCurrentUser(),
+      fechaCorte: new Date(),
+      filtros: 'Ninguno',
+    })
     addAuditEntry({
       accion: 'Exportación de oferta a PDF',
       entidad: 'Offer',
@@ -145,13 +163,15 @@ export function OfferViewPage() {
               <FileDown className="w-4 h-4" />
               Excel
             </button>
-            <button
-              onClick={handleExportPDF}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              PDF
-            </button>
+            {offer.estado === 'Aprobada' && (
+              <button
+                onClick={handleExportPDF}
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                PDF
+              </button>
+            )}
           </div>
         )}
       </div>

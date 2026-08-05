@@ -5,6 +5,10 @@ import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
+import { getEventApi } from '../../../services/events.service'
+import { useAllies } from '../../../hooks/useAllies'
+import { useMunicipalities } from '../../../hooks/useMunicipalities'
+import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 import type { OfferState } from '../types'
 
 export function OffersPage() {
@@ -19,11 +23,33 @@ export function OffersPage() {
 
   const { can } = usePermissions()
   const toast = useToast()
+  const { data: aliados = [] } = useAllies()
+  const { data: municipios = [] } = useMunicipalities()
+  const rates = useActiveCalculationParams()
 
-  function handleExport(id: string) {
+  async function handleExport(id: string) {
     const offer = offers.find((o) => o.id === id)
     if (!offer) return
-    exportOfferToExcel(offer)
+
+    let event: Awaited<ReturnType<typeof getEventApi>> = null
+    if (offer.eventoId) {
+      try {
+        event = await getEventApi(offer.eventoId)
+      } catch {
+        event = null
+      }
+    }
+
+    exportOfferToExcel(offer, {
+      event,
+      aliados,
+      municipios,
+      rates,
+      usuario: getCurrentUser(),
+      fechaCorte: new Date(),
+      filtros: search ? `Búsqueda: "${search}"` : 'Ninguno',
+    })
+
     addAuditEntry({
       accion: 'Exportación de oferta',
       entidad: 'Offer',
