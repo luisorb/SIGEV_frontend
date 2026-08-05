@@ -560,31 +560,33 @@ export function AdminUsersPage() {
                 </div>
                 {errors.roles && <p className="text-xs text-red-500">{errors.roles}</p>}
               </div>
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-700">Estado</label>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="estado"
-                      checked={newUser.activo}
-                      onChange={() => setNewUser((p) => ({ ...p, activo: true }))}
-                      className="w-4 h-4 text-green-600 focus:ring-green-500"
-                    />
-                    <span className="text-sm text-slate-700">Activo</span>
-                  </label>
-                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="estado"
-                      checked={!newUser.activo}
-                      onChange={() => setNewUser((p) => ({ ...p, activo: false }))}
-                      className="w-4 h-4 text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-sm text-slate-700">Inactivo</span>
-                  </label>
+              {isCreating && (
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-slate-700">Estado</label>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="radio"
+                        name="estado"
+                        checked={newUser.activo}
+                        onChange={() => setNewUser((p) => ({ ...p, activo: true }))}
+                        className="w-4 h-4 text-green-600 focus:ring-green-500"
+                      />
+                      <span className="text-sm text-slate-700">Activo</span>
+                    </label>
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="radio"
+                        name="estado"
+                        checked={!newUser.activo}
+                        onChange={() => setNewUser((p) => ({ ...p, activo: false }))}
+                        className="w-4 h-4 text-red-600 focus:ring-red-500"
+                      />
+                      <span className="text-sm text-slate-700">Inactivo</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl shrink-0">
               <button onClick={() => { setEditingUser(null); setIsCreating(false) }} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
