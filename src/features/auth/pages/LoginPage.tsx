@@ -46,15 +46,52 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-50 p-6">
+    <div className="relative min-h-[100dvh] flex items-center justify-center bg-slate-50 p-6 overflow-hidden">
+      {/* Orbes difuminados en las esquinas */}
+      <div className="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 -right-28 w-[28rem] h-[28rem] rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-20 w-64 h-64 rounded-full bg-slate-200/70 blur-3xl" />
+      <div className="pointer-events-none absolute -left-16 bottom-1/4 w-72 h-72 rounded-full bg-slate-200/70 blur-3xl" />
+      {/* Patrón de puntos */}
+      <div
+        className="pointer-events-none absolute top-10 left-10 w-40 h-40 opacity-20"
+        style={{ backgroundImage: 'radial-gradient(circle, #334155 1.5px, transparent 1.5px)', backgroundSize: '16px 16px' }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-10 right-10 w-40 h-40 opacity-20"
+        style={{ backgroundImage: 'radial-gradient(circle, #334155 1.5px, transparent 1.5px)', backgroundSize: '16px 16px' }}
+      />
+      {/* Figuras geométricas */}
+      <div className="pointer-events-none absolute top-24 right-16 w-4 h-4 rotate-45 bg-primary/40" />
+      <div className="pointer-events-none absolute top-40 right-10 w-2.5 h-2.5 rounded-full bg-primary/50" />
+      <div className="pointer-events-none absolute bottom-24 left-14 w-4 h-4 rotate-12 bg-primary/40" />
+      <div className="pointer-events-none absolute bottom-36 left-24 w-2.5 h-2.5 rounded-full bg-primary/50" />
+      <div className="pointer-events-none absolute top-1/2 -right-6 w-5 h-5 border-2 border-primary/30" />
+      <div className="pointer-events-none absolute top-1/2 -left-6 w-5 h-5 border-2 border-primary/30" />
+      {/* Anillos decorativos */}
+      <div className="pointer-events-none absolute -left-40 -top-40 w-96 h-96 rounded-full border-2 border-primary/15" />
+      <div className="pointer-events-none absolute -left-32 -top-32 w-72 h-72 rounded-full border-2 border-primary/10" />
+      <div className="pointer-events-none absolute -right-40 -bottom-40 w-96 h-96 rounded-full border-2 border-primary/15" />
+      <div className="pointer-events-none absolute -right-32 -bottom-32 w-72 h-72 rounded-full border-2 border-primary/10" />
+
       <div className="w-full max-w-md animate-[slideInUp_0.4s_ease-out]">
         <div className="relative">
           <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-900/25 border border-white/80 ring-1 ring-slate-100 p-8 sm:p-10 overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary-dark via-primary to-primary-dark" />
 
             <div className="mb-8">
-              <div className="flex flex-col items-center">
-                <img src="/logo2.png" alt="SIGEV" className="h-16 w-auto mb-5" />
+<div className="flex flex-col items-center">
+                <div className="flex items-center gap-3 mb-5">
+                  <img src="/logo2.png" alt="SIGEV" className="h-12 w-auto" />
+<div className="text-left">
+                  <span className="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    Sistema Integrado de
+                  </span>
+                  <span className="block bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-[1.35rem] font-medium tracking-tight text-transparent">
+                    Gestión de Eventos
+                  </span>
+                </div>
+                </div>
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                   Bienvenido de nuevo
                 </h1>
