@@ -91,7 +91,7 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
   function validate(): boolean {
     const errs: Partial<Record<keyof ItemInput, string>> = {}
     if (!form.descripcion.trim()) errs.descripcion = 'La descripción es obligatoria'
-    if (!form.isTariffed && !form.nombre.trim()) errs.nombre = 'El nombre del servicio es obligatorio'
+    if (!form.isTariffed && !form.nombre?.trim()) errs.nombre = 'El nombre del servicio es obligatorio'
     if (form.cantidad < 1) errs.cantidad = 'Debe ser mayor a 0'
     if (form.isTariffed && !form.tariffId) errs.tariffId = 'Seleccione un servicio del tarifario'
     if (!form.isTariffed && form.valorUnitario < 0) errs.valorUnitario = 'No puede ser negativo'
@@ -105,7 +105,7 @@ function AddItemModalContent({ initialItem, isEditing, aliados, municipalityCate
     if (!validate()) return
     const data: ItemInput = {
       ...form,
-      nombre: form.nombre.trim(),
+      nombre: form.nombre?.trim() ?? '',
       descripcion: form.descripcion.trim(),
       aliadoId: form.aliadoId || undefined,
       tariffId: form.tariffId || undefined,

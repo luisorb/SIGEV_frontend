@@ -103,7 +103,7 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
     disbursementId: event.desembolsoId,
     startDate: event.fechaEvento || undefined,
     items: event.items?.length ? event.items.map((i) => ({
-      name: i.nombre,
+      name: i.nombre ?? i.descripcion,
       description: i.descripcion,
       quantity: i.cantidad,
       ...(i.valorUnitario ? { unitPrice: i.valorUnitario } : {}),
