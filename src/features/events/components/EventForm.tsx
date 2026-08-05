@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { AlertTriangle, MapPin } from 'lucide-react'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event } from '../../../types'
@@ -58,6 +59,17 @@ export function EventForm({
     return errors[name] ? inputBase + ' ' + inputError : inputBase
   }
 
+  function numericField(name: 'dias' | 'asistentes' | 'latitud' | 'longitud') {
+    const { onChange, ...rest } = register(name, { valueAsNumber: true })
+    return {
+      ...rest,
+      onChange: (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.value.length > 15) e.target.value = e.target.value.slice(0, 15)
+        onChange(e)
+      },
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {duplicate && (
@@ -77,21 +89,21 @@ export function EventForm({
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
           <div className="space-y-1.5">
             <label className={labelBase}>Número de Evento {requiredMark}</label>
-            <input {...register('numeroEvento')} className={field('numeroEvento')} placeholder="Ej: 2025-001" />
+            <input {...register('numeroEvento')} maxLength={100} className={field('numeroEvento')} placeholder="Ej: 2025-001" />
             {errors.numeroEvento && <p className="text-xs text-red-500">{errors.numeroEvento.message}</p>}
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Sufijo</label>
-            <input {...register('sufijo')} className={inputBase} placeholder="Ej: A, B, C" />
+            <input {...register('sufijo')} maxLength={100} className={inputBase} placeholder="Ej: A, B, C" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Responsable {requiredMark}</label>
-            <input {...register('responsable')} className={field('responsable')} placeholder="Nombre del responsable" />
+            <input {...register('responsable')} maxLength={100} className={field('responsable')} placeholder="Nombre del responsable" />
             {errors.responsable && <p className="text-xs text-red-500">{errors.responsable.message}</p>}
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Dependencia</label>
-            <input {...register('dependencia')} className={inputBase} placeholder="Ej: Secretaría de Cultura" />
+            <input {...register('dependencia')} maxLength={100} className={inputBase} placeholder="Ej: Secretaría de Cultura" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Fecha del Evento</label>
@@ -99,11 +111,11 @@ export function EventForm({
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Asistentes</label>
-            <input type="number" min={0} {...register('asistentes', { valueAsNumber: true })} className={inputBase} placeholder="0" />
+            <input type="number" min={0} {...numericField('asistentes')} className={inputBase} placeholder="0" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Días</label>
-            <input type="number" min={0} {...register('dias', { valueAsNumber: true })} className={inputBase} placeholder="0" />
+            <input type="number" min={0} {...numericField('dias')} className={inputBase} placeholder="0" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Municipio {requiredMark}</label>
@@ -117,15 +129,15 @@ export function EventForm({
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Vereda</label>
-            <input {...register('vereda')} className={inputBase} placeholder="Nombre de la vereda (opcional)" />
+            <input {...register('vereda')} maxLength={100} className={inputBase} placeholder="Nombre de la vereda (opcional)" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Latitud</label>
-            <input type="number" step="any" {...register('latitud', { valueAsNumber: true })} className={inputBase} placeholder="4.7110" />
+            <input type="number" step="any" {...numericField('latitud')} className={inputBase} placeholder="4.7110" />
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Longitud</label>
-            <input type="number" step="any" {...register('longitud', { valueAsNumber: true })} className={inputBase} placeholder="-74.0721" />
+            <input type="number" step="any" {...numericField('longitud')} className={inputBase} placeholder="-74.0721" />
           </div>
           <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
             <label className={labelBase}>Ubicación en el mapa</label>
@@ -177,6 +189,7 @@ export function EventForm({
             <label className={labelBase}>Observaciones</label>
             <textarea
               {...register('observaciones')}
+              maxLength={1000}
               rows={4}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 resize-none"
               placeholder="Observaciones adicionales del evento..."
