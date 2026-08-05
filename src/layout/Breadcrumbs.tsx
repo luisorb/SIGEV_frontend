@@ -2,6 +2,7 @@ import { useLocation, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Home } from 'lucide-react'
 import { getEventsApi } from '../services/events.service'
+import { getQuotationsApi } from '../services/quotations.service'
 
 const routeLabels: Record<string, string> = {
   '/': 'Panel',
@@ -22,10 +23,19 @@ export function Breadcrumbs() {
   const orderMatch = pathname.match(/^\/ordenes\/([^/]+)(?:\/)?/)
   const orderId = orderMatch?.[1] && orderMatch[1] !== 'nueva' ? orderMatch[1] : undefined
 
+  const offerMatch = pathname.match(/^\/ofertas\/([^/]+)(?:\/)?/)
+  const offerId = offerMatch?.[1] && offerMatch[1] !== 'nueva' ? offerMatch[1] : undefined
+
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
     queryFn: getEventsApi,
     enabled: Boolean(orderId),
+  })
+
+  const { data: quotations = [] } = useQuery({
+    queryKey: ['offers'],
+    queryFn: getQuotationsApi,
+    enabled: Boolean(offerId),
   })
 
   function resolveLabel(segment: string): string {
@@ -36,6 +46,15 @@ export function Breadcrumbs() {
       const event = events.find((e) => e.id === orderSegment[1])
       if (event) return event.numeroEvento
       return orderSegment[1]
+    }
+    const offerSegment = segment.match(/^\/ofertas\/([^/]+)$/)
+    if (offerSegment && offerSegment[1] !== 'nueva') {
+      const quotation = quotations.find((q) => q.id === offerSegment[1])
+      const code =
+        quotation &&
+        ((quotation as { codigo?: string }).codigo ?? (quotation as { code?: string }).code)
+      if (code) return code
+      return offerSegment[1]
     }
     const lastPart = segment.split('/').pop() ?? ''
     return lastPart === 'editar' ? 'Editar' : lastPart
