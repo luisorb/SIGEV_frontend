@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Pencil, ChevronLeft, Tag, MapPin, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, Tag, MapPin, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { AssociatedOffers } from '../components/AssociatedOffers'
 import { SupportDocuments } from '../components/SupportDocuments'
@@ -373,15 +373,6 @@ export function EventViewPage() {
             </div>
           </div>
         </div>
-        {canEdit && (
-          <Link
-            to={`/ordenes/${event.id}/editar`}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150 shrink-0"
-          >
-            <Pencil className="w-4 h-4" />
-            Editar
-          </Link>
-        )}
       </div>
 
       {isDevuelto && (
