@@ -180,6 +180,7 @@ export function EventForm({
           <div className="space-y-1.5">
             <label className={labelBase}>Esquema {requiredMark}</label>
             <select {...register('esquema')} className={field('esquema')}>
+              <option value="">Seleccionar esquema</option>
               <option value="cotizacion">Cotización</option>
               <option value="detalle">Detalle</option>
             </select>
