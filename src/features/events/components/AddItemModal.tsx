@@ -67,12 +67,6 @@ function AddItemModalContent({ initialItem, isEditing, aliados, onCancel, onSubm
   const [loadingTariffs, setLoadingTariffs] = useState(false)
   const [showTariffList, setShowTariffList] = useState(false)
 
-  useEffect(() => {
-    if (form.isTariffed) {
-      loadTariffs()
-    }
-  }, [form.isTariffed])
-
   async function loadTariffs() {
     setLoadingTariffs(true)
     try {
@@ -84,6 +78,14 @@ function AddItemModalContent({ initialItem, isEditing, aliados, onCancel, onSubm
       setLoadingTariffs(false)
     }
   }
+
+  useEffect(() => {
+    if (form.isTariffed) {
+      void (async () => {
+        await loadTariffs()
+      })()
+    }
+  }, [form.isTariffed])
 
   function validate(): boolean {
     const errs: Partial<Record<keyof ItemInput, string>> = {}

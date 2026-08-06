@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Eye, Pencil, FileDown, RefreshCw, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
-import type { Offer, OfferState } from '../types'
+import { Search, Eye, FileDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import type { Offer } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
-import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { hasQuotedValues } from '../utils/offerValues'
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
@@ -18,11 +17,7 @@ interface OfferListProps {
   search: string
   onSearchChange: (value: string) => void
   onExport: (id: string) => void
-  onChangeState: (id: string, estado: OfferState) => void
   canExport?: boolean
-  canCreate?: boolean
-  canEdit?: boolean
-  canChangeState?: boolean
 }
 
 export function OfferList({
@@ -30,21 +25,13 @@ export function OfferList({
   search,
   onSearchChange,
   onExport,
-  onChangeState,
   canExport = true,
-  canCreate = true,
-  canEdit = true,
-  canChangeState = true,
 }: OfferListProps) {
   const [filterEstado, setFilterEstado] = useState('')
   const [sortColumn, setSortColumn] = useState<string>('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null)
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
-  const [stateOffer, setStateOffer] = useState<Offer | null>(null)
-  const [targetState, setTargetState] = useState<OfferState | ''>('')
-  const [pendingState, setPendingState] = useState<OfferState | null>(null)
-  const [validationError, setValidationError] = useState('')
 
   const filterKey = `${search}|${filterEstado}`
   const [lastFilterKey, setLastFilterKey] = useState(filterKey)
@@ -63,31 +50,6 @@ export function OfferList({
       setSortColumn('')
       setSortDir(null)
     }
-  }
-
-  function openStateChange(offer: Offer) {
-    setValidationError('')
-    setTargetState('')
-    setPendingState(null)
-    setStateOffer(offer)
-  }
-
-  function confirmTargetState() {
-    if (!stateOffer || !targetState) return
-    if ((targetState === 'Enviada' || targetState === 'Aprobada') && (!stateOffer.aliado || !stateOffer.desembolso)) {
-      setValidationError('La oferta debe tener Aliado y Desembolso asignados para poder ser aprobada.')
-      return
-    }
-    setValidationError('')
-    setPendingState(targetState)
-  }
-
-  async function confirmStateChange() {
-    if (!stateOffer || !pendingState) return
-    await onChangeState(stateOffer.id, pendingState)
-    setStateOffer(null)
-    setPendingState(null)
-    setValidationError('')
   }
 
   const sorted = useMemo(() => {
@@ -124,20 +86,9 @@ export function OfferList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Ofertas Económicas</h1>
-          <p className="text-sm text-slate-500">{offers.length} ofertas registradas</p>
-        </div>
-        {canCreate && (
-          <Link
-            to="/ofertas/nueva"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Oferta
-          </Link>
-        )}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Ofertas Económicas Definitivas</h1>
+        <p className="text-sm text-slate-500">{offers.length} ofertas registradas</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -240,14 +191,14 @@ export function OfferList({
                     <SortIcon active={sortColumn === 'createdAt'} direction={sortDir} />
                   </div>
                 </th>
-                <th className="px-4 py-3 w-24" />
+                <th className="px-4 py-3 w-20" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-400">
-                    No hay ofertas para mostrar.
+                    No hay ofertas definitivas para mostrar.
                   </td>
                 </tr>
               ) : (
@@ -282,24 +233,6 @@ export function OfferList({
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
-                        {canEdit && (
-                          <Link
-                            to={`/ofertas/${offer.id}/editar`}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
-                            title="Editar"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Link>
-                        )}
-                        {canChangeState && (
-                          <button
-                            onClick={() => openStateChange(offer)}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors"
-                            title="Cambiar estado"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </button>
-                        )}
                         {canExport && (
                           <button
                             onClick={() => onExport(offer.id)}
@@ -374,81 +307,6 @@ export function OfferList({
         </div>
         )}
       </div>
-
-      {stateOffer && !pendingState && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-2 rounded-xl bg-indigo-100 text-indigo-600 shrink-0">
-                <RefreshCw className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-slate-900">Cambiar estado</h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  Oferta {stateOffer.codigo} · Estado actual:{' '}
-                  <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ml-1 ${OFFER_STATE_COLORS[stateOffer.estado]}`}>
-                    {stateOffer.estado}
-                  </span>
-                </p>
-                <p className="text-xs text-slate-400 mt-2">Selecciona el nuevo estado de la oferta:</p>
-                {validationError && (
-                  <p className="text-sm text-red-600 mt-3">{validationError}</p>
-                )}
-                <div className="mt-4">
-                  <select
-                    value={targetState}
-                    onChange={(e) => {
-                      setTargetState(e.target.value as OfferState)
-                      setValidationError('')
-                    }}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="">Seleccione el estado...</option>
-                    {OFFER_STATES.filter((s) => s !== stateOffer.estado).map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <button
-                onClick={() => setStateOffer(null)}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
-                aria-label="Cerrar"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setStateOffer(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmTargetState}
-                disabled={!targetState}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors"
-              >
-                Continuar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {pendingState && stateOffer && !validationError && (
-        <ConfirmDialog
-          isOpen
-          title="Cambiar estado"
-          message={`¿Estás seguro de cambiar la oferta ${stateOffer.codigo} de ${stateOffer.estado} a ${pendingState}?`}
-          confirmLabel={`Cambiar a ${pendingState}`}
-          cancelLabel="Cancelar"
-          variant={pendingState === 'Rechazada' ? 'danger' : 'warning'}
-          onConfirm={confirmStateChange}
-          onCancel={() => setPendingState(null)}
-        />
-      )}
     </div>
   )
 }

@@ -7,9 +7,10 @@ import { SupportDocuments } from '../components/SupportDocuments'
 import { ImportExcelModal } from '../components/ImportExcelModal'
 import { useItems, type ManagedItem } from '../hooks/useItems'
 import { useStateMachine } from '../hooks/useStateMachine'
-import { useOffers } from '../../offers/hooks/useOffers'
+import { useQuotations } from '../../offers/hooks/useQuotations'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventApi, changeEventStatusApi, updateEventApi } from '../../../services/events.service'
+import { getOfertaEconomicaByEventApi, mapOfertaEconomicaToOffer } from '../../../services/offers.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
@@ -17,7 +18,6 @@ import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
-import { exportBudgetPDF } from '../../../utils/pdfExport'
 import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
@@ -41,11 +41,17 @@ export function EventViewPage() {
   const queryClient = useQueryClient()
   const { getTransitionRules, isDevolucion, validateTransition } = useStateMachine()
   const { roleNames, can: userCan } = useRolePermissions()
-  const { allOffers: offers, selectOffer } = useOffers()
+  const { allQuotations: offers, selectQuotation } = useQuotations()
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
     queryFn: () => getEventApi(id!),
+    enabled: !!id,
+  })
+
+  const { data: ofertaEconomica } = useQuery({
+    queryKey: ['oferta-economica', id],
+    queryFn: () => getOfertaEconomicaByEventApi(id!).then((data) => (data ? mapOfertaEconomicaToOffer(data) : null)),
     enabled: !!id,
   })
 
@@ -187,36 +193,20 @@ export function EventViewPage() {
   async function handleSelectOffer(offerId: string) {
     if (!event) return
     try {
-      await selectOffer(offerId)
+      const quotation = await selectQuotation(offerId)
       await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       addAuditEntry({
-        accion: 'Selección de oferta económica',
+        accion: 'Selección de cotización ganadora',
         entidad: 'Event',
         entidadId: event.id,
         usuario: '',
         fecha: new Date().toISOString(),
-        detalle: `Oferta ${offerId} seleccionada como aprobada`,
+        detalle: `Cotización ${quotation.codigo} seleccionada; se generó la oferta económica definitiva`,
       })
-      toast.showToast('Oferta seleccionada')
+      toast.showToast('Oferta económica definitiva generada')
     } catch (error) {
-      toast.showToast(getApiErrorMessage(error, 'No se pudo seleccionar la oferta'), 'error')
+      toast.showToast(getApiErrorMessage(error, 'No se pudo seleccionar la cotización'), 'error')
     }
-  }
-
-  function handleExportPDF(offerId: string) {
-    if (!event) return
-    const offer = offers.find((o) => o.id === offerId)
-    if (!offer) return
-    exportBudgetPDF(event, offer)
-    addAuditEntry({
-      accion: 'Exportación de presupuesto PDF',
-      entidad: 'Offer',
-      entidadId: offerId,
-      usuario: '',
-      fecha: new Date().toISOString(),
-      detalle: `Presupuesto PDF generado para evento ${event.numeroEvento}`,
-    })
-    toast.showToast('Presupuesto PDF generado')
   }
 
   async function handleUploadSoporte(tipo: TipoSoporte, file: File) {
@@ -527,7 +517,7 @@ export function EventViewPage() {
         offers={offers}
         selectedOfferId={event.cotizacionSeleccionadaId}
         onSelectOffer={handleSelectOffer}
-        onExportPDF={handleExportPDF}
+        oferta={ofertaEconomica ?? null}
         readOnly={offersReadOnly}
       />
 

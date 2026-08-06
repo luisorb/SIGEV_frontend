@@ -1,13 +1,13 @@
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, FileDown, FileText } from 'lucide-react'
+import { ChevronLeft, FileDown, Download } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useOffers, usePermissions } from '../hooks/useOffers'
 import { formatCurrencyCO, formatDateTimeCO, formatDateCO } from '../../../utils/formatters'
 import { exportOfferToExcel } from '../utils/excelExport'
-import { exportOfferToPDF } from '../utils/pdfExport'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { getEventApi } from '../../../services/events.service'
+import { downloadAttachment } from '../../../services/attachments.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
@@ -93,22 +93,19 @@ export function OfferViewPage() {
 
   function handleExportPDF() {
     if (!offer) return
-    exportOfferToPDF(offer, {
-      event,
-      aliados,
-      municipios,
-      rates,
-      usuario: getCurrentUser(),
-      fechaCorte: new Date(),
-      filtros: 'Ninguno',
-    })
+    const presupuesto = event?.attachments?.find((a) => a.category === 'Presupuesto final')
+    if (!presupuesto) {
+      window.alert('El presupuesto final aún no está disponible. Seleccione la cotización ganadora para generarlo.')
+      return
+    }
+    void downloadAttachment(presupuesto.id, presupuesto.originalName)
     addAuditEntry({
-      accion: 'Exportación de oferta a PDF',
+      accion: 'Descarga del presupuesto final',
       entidad: 'Offer',
       entidadId: offer.id,
       usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
-      detalle: `Oferta ${offer.codigo} exportada a PDF (presupuesto definitivo)`,
+      detalle: `Presupuesto final de la oferta ${offer.codigo} descargado`,
     })
   }
 
@@ -166,13 +163,13 @@ export function OfferViewPage() {
               <FileDown className="w-4 h-4" />
               Excel
             </button>
-            {offer.estado === 'Aprobada' && (
+            {offer.estado === 'Definitiva' && (
               <button
                 onClick={handleExportPDF}
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
               >
-                <FileText className="w-4 h-4" />
-                PDF
+                <Download className="w-4 h-4" />
+                Presupuesto final
               </button>
             )}
           </div>

@@ -6,9 +6,7 @@ import { EventCreatePage } from '../features/events/pages/EventCreatePage'
 import { EventViewPage } from '../features/events/pages/EventViewPage'
 import { EventDetailPage } from '../features/events/pages/EventDetailPage'
 import { OffersPage } from '../features/offers/pages/OffersPage'
-import { OfferCreatePage } from '../features/offers/pages/OfferCreatePage'
 import { OfferViewPage } from '../features/offers/pages/OfferViewPage'
-import { OfferEditPage } from '../features/offers/pages/OfferEditPage'
 import { MatrixPage } from '../features/matrix/pages/MatrixPage'
 import { KanbanPage } from '../features/kanban/pages/KanbanPage'
 import { MapPage } from '../features/map/pages/MapPage'
@@ -52,23 +50,7 @@ export const router = createBrowserRouter([
             ),
           },
           { path: 'ofertas', element: <OffersPage /> },
-          {
-            path: 'ofertas/nueva',
-            element: (
-              <RoleRoute roles={['functional_admin', 'operator']}>
-                <OfferCreatePage />
-              </RoleRoute>
-            ),
-          },
           { path: 'ofertas/:id', element: <OfferViewPage /> },
-          {
-            path: 'ofertas/:id/editar',
-            element: (
-              <RoleRoute roles={['functional_admin', 'operator']}>
-                <OfferEditPage />
-              </RoleRoute>
-            ),
-          },
           { path: 'matriz', element: <MatrixPage /> },
           { path: 'tablero', element: <KanbanPage /> },
           { path: 'mapa', element: <MapPage /> },

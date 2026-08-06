@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
-import { FileSpreadsheet, Plus, CheckCircle, Circle, FileDown, Printer } from 'lucide-react'
+import { FileSpreadsheet, Plus, CheckCircle, Circle, FileDown, BadgeCheck, Download } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { OFFER_STATE_COLORS } from '../../offers/types'
 import { hasQuotedValues } from '../../offers/utils/offerValues'
-import { OFFERS_KEY } from '../../offers/hooks/useOffers'
+import { QUOTATIONS_KEY } from '../../offers/hooks/useQuotations'
 import type { Event } from '../../../types'
+import { downloadAttachment } from '../../../services/attachments.service'
 import { QuotationRegistrationModal } from './QuotationRegistrationModal'
 import { QuotationDetailModal } from './QuotationDetailModal'
 import { addAuditEntry } from '../../../lib/auditStore'
@@ -19,8 +20,8 @@ interface QuotationListProps {
   offers: Offer[]
   selectedOfferId?: string
   onSelectOffer?: (offerId: string) => void
-  onExportPDF?: (offerId: string) => void
   readOnly?: boolean
+  oferta?: Offer | null
 }
 
 export function QuotationList({
@@ -29,8 +30,8 @@ export function QuotationList({
   offers,
   selectedOfferId,
   onSelectOffer,
-  onExportPDF,
   readOnly = false,
+  oferta,
 }: QuotationListProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -42,8 +43,10 @@ export function QuotationList({
 
   const canSelect = !readOnly && eventOffers.length >= 3
 
+  const presupuestoAttachment = event.attachments?.find((a) => a.category === 'Presupuesto final')
+
   function handleSaved(notice?: string) {
-    queryClient.invalidateQueries({ queryKey: OFFERS_KEY })
+    queryClient.invalidateQueries({ queryKey: QUOTATIONS_KEY })
     queryClient.invalidateQueries({ queryKey: ['event', eventoId] })
     queryClient.invalidateQueries({ queryKey: ['events'] })
     addAuditEntry({
@@ -83,6 +86,34 @@ export function QuotationList({
         )}
       </div>
 
+      {oferta && (
+        <div className="px-6 py-4 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="shrink-0 w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <BadgeCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-emerald-700 uppercase tracking-wider">
+                Oferta económica definitiva
+              </p>
+              <p className="text-sm font-semibold text-emerald-900 truncate">
+                {oferta.codigo} · {formatCurrencyCO(oferta.total)}
+              </p>
+            </div>
+          </div>
+          {presupuestoAttachment && (
+            <button
+              onClick={() => downloadAttachment(presupuestoAttachment.id, presupuestoAttachment.originalName)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shrink-0"
+              title="Descargar presupuesto final (Carpeta 4)"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Presupuesto final
+            </button>
+          )}
+        </div>
+      )}
+
       {eventOffers.length === 0 ? (
         <div className="px-6 py-8 text-center">
           <FileSpreadsheet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
@@ -93,7 +124,6 @@ export function QuotationList({
         <div className="divide-y divide-slate-100">
           {eventOffers.map((offer) => {
             const isSelected = offer.id === selectedOfferId
-            const isApproved = offer.estado === 'Aprobada'
 
             return (
               <div key={offer.id} className="px-6 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
@@ -140,15 +170,6 @@ export function QuotationList({
                     <p className="text-[10px] text-slate-400">{formatDateCO(offer.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    {isApproved && onExportPDF && (
-                      <button
-                        onClick={() => onExportPDF(offer.id)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
-                        title="Exportar PDF presupuesto"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                     <button
                       onClick={() => setDetailOffer(offer)}
                       className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"

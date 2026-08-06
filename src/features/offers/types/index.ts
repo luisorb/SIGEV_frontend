@@ -1,6 +1,6 @@
 import type { TaxCategory, Ally, Municipality, CalculationParams, Event } from '../../../types'
 
-export type OfferState = 'Borrador' | 'Enviada' | 'Aprobada' | 'Rechazada'
+export type OfferState = 'Borrador' | 'Enviada' | 'Aprobada' | 'Rechazada' | 'Definitiva'
 
 export interface OfferItem {
   id: string
@@ -77,7 +77,7 @@ export interface OfferInput {
   items?: OfferItemInput[]
 }
 
-export const OFFER_STATES: OfferState[] = ['Borrador', 'Enviada', 'Aprobada', 'Rechazada']
+export const OFFER_STATES: OfferState[] = ['Borrador', 'Enviada', 'Aprobada', 'Rechazada', 'Definitiva']
 
 export interface OfferExportOptions {
   event?: Event | null
@@ -94,4 +94,5 @@ export const OFFER_STATE_COLORS: Record<OfferState, string> = {
   Enviada: 'bg-amber-100 text-amber-700',
   Aprobada: 'bg-green-100 text-green-700',
   Rechazada: 'bg-red-100 text-red-700',
+  Definitiva: 'bg-emerald-100 text-emerald-700',
 }

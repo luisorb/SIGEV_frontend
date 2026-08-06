@@ -3,13 +3,10 @@ import { OfferList } from '../components/OfferList'
 import { exportOfferToExcel } from '../utils/excelExport'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
-import { useToast } from '../../../components/ToastProvider'
-import { getApiErrorMessage } from '../../../lib/apiErrors'
 import { getEventApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
-import type { OfferState } from '../types'
 
 export function OffersPage() {
   const {
@@ -18,11 +15,9 @@ export function OffersPage() {
     setSearch,
     isLoading,
     error,
-    changeState,
   } = useOffers()
 
   const { can } = usePermissions()
-  const toast = useToast()
   const { data: aliados = [] } = useAllies()
   const { data: municipios = [] } = useMunicipalities()
   const rates = useActiveCalculationParams()
@@ -51,22 +46,13 @@ export function OffersPage() {
     })
 
     addAuditEntry({
-      accion: 'Exportación de oferta',
+      accion: 'Exportación de oferta económica definitiva',
       entidad: 'Offer',
       entidadId: id,
       usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
       detalle: `Oferta ${offer.codigo} exportada a Excel`,
     })
-  }
-
-  async function handleChangeState(id: string, estado: OfferState) {
-    try {
-      await changeState(id, estado)
-      toast.showToast(`Estado cambiado a ${estado}`)
-    } catch (error) {
-      toast.showToast(getApiErrorMessage(error, 'No se pudo cambiar el estado de la oferta'), 'error')
-    }
   }
 
   if (isLoading) {
@@ -92,11 +78,7 @@ export function OffersPage() {
       search={search}
       onSearchChange={setSearch}
       onExport={handleExport}
-      onChangeState={handleChangeState}
       canExport={can('export')}
-      canCreate={can('create')}
-      canEdit={can('edit')}
-      canChangeState={can('changeState')}
     />
   )
 }
