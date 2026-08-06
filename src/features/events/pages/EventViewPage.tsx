@@ -1,22 +1,21 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle, Lock } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
 import { ImportExcelModal } from '../components/ImportExcelModal'
 import { useItems, type ManagedItem } from '../hooks/useItems'
-import { useStateMachine } from '../hooks/useStateMachine'
 import { useQuotations } from '../../offers/hooks/useQuotations'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { getEventApi, changeEventStatusApi, updateEventApi } from '../../../services/events.service'
+import { getEventApi, updateEventApi } from '../../../services/events.service'
 import { getOfertaEconomicaByEventApi, mapOfertaEconomicaToOffer } from '../../../services/offers.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { addAuditEntry } from '../../../lib/auditStore'
-import { addStateHistoryEntry, getStateHistory } from '../../../lib/stateHistoryStore'
+import { getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
 import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
@@ -39,8 +38,7 @@ export function EventViewPage() {
   const { id } = useParams()
   const toast = useToast()
   const queryClient = useQueryClient()
-  const { getTransitionRules, isDevolucion, validateTransition } = useStateMachine()
-  const { roleNames, can: userCan } = useRolePermissions()
+  const { can: userCan } = useRolePermissions()
   const { allQuotations: offers, selectQuotation } = useQuotations()
 
   const { data: event, isLoading } = useQuery({
@@ -59,13 +57,8 @@ export function EventViewPage() {
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
 
-  const [localOverrides, setLocalOverrides] = useState<Partial<Event>>({})
+  const [localOverrides] = useState<Partial<Event>>({})
 
-  const [pendingEstado, setPendingEstado] = useState<string | null>(null)
-  const [transitionError, setTransitionError] = useState<string | null>(null)
-  const [devolucionMotivo, setDevolucionMotivo] = useState('')
-  const [authorizeException, setAuthorizeException] = useState(false)
-  const [confirming, setConfirming] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
 
@@ -116,7 +109,6 @@ export function EventViewPage() {
 
   const stateHistory = event ? getStateHistory(event.id) : []
   const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Abierto') as EventState
-  const quotationsCount = event?.quotations?.length ?? 0
 
   const selectedQuotation = offers.find((o) => o.id === event?.cotizacionSeleccionadaId)
 
@@ -277,74 +269,6 @@ export function EventViewPage() {
     }
   }
 
-  function requestTransition(newEstado: EventState) {
-    if (!event || event.estado === newEstado) return
-    setTransitionError(null)
-    setDevolucionMotivo('')
-    setAuthorizeException(false)
-    setPendingEstado(newEstado)
-  }
-
-  async function confirmStateChange() {
-    if (!event || !pendingEstado) return
-    const newEstado = pendingEstado as EventState
-    const motivo = devolucionMotivo.trim()
-    const isDev = isDevolucion(event.estado, newEstado)
-
-    if (isDev && !motivo) {
-      setTransitionError('Debe indicar el motivo de la devolución')
-      return
-    }
-
-    const error = validateTransition(event, newEstado, { quotationsCount, authorizeException }, roleNames)
-    if (error) {
-      setTransitionError(error)
-      return
-    }
-
-    setConfirming(true)
-    try {
-      await changeEventStatusApi(event.id, newEstado, {
-        observation: motivo || undefined,
-        authorizeException: newEstado === 'Cerrado' && authorizeException ? true : undefined,
-      })
-
-      const oldEstado = event.estado
-      setLocalOverrides((prev) => ({
-        ...prev,
-        estado: newEstado,
-        updatedAt: new Date().toISOString(),
-        ...(isDev ? { observation: motivo } : {}),
-      }))
-      setPendingEstado(null)
-      setTransitionError(null)
-
-      addStateHistoryEntry({
-        eventoId: event.id,
-        estadoAnterior: oldEstado,
-        estadoNuevo: newEstado,
-        usuario: '',
-        fecha: new Date().toISOString(),
-        motivo,
-      })
-      addAuditEntry({
-        accion: 'Cambio de estado',
-        entidad: 'Event',
-        entidadId: event.id,
-        usuario: '',
-        fecha: new Date().toISOString(),
-        detalle: `Estado cambiado de ${oldEstado} a ${newEstado}${motivo ? `. Motivo: ${motivo}` : ''}`,
-        valorAnterior: oldEstado,
-        valorNuevo: newEstado,
-      })
-      toast.showToast(`Estado cambiado de ${oldEstado} a ${newEstado}`)
-    } catch (error) {
-      setTransitionError(getApiErrorMessage(error, 'No se pudo cambiar el estado del evento'))
-    } finally {
-      setConfirming(false)
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -380,18 +304,15 @@ export function EventViewPage() {
     (isDevuelto && userCan('analista'))
 
   const canManageOffers = userCan('functional_admin', 'operator')
-  const offersReadOnly = !canManageOffers || TERMINAL_STATES.includes(displayEstado)
+  const quotationApproved = !!event.cotizacionSeleccionadaId
+  const offersReadOnly =
+    !canManageOffers || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
   const soportesVisible = ['En ejecución', 'Ejecutado', 'Cerrado', 'Devuelto'].includes(displayEstado)
   const soportesReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
 
-  const itemsReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
-
-  const availableTransitions = getTransitionRules(displayEstado, roleNames)
-  const needsExceptionApproval = quotationsCount < 3
-  const pendingRule = pendingEstado
-    ? availableTransitions.find((r) => r.to === pendingEstado)
-    : undefined
+  const itemsReadOnly =
+    !canModifyItems || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
   const label = (text: string) => (
     <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1">{text}</p>
@@ -448,6 +369,18 @@ export function EventViewPage() {
         </div>
       )}
 
+      {quotationApproved && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-6 py-4 flex items-start gap-3">
+          <Lock className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-800">Cotización definitiva aprobada</p>
+            <p className="text-xs text-emerald-700 mt-0.5">
+              No se pueden crear nuevas cotizaciones, ni añadir o modificar los ítems de esta orden.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Detalles de la Orden</h2>
@@ -479,28 +412,6 @@ export function EventViewPage() {
                 {displayEstado}
               </span>
             </div>
-            {availableTransitions.length > 0 && (
-              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
-                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Acciones</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {availableTransitions.map((rule) => (
-                    <button
-                      key={rule.to}
-                      onClick={() => requestTransition(rule.to)}
-                      className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98] ${
-                        rule.isDevolucion
-                          ? 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100'
-                          : rule.isRechazo
-                            ? 'text-red-700 bg-red-50 border border-red-200 hover:bg-red-100'
-                            : 'text-white bg-primary hover:bg-primary-dark'
-                      }`}
-                    >
-                      {rule.isDevolucion ? 'Devolver' : rule.isRechazo ? 'Rechazar' : `Pasar a ${rule.to}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
             {stateHistory.length > 0 && (
               <button onClick={() => setShowHistory(true)} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -572,98 +483,6 @@ export function EventViewPage() {
           })
         }}
       />
-
-      {pendingEstado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => { setPendingEstado(null); setTransitionError(null) }}>
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 sm:p-5 animate-[scaleIn_200ms_ease-out]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start gap-3 mb-3">
-              <div className={`p-2 rounded-lg shrink-0 ${pendingRule?.isDevolucion ? 'bg-amber-100' : pendingRule?.isRechazo ? 'bg-red-100' : 'bg-primary/10'}`}>
-                {pendingRule?.isDevolucion ? (
-                  <ArrowLeftCircle className="w-5 h-5 text-amber-600" />
-                ) : pendingRule?.isRechazo ? (
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
-                ) : (
-                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                )}
-              </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                  {pendingRule?.isDevolucion ? 'Devolver evento' : pendingRule?.isRechazo ? 'Rechazar evento' : `Cambiar estado`}
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500">
-                  De <span className="font-semibold">{displayEstado}</span> a <span className="font-semibold">{pendingEstado}</span>
-                </p>
-              </div>
-            </div>
-
-            {transitionError ? (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-xs font-semibold text-red-700 mb-1">No se puede realizar el cambio</p>
-                <p className="text-sm text-red-600">{transitionError}</p>
-              </div>
-            ) : (
-              <>
-                {(pendingRule?.isDevolucion || pendingRule?.isRechazo) && (
-                  <div className="mb-4">
-                    <label className="block text-xs font-medium text-slate-500 mb-1">
-                      {pendingRule?.isDevolucion ? 'Motivo de la devolución' : 'Motivo del rechazo'} <span className="text-red-400">*</span>
-                    </label>
-                    <textarea value={devolucionMotivo} onChange={(e) => setDevolucionMotivo(e.target.value)} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Describa el motivo..." />
-                  </div>
-                )}
-
-                {pendingEstado === 'Cerrado' && needsExceptionApproval && (
-                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-xs text-amber-800 mb-2">
-                      El evento tiene {quotationsCount} cotización{quotationsCount !== 1 ? 'es' : ''} y se requieren al menos 3 para cerrar.
-                    </p>
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={authorizeException}
-                        onChange={(e) => setAuthorizeException(e.target.checked)}
-                        className="mt-0.5 w-4 h-4 rounded border-amber-300 text-primary focus:ring-primary"
-                      />
-                      <span className="text-xs text-amber-800">
-                        Autorizar excepción y cerrar con menos de 3 cotizaciones
-                      </span>
-                    </label>
-                  </div>
-                )}
-
-                <p className="text-sm sm:text-base text-slate-700 mb-4">
-                  ¿Estás seguro de cambiar la orden <span className="font-semibold">{event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}</span> a <span className="font-semibold">{pendingEstado}</span>?
-                </p>
-              </>
-            )}
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => { setPendingEstado(null); setTransitionError(null) }}
-                disabled={confirming}
-                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
-              >
-                {transitionError ? 'Cerrar' : 'Cancelar'}
-              </button>
-              {!transitionError && (
-                <button
-                  onClick={confirmStateChange}
-                  disabled={confirming}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg active:scale-[0.98] transition-all duration-150 disabled:opacity-50 ${
-                    pendingRule?.isDevolucion
-                      ? 'text-white bg-amber-600 hover:bg-amber-700'
-                      : pendingRule?.isRechazo
-                        ? 'text-white bg-red-600 hover:bg-red-700'
-                        : 'text-white bg-primary hover:bg-primary-dark'
-                  }`}
-                >
-                  {confirming ? 'Procesando...' : `Confirmar ${pendingRule?.isDevolucion ? 'devolución' : pendingRule?.isRechazo ? 'rechazo' : ''}`}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {showHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
