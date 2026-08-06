@@ -10,6 +10,7 @@ import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { EVENT_STATES } from '../../../config/constants'
 import { formatCurrencyCO } from '../../../utils/formatters'
 import { Table2, Calendar, DollarSign, FileSpreadsheet, Filter, List, Grid3x3, Receipt, BadgePercent, FileText, Maximize2, Minimize2 } from 'lucide-react'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 
 export function MatrixPage() {
   const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
@@ -137,7 +138,7 @@ export function MatrixPage() {
           <>
             <input type="date" value={filters.periodoDesde} onChange={(e) => updateFilter('periodoDesde', e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white" title="Fecha desde" />
             <input type="date" value={filters.periodoHasta} onChange={(e) => updateFilter('periodoHasta', e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white" title="Fecha hasta" />
-            <select value={filters.municipioId} onChange={(e) => updateFilter('municipioId', e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"><option value="">Todos los territorios</option>{Object.entries(municipiosMap).map(([id, nombre]) => (<option key={id} value={id}>{nombre}</option>))}</select>
+            <SearchableSelect size="sm" className="w-52" options={Object.entries(municipiosMap).map(([id, nombre]) => ({ value: id, label: nombre }))} value={filters.municipioId} onChange={(v) => updateFilter('municipioId', v)} placeholder="Todos los territorios" />
             <select value={filters.estado} onChange={(e) => updateFilter('estado', e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"><option value="">Todos los estados</option>{EVENT_STATES.map((s) => (<option key={s} value={s}>{s}</option>))}</select>
             <select value={filters.desembolsoId} onChange={(e) => updateFilter('desembolsoId', e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"><option value="">Todos los desembolsos</option>{Object.entries(desembolsosMap).map(([id, nombre]) => (<option key={id} value={id}>{nombre}</option>))}</select>
             <select value={filters.aliadoId} onChange={(e) => updateFilter('aliadoId', e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent bg-white"><option value="">Todos los aliados</option>{Object.entries(aliadosMap).map(([id, nombre]) => (<option key={id} value={id}>{nombre}</option>))}</select>

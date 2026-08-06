@@ -10,6 +10,7 @@ import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import type { PageSize } from '../hooks/useEventList'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 
 const stateColors: Record<string, string> = {
   Abierto: 'bg-yellow-100 text-yellow-800',
@@ -142,16 +143,18 @@ export function EventList({
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
-          <select
+          <SearchableSelect
+            size="sm"
+            className="w-52"
+            options={municipios.map((m) => ({
+              value: m.id,
+              label: m.nombre,
+              keywords: `${m.nombre} ${m.departamento}`,
+            }))}
             value={filters.municipioId}
-            onChange={(e) => onFilterChange('municipioId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-          >
-            <option value="">Todos los municipios</option>
-            {municipios.map((m) => (
-              <option key={m.id} value={m.id}>{m.nombre}</option>
-            ))}
-          </select>
+            onChange={(v) => onFilterChange('municipioId', v)}
+            placeholder="Todos los municipios"
+          />
           <select
             value={filters.aliadoId}
             onChange={(e) => onFilterChange('aliadoId', e.target.value)}

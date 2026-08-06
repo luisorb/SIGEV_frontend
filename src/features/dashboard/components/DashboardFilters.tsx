@@ -2,6 +2,7 @@ import { RotateCcw } from 'lucide-react'
 import type { DashboardFiltersState } from '../types'
 import type { Ally, Disbursement, Municipality } from '../../../types'
 import { EVENT_STATES } from '../../../config/constants'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 
 interface DashboardFiltersProps {
   filters: DashboardFiltersState
@@ -103,16 +104,18 @@ export function DashboardFilters({
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
             Municipio
           </label>
-          <select
-            value={filters.municipioId}
-            onChange={(e) => onFilterChange('municipioId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="">Todos</option>
-            {municipios.map((m) => (
-              <option key={m.id} value={m.id}>{m.nombre} ({m.departamento})</option>
-            ))}
-          </select>
+          <SearchableSelect
+            size="sm"
+            className="w-56"
+            options={municipios.map((m) => ({
+              value: m.id,
+              label: `${m.nombre} (${m.departamento})`,
+              keywords: `${m.nombre} ${m.departamento}`,
+            }))}
+            value={filters.municipioId ?? ''}
+            onChange={(v) => onFilterChange('municipioId', v)}
+            placeholder="Todos"
+          />
         </div>
 
         <div className="space-y-1">
