@@ -6,6 +6,7 @@ import type { Ally, Disbursement, Municipality, Event } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
 import { checkDuplicateEventNumber } from '../utils/duplicateCheck'
 import { LocationPicker } from './LocationPicker'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 
 interface EventFormProps {
   event?: Event
@@ -139,12 +140,17 @@ export function EventForm({
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Municipio {requiredMark}</label>
-            <select {...register('municipioId')} className={field('municipioId')}>
-              <option value="">Seleccionar municipio</option>
-              {municipios.map((m) => (
-                <option key={m.id} value={m.id}>{m.nombre} ({m.departamento})</option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={municipios.map((m) => ({
+                value: m.id,
+                label: `${m.nombre} (${m.departamento})`,
+                keywords: `${m.nombre} ${m.departamento}`,
+              }))}
+              value={watchedValues.municipioId ?? ''}
+              onChange={(municipioId) => setValue('municipioId', municipioId, { shouldValidate: true })}
+              placeholder="Buscar municipio..."
+              error={!!errors.municipioId}
+            />
             {errors.municipioId && <p className="text-xs text-red-500">{errors.municipioId.message}</p>}
           </div>
           <div className="space-y-1.5">
