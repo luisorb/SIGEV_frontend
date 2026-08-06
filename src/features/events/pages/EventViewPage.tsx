@@ -541,7 +541,6 @@ export function EventViewPage() {
         onAddItem={handleAddItem}
         onUpdateItem={handleUpdateItem}
         onRemoveItem={handleRemoveItem}
-        eventTotals={eventTotals}
         onOpenImport={!itemsReadOnly ? () => setShowImportModal(true) : undefined}
         readOnly={itemsReadOnly}
         eventAliadoId={event.aliadoId}

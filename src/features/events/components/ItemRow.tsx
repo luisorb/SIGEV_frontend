@@ -58,18 +58,6 @@ export function ItemRow({ item, onEdit, onRemove, readOnly = false, index = 0 }:
           {item.categoriaTributaria}
         </span>
       </td>
-      <td className="px-5 py-3 text-sm text-right font-medium text-slate-900 tabular-nums border-l border-slate-100/80 bg-slate-50/30">
-        {formatCurrencyCO(item.totals.base)}
-      </td>
-      <td className="px-5 py-3 text-sm text-right text-slate-600 tabular-nums bg-slate-50/30">
-        {formatCurrencyCO(item.totals.impuestos)}
-      </td>
-      <td className="px-5 py-3 text-sm text-right text-slate-600 tabular-nums bg-slate-50/30">
-        {formatCurrencyCO(item.totals.feeTotal)}
-      </td>
-      <td className="px-5 py-3 text-sm text-right font-semibold text-slate-900 tabular-nums bg-slate-50/30">
-        {formatCurrencyCO(item.totals.total)}
-      </td>
       {!readOnly && (
         <td className="px-5 py-3 text-right">
           <div className="flex items-center justify-end gap-1">

@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
-import type { ItemInput, EventTotals, Ally } from '../../../types'
+import type { ItemInput, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'
-import { formatCurrencyCO } from '../../../utils/formatters'
 import { AddItemModal } from './AddItemModal'
 
 interface ItemManagerProps {
@@ -12,7 +11,6 @@ interface ItemManagerProps {
   onAddItem?: (item: ItemInput) => void | Promise<void>
   onUpdateItem?: (id: string, updates: ItemInput) => void | Promise<void>
   onRemoveItem?: (id: string) => void | Promise<void>
-  eventTotals: EventTotals
   onOpenImport?: () => void
   readOnly?: boolean
   eventAliadoId?: string
@@ -24,7 +22,6 @@ export function ItemManager({
   onAddItem,
   onUpdateItem,
   onRemoveItem,
-  eventTotals,
   onOpenImport,
   readOnly = false,
   eventAliadoId,
@@ -114,17 +111,13 @@ export function ItemManager({
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Cant.</th>
               <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Vr. Unitario</th>
               <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Categoría</th>
-              <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28 border-l border-slate-200/60">Base</th>
-              <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Impuestos</th>
-              <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Fee</th>
-              <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Total</th>
               {!readOnly && <th className="px-5 py-3.5 w-20" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={readOnly ? 10 : 11} className="px-5 py-16 text-center">
+                <td colSpan={readOnly ? 6 : 7} className="px-5 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     <p className="text-sm text-slate-400">
@@ -147,28 +140,6 @@ export function ItemManager({
               ))
             )}
           </tbody>
-          {items.length > 0 && (
-            <tfoot>
-              <tr className="border-t-2 border-slate-200 bg-slate-50">
-                <td colSpan={6} className="px-5 py-4 text-sm font-semibold text-slate-700">
-                  Totales del Evento
-                </td>
-                <td className="px-5 py-4 text-sm text-right font-semibold text-slate-900 tabular-nums border-l border-slate-200/60">
-                  {formatCurrencyCO(eventTotals.baseTotal)}
-                </td>
-                <td className="px-5 py-4 text-sm text-right font-semibold text-slate-900 tabular-nums">
-                  {formatCurrencyCO(eventTotals.impuestosTotal)}
-                </td>
-                <td className="px-5 py-4 text-sm text-right font-semibold text-slate-900 tabular-nums">
-                  {formatCurrencyCO(eventTotals.feeTotal)}
-                </td>
-                <td className="px-5 py-4 text-sm text-right font-bold text-primary tabular-nums">
-                  {formatCurrencyCO(eventTotals.granTotal)}
-                </td>
-                {!readOnly && <td className="px-5 py-4" />}
-              </tr>
-            </tfoot>
-          )}
         </table>
       </div>
 
