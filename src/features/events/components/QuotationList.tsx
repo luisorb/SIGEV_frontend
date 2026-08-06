@@ -22,6 +22,7 @@ interface QuotationListProps {
   selectedOfferId?: string
   onSelectOffer?: (offerId: string) => void
   readOnly?: boolean
+  canSelectQuotation?: boolean
   oferta?: Offer | null
 }
 
@@ -32,6 +33,7 @@ export function QuotationList({
   selectedOfferId,
   onSelectOffer,
   readOnly = false,
+  canSelectQuotation = false,
   oferta,
 }: QuotationListProps) {
   const queryClient = useQueryClient()
@@ -43,7 +45,7 @@ export function QuotationList({
   const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
   const quotationsCount = event.quotations?.length ?? eventOffers.length
 
-  const canSelect = !readOnly && eventOffers.length >= 3
+  const canSelect = canSelectQuotation && eventOffers.length >= 3
 
   const presupuestoAttachment = event.attachments?.find((a) => a.category === 'Presupuesto final')
 
@@ -133,11 +135,11 @@ export function QuotationList({
                   {!oferta && (
                     <button
                       onClick={() => setConfirmOffer(offer)}
-                      disabled={!canSelect || isSelected || readOnly}
+                      disabled={!canSelect || isSelected}
                       className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                         isSelected
                           ? 'border-primary bg-primary text-white'
-                          : canSelect && !readOnly
+                          : canSelect
                             ? 'border-slate-300 hover:border-primary cursor-pointer'
                             : 'border-slate-200 cursor-default'
                       }`}

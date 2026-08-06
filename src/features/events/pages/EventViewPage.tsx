@@ -308,6 +308,9 @@ export function EventViewPage() {
   const offersReadOnly =
     !canManageOffers || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
+  const canSelectQuotation =
+    userCan('approver') && !TERMINAL_STATES.includes(displayEstado) && !quotationApproved
+
   const soportesVisible = ['En ejecución', 'Ejecutado', 'Cerrado', 'Devuelto'].includes(displayEstado)
   const soportesReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
 
@@ -443,6 +446,7 @@ export function EventViewPage() {
         onSelectOffer={handleSelectOffer}
         oferta={ofertaEconomica ?? null}
         readOnly={offersReadOnly}
+        canSelectQuotation={canSelectQuotation}
       />
 
       {soportesVisible && (
