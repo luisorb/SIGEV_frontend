@@ -85,10 +85,7 @@ export function EventList({
   const canDelete = userCan('functional_admin')
 
   const totalItems = _events.reduce((sum, e) => sum + e.items.length, 0)
-  const totalValue = _events.reduce((sum, e) => {
-    const itemSum = e.items.reduce((s, i) => s + i.total, 0)
-    return sum + itemSum
-  }, 0)
+  const totalValue = _events.reduce((sum, e) => sum + (e.ofertaEconomica ? e.ofertaEconomica.total : 0), 0)
 
   return (
     <div className="space-y-4 h-full flex flex-col">
@@ -206,7 +203,7 @@ export function EventList({
                 </tr>
               ) : (
                 _events.map((event) => {
-                  const eventTotal = event.items.reduce((s, i) => s + i.total, 0)
+                  const eventTotal = event.ofertaEconomica ? event.ofertaEconomica.total : 0
                   const aliado = aliados.find((a) => a.id === event.aliadoId)
                   const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
                   const municipio = municipios.find((m) => m.id === event.municipioId)

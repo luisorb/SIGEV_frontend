@@ -64,8 +64,8 @@ export function useEventList(events: Event[]) {
       result.sort((a, b) => {
         let cmp = 0
         if (sortColumn === 'totalCalculado') {
-          const totalA = a.items.reduce((s, i) => s + i.total, 0)
-          const totalB = b.items.reduce((s, i) => s + i.total, 0)
+          const totalA = a.ofertaEconomica ? a.ofertaEconomica.total : 0
+          const totalB = b.ofertaEconomica ? b.ofertaEconomica.total : 0
           cmp = totalA - totalB
         } else if ((SORTABLE_NUMERIC_COLUMNS as readonly string[]).includes(sortColumn)) {
           const aVal = sortColumn === 'itemsCount' ? a.items.length : Number(a[sortColumn as keyof Event] ?? 0)

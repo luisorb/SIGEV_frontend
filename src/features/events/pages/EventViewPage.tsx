@@ -511,7 +511,7 @@ export function EventViewPage() {
               <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p></div>
               <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p></div>
               <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p></div>
-              <div className="text-right pl-4 border-l border-slate-200"><p className="text-[11px] text-primary/60 uppercase tracking-wider font-semibold">Total</p><p className="text-base font-bold text-primary">{formatCurrencyCO(ofertaTotals?.total ?? eventTotals.granTotal)}</p></div>
+              <div className="text-right pl-4 border-l border-slate-200"><p className="text-[11px] text-primary/60 uppercase tracking-wider font-semibold">Total</p><p className="text-base font-bold text-primary">{formatCurrencyCO(ofertaTotals?.total ?? 0)}</p></div>
             </div>
           </div>
         </div>

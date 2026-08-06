@@ -78,6 +78,12 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     eliminadoAt: data.deletedAt ? String(data.deletedAt) : undefined,
     devolucionLegalizacion: data.devolucionLegalizacion === true,
     cotizacionSeleccionadaId: data.cotizacionSeleccionadaId ? String(data.cotizacionSeleccionadaId) : undefined,
+    ofertaEconomica: data.ofertaEconomica
+      ? {
+          id: String((data.ofertaEconomica as Record<string, unknown>).id ?? ''),
+          total: Number((data.ofertaEconomica as Record<string, unknown>).total ?? 0),
+        }
+      : undefined,
     createdAt: String(data.createdAt ?? new Date().toISOString()),
     updatedAt: String(data.updatedAt ?? new Date().toISOString()),
   }

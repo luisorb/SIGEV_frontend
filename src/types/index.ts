@@ -309,6 +309,10 @@ export interface Event {
   attachments?: Attachment[]
   quotations?: Quotation[]
   cotizacionSeleccionadaId?: string
+  ofertaEconomica?: {
+    id: string
+    total: number
+  }
   municipalityCategory?: string
   observation?: string
   activo?: boolean
