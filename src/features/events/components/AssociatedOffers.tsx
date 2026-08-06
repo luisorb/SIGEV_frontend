@@ -4,6 +4,7 @@ import { FileSpreadsheet, Plus, CheckCircle, Circle, FileDown, Printer } from 'l
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { OFFER_STATE_COLORS } from '../../offers/types'
+import { hasQuotedValues } from '../../offers/utils/offerValues'
 
 interface AssociatedOffersProps {
   eventoId: string
@@ -93,7 +94,11 @@ export function AssociatedOffers({
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(offer.total)}</p>
+                    {hasQuotedValues(offer.items) ? (
+                      <p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(offer.total)}</p>
+                    ) : (
+                      <p className="text-sm font-normal italic text-slate-400">Pendiente por cotizar</p>
+                    )}
                     <p className="text-[10px] text-slate-400">{formatDateCO(offer.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-1">

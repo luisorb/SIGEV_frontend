@@ -5,6 +5,7 @@ import type { Offer, OfferState } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { hasQuotedValues } from '../utils/offerValues'
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
   if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1" />
@@ -263,7 +264,11 @@ export function OfferList({
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{offer.items.length}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-right text-slate-900">
-                      {formatCurrencyCO(offer.total)}
+                      {hasQuotedValues(offer.items) ? (
+                        formatCurrencyCO(offer.total)
+                      ) : (
+                        <span className="text-slate-400 italic font-normal">Pendiente por cotizar</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500 text-right">
                       {formatDateCO(offer.createdAt)}

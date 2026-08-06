@@ -11,6 +11,7 @@ import { getEventApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
+import { hasQuotedValues } from '../utils/offerValues'
 
 const catColors: Record<string, string> = {
   IVA: 'bg-blue-50 text-blue-700',
@@ -130,7 +131,9 @@ export function OfferViewPage() {
     return a?.nombre ?? aliadoId
   }
 
-  const displayItems = event?.items?.length ? event.items : offer.items
+  const displayItems = offer.items.length ? offer.items : event?.items ?? []
+
+  const hasValues = hasQuotedValues(offer.items)
 
   const orderTotals = displayItems.reduce(
     (acc, item) => ({
@@ -317,30 +320,49 @@ export function OfferViewPage() {
                           )}
                         </td>
                         <td className="px-4 py-2 text-right text-slate-600">{item.cantidad}</td>
-                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.valorUnitario)}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">
+                          {hasValues ? (
+                            formatCurrencyCO(item.valorUnitario)
+                          ) : (
+                            <span className="italic text-slate-400">Pendiente por cotizar</span>
+                          )}
+                        </td>
                         <td className="px-4 py-2 text-center">
                           <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${catColors[item.categoriaTributaria] || 'bg-slate-100 text-slate-600'}`}>
                             {item.categoriaTributaria}
                           </span>
                         </td>
-                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.base)}</td>
-                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.iva)}</td>
-                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.impuestoConsumo)}</td>
-                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.feeTarifado + item.feeTerceros)}</td>
-                        <td className="px-4 py-2 text-right text-slate-600">{formatCurrencyCO(item.ivaFee)}</td>
-                        <td className="px-4 py-2 text-right font-semibold text-slate-900">{formatCurrencyCO(item.total)}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{hasValues ? formatCurrencyCO(item.base) : '—'}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{hasValues ? formatCurrencyCO(item.iva) : '—'}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{hasValues ? formatCurrencyCO(item.impuestoConsumo) : '—'}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{hasValues ? formatCurrencyCO(item.feeTarifado + item.feeTerceros) : '—'}</td>
+                        <td className="px-4 py-2 text-right text-slate-600">{hasValues ? formatCurrencyCO(item.ivaFee) : '—'}</td>
+                        <td className="px-4 py-2 text-right font-semibold text-slate-900">{hasValues ? formatCurrencyCO(item.total) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                     <tr>
                       <td colSpan={5} className="px-4 py-2.5 text-sm font-semibold text-slate-900">Totales</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.subtotal)}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.iva)}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.impuestoConsumo)}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.fee)}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.ivaFee)}</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-primary">{formatCurrencyCO(orderTotals.total)}</td>
+                      {hasValues ? (
+                        <>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.subtotal)}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.iva)}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.impuestoConsumo)}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.fee)}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.ivaFee)}</td>
+                          <td className="px-4 py-2.5 text-right font-bold text-primary">{formatCurrencyCO(orderTotals.total)}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
+                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
+                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
+                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
+                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
+                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
+                        </>
+                      )}
                     </tr>
                   </tfoot>
                 </table>

@@ -2,7 +2,7 @@ import { useLocation, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Home } from 'lucide-react'
 import { getEventsApi } from '../services/events.service'
-import { getQuotationsApi } from '../services/quotations.service'
+import { getQuotationsApi, mapQuotationResponse } from '../services/quotations.service'
 
 const routeLabels: Record<string, string> = {
   '/': 'Panel',
@@ -34,7 +34,7 @@ export function Breadcrumbs() {
 
   const { data: quotations = [] } = useQuery({
     queryKey: ['offers'],
-    queryFn: getQuotationsApi,
+    queryFn: async () => (await getQuotationsApi()).map(mapQuotationResponse),
     enabled: Boolean(offerId),
   })
 
