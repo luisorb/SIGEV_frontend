@@ -138,6 +138,10 @@ export function mapOfferItemToCreateDto(item: OfferItem | OfferItemInput): Creat
     unitPrice: item.valorUnitario,
     ...('aliadoId' in item && item.aliadoId ? { allyId: item.aliadoId } : {}),
     ...('tariffId' in item && item.tariffId ? { tariffId: item.tariffId, isTariffed: true } : {}),
+    ...('ivaRate' in item && item.ivaRate !== undefined ? { ivaRate: item.ivaRate } : {}),
+    ...('consumptionTaxRate' in item && item.consumptionTaxRate !== undefined
+      ? { consumptionTaxRate: item.consumptionTaxRate }
+      : {}),
   }
 }
 
@@ -148,6 +152,7 @@ function mapOfferInputToCreateDto(input: OfferInput): CreateQuotationDto {
     description: input.descripcion || undefined,
     cliente: input.cliente || undefined,
     ...(input.eventoId ? { eventId: input.eventoId } : {}),
+    ...(input.quotationDate ? { quotationDate: input.quotationDate } : {}),
     ...(input.items?.length ? { items: input.items.map(mapOfferItemToCreateDto) } : {}),
   }
 }

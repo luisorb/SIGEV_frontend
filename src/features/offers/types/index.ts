@@ -27,6 +27,9 @@ export interface OfferItemInput {
   categoriaTributaria: TaxCategory
   aliadoId?: string
   tariffId?: string
+  isTariffed?: boolean
+  ivaRate?: number
+  consumptionTaxRate?: number
 }
 
 export interface Offer {
@@ -70,6 +73,7 @@ export interface OfferInput {
   aliado?: string
   desembolso?: string
   esquema?: string
+  quotationDate?: string
   items?: OfferItemInput[]
 }
 

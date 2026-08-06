@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ChevronLeft, ArrowLeftCircle, AlertTriangle } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
-import { AssociatedOffers } from '../components/AssociatedOffers'
+import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
 import { ImportExcelModal } from '../components/ImportExcelModal'
 import { useItems, type ManagedItem } from '../hooks/useItems'
@@ -521,8 +521,9 @@ export function EventViewPage() {
         )}
       </div>
 
-      <AssociatedOffers
+      <QuotationList
         eventoId={event.id}
+        event={event}
         offers={offers}
         selectedOfferId={event.cotizacionSeleccionadaId}
         onSelectOffer={handleSelectOffer}

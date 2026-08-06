@@ -1,13 +1,21 @@
-import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { FileSpreadsheet, Plus, CheckCircle, Circle, FileDown, Printer } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { OFFER_STATE_COLORS } from '../../offers/types'
 import { hasQuotedValues } from '../../offers/utils/offerValues'
+import { OFFERS_KEY } from '../../offers/hooks/useOffers'
+import type { Event } from '../../../types'
+import { QuotationRegistrationModal } from './QuotationRegistrationModal'
+import { QuotationDetailModal } from './QuotationDetailModal'
+import { addAuditEntry } from '../../../lib/auditStore'
+import { getCurrentUser } from '../../../config/constants'
+import { useToast } from '../../../components/ToastProvider'
 
-interface AssociatedOffersProps {
+interface QuotationListProps {
   eventoId: string
+  event: Event
   offers: Offer[]
   selectedOfferId?: string
   onSelectOffer?: (offerId: string) => void
@@ -15,45 +23,71 @@ interface AssociatedOffersProps {
   readOnly?: boolean
 }
 
-export function AssociatedOffers({
+export function QuotationList({
   eventoId,
+  event,
   offers,
   selectedOfferId,
   onSelectOffer,
   onExportPDF,
   readOnly = false,
-}: AssociatedOffersProps) {
+}: QuotationListProps) {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const [showModal, setShowModal] = useState(false)
+  const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
+
   const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
+  const quotationsCount = event.quotations?.length ?? eventOffers.length
 
   const canSelect = !readOnly && eventOffers.length >= 3
+
+  function handleSaved(notice?: string) {
+    queryClient.invalidateQueries({ queryKey: OFFERS_KEY })
+    queryClient.invalidateQueries({ queryKey: ['event', eventoId] })
+    queryClient.invalidateQueries({ queryKey: ['events'] })
+    addAuditEntry({
+      accion: 'Registro de cotización',
+      entidad: 'Quotation',
+      entidadId: eventoId,
+      usuario: getCurrentUser(),
+      fecha: new Date().toISOString(),
+      detalle: `Cotización registrada para el evento ${event.numeroEvento}`,
+    })
+    if (notice) {
+      toast.showToast(notice, 'error')
+    } else {
+      toast.showToast('Cotización registrada correctamente')
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
-            Ofertas Económicas Asociadas
+            Listado de cotizaciones
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            {eventOffers.length} oferta{eventOffers.length !== 1 ? 's' : ''} de {eventOffers.length < 3 ? '3' : ''} requeridas
+            {eventOffers.length} cotización{eventOffers.length !== 1 ? 'es' : ''} de {eventOffers.length < 3 ? '3' : ''} requeridas
           </p>
         </div>
         {!readOnly && (
-          <Link
-            to={`/ofertas/nueva?eventoId=${eventoId}`}
+          <button
+            onClick={() => setShowModal(true)}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
           >
             <Plus className="w-3.5 h-3.5" />
-            Nueva Oferta
-          </Link>
+            Nueva cotización
+          </button>
         )}
       </div>
 
       {eventOffers.length === 0 ? (
         <div className="px-6 py-8 text-center">
           <FileSpreadsheet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-400">No hay ofertas asociadas a este evento</p>
-          <p className="text-xs text-slate-300 mt-1">Cree ofertas desde el botón "Nueva Oferta"</p>
+          <p className="text-sm text-slate-400">No hay cotizaciones registradas para esta orden</p>
+          <p className="text-xs text-slate-300 mt-1">Use el botón "Nueva cotización" para valorar los ítems de la orden</p>
         </div>
       ) : (
         <div className="divide-y divide-slate-100">
@@ -80,9 +114,13 @@ export function AssociatedOffers({
                   </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <Link to={`/ofertas/${offer.id}`} className="text-sm font-medium text-primary hover:text-primary-dark truncate">
+                      <button
+                        onClick={() => setDetailOffer(offer)}
+                        className="text-sm font-medium text-primary hover:text-primary-dark truncate text-left transition-colors"
+                        title="Ver detalle"
+                      >
                         {offer.codigo}
-                      </Link>
+                      </button>
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${OFFER_STATE_COLORS[offer.estado]}`}>
                         {offer.estado}
                       </span>
@@ -111,13 +149,13 @@ export function AssociatedOffers({
                         <Printer className="w-3.5 h-3.5" />
                       </button>
                     )}
-                    <Link
-                      to={`/ofertas/${offer.id}`}
+                    <button
+                      onClick={() => setDetailOffer(offer)}
                       className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
                       title="Ver detalle"
                     >
                       <FileDown className="w-3.5 h-3.5" />
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -137,9 +175,22 @@ export function AssociatedOffers({
       {selectedOfferId && (
         <div className="px-6 py-3 bg-blue-50 border-t border-blue-100">
           <p className="text-xs text-blue-700 font-medium">
-            Oferta seleccionada: {eventOffers.find((o) => o.id === selectedOfferId)?.codigo}
+            Cotización seleccionada: {eventOffers.find((o) => o.id === selectedOfferId)?.codigo}
           </p>
         </div>
+      )}
+
+      {showModal && (
+        <QuotationRegistrationModal
+          event={event}
+          quotationsCount={quotationsCount}
+          onClose={() => setShowModal(false)}
+          onSaved={handleSaved}
+        />
+      )}
+
+      {detailOffer && (
+        <QuotationDetailModal offer={detailOffer} event={event} onClose={() => setDetailOffer(null)} />
       )}
     </div>
   )
