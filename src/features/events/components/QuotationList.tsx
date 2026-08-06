@@ -107,7 +107,17 @@ export function QuotationList({
           </div>
           {presupuestoAttachment && (
             <button
-              onClick={() => downloadAttachment(presupuestoAttachment.id, presupuestoAttachment.originalName)}
+              onClick={() => {
+                downloadAttachment(presupuestoAttachment.id, presupuestoAttachment.originalName)
+                addAuditEntry({
+                  accion: 'Descarga del presupuesto final',
+                  entidad: 'Attachment',
+                  entidadId: presupuestoAttachment.id,
+                  usuario: getCurrentUser(),
+                  fecha: new Date().toISOString(),
+                  detalle: `Presupuesto final "${presupuestoAttachment.originalName}" descargado del evento ${event.numeroEvento}`,
+                })
+              }}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shrink-0"
               title="Descargar presupuesto final (Carpeta 4)"
             >

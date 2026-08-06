@@ -6,6 +6,8 @@ import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { hasQuotedValues } from '../../offers/utils/offerValues'
 import type { Event, Attachment } from '../../../types'
 import { getEventAttachmentsApi, downloadAttachment } from '../../../services/attachments.service'
+import { addAuditEntry } from '../../../lib/auditStore'
+import { getCurrentUser } from '../../../config/constants'
 
 const catColors: Record<string, string> = {
   IVA: 'bg-blue-50 text-blue-700',
@@ -188,7 +190,17 @@ export function QuotationDetailModal({ offer, event, onClose }: QuotationDetailM
                     </div>
                     <button
                       type="button"
-                      onClick={() => downloadAttachment(att.id, att.originalName)}
+                      onClick={() => {
+                        downloadAttachment(att.id, att.originalName)
+                        addAuditEntry({
+                          accion: 'Descarga de adjunto',
+                          entidad: 'Attachment',
+                          entidadId: att.id,
+                          usuario: getCurrentUser(),
+                          fecha: new Date().toISOString(),
+                          detalle: `Adjunto "${att.originalName}" descargado de la cotización ${offer.codigo}`,
+                        })
+                      }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-md hover:bg-primary/10 transition-colors shrink-0"
                     >
                       <Download className="w-3.5 h-3.5" />

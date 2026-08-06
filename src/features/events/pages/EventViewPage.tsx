@@ -15,6 +15,7 @@ import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { addAuditEntry } from '../../../lib/auditStore'
+import { getCurrentUser } from '../../../config/constants'
 import { getStateHistory } from '../../../lib/stateHistoryStore'
 import { useToast } from '../../../components/ToastProvider'
 import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
@@ -204,7 +205,7 @@ export function EventViewPage() {
         accion: 'Selección de cotización ganadora',
         entidad: 'Event',
         entidadId: event.id,
-        usuario: '',
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Cotización ${quotation.codigo} seleccionada; se generó la oferta económica definitiva`,
       })
@@ -223,7 +224,7 @@ export function EventViewPage() {
         accion: 'Carga de soporte documental',
         entidad: 'Event',
         entidadId: event.id,
-        usuario: '',
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Soporte "${tipo}" cargado: ${file.name}`,
       })
@@ -242,7 +243,7 @@ export function EventViewPage() {
         accion: 'Eliminación de soporte documental',
         entidad: 'Event',
         entidadId: event.id,
-        usuario: '',
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Soporte eliminado del evento ${event.numeroEvento}`,
       })
@@ -260,7 +261,7 @@ export function EventViewPage() {
         accion: 'Descarga de adjunto',
         entidad: 'Attachment',
         entidadId: attachment.id,
-        usuario: '',
+        usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
         detalle: `Adjunto "${attachment.originalName}" descargado del evento ${event.numeroEvento}`,
       })
