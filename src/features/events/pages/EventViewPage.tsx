@@ -118,6 +118,19 @@ export function EventViewPage() {
   const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Abierto') as EventState
   const quotationsCount = event?.quotations?.length ?? 0
 
+  const selectedQuotation = offers.find((o) => o.id === event?.cotizacionSeleccionadaId)
+
+  const ofertaTotals = (() => {
+    const source = ofertaEconomica ?? selectedQuotation
+    if (!source) return null
+    return {
+      base: source.subtotal,
+      impuestos: source.ivaTotal + source.impuestoConsumoTotal,
+      fee: source.feeTarifadoTotal + source.feeTercerosTotal,
+      total: source.total,
+    }
+  })()
+
   const persistChainRef = useRef<Promise<void>>(Promise.resolve())
 
   function buildItemsPayload(nextItems: ManagedItem[]): Item[] {
@@ -495,10 +508,10 @@ export function EventViewPage() {
               </button>
             )}
             <div className="ml-auto flex items-center gap-4">
-              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(eventTotals.baseTotal)}</p></div>
-              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(eventTotals.impuestosTotal)}</p></div>
-              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(eventTotals.feeTotal)}</p></div>
-              <div className="text-right pl-4 border-l border-slate-200"><p className="text-[11px] text-primary/60 uppercase tracking-wider font-semibold">Total</p><p className="text-base font-bold text-primary">{formatCurrencyCO(eventTotals.granTotal)}</p></div>
+              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p></div>
+              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p></div>
+              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p></div>
+              <div className="text-right pl-4 border-l border-slate-200"><p className="text-[11px] text-primary/60 uppercase tracking-wider font-semibold">Total</p><p className="text-base font-bold text-primary">{formatCurrencyCO(ofertaTotals?.total ?? eventTotals.granTotal)}</p></div>
             </div>
           </div>
         </div>
