@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { FileSpreadsheet, Plus, CheckCircle, Circle, FileDown, BadgeCheck, Download } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { OFFER_STATE_COLORS } from '../../offers/types'
@@ -37,6 +38,7 @@ export function QuotationList({
   const toast = useToast()
   const [showModal, setShowModal] = useState(false)
   const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
+  const [confirmOffer, setConfirmOffer] = useState<Offer | null>(null)
 
   const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
   const quotationsCount = event.quotations?.length ?? eventOffers.length
@@ -128,20 +130,22 @@ export function QuotationList({
             return (
               <div key={offer.id} className="px-6 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <button
-                    onClick={() => onSelectOffer?.(offer.id)}
-                    disabled={!canSelect || isSelected || readOnly}
-                    className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                      isSelected
-                        ? 'border-primary bg-primary text-white'
-                        : canSelect && !readOnly
-                          ? 'border-slate-300 hover:border-primary cursor-pointer'
-                          : 'border-slate-200 cursor-default'
-                    }`}
-                  >
-                    {isSelected && <CheckCircle className="w-4 h-4" />}
-                    {!isSelected && <Circle className="w-3 h-3 opacity-0" />}
-                  </button>
+                  {!oferta && (
+                    <button
+                      onClick={() => setConfirmOffer(offer)}
+                      disabled={!canSelect || isSelected || readOnly}
+                      className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        isSelected
+                          ? 'border-primary bg-primary text-white'
+                          : canSelect && !readOnly
+                            ? 'border-slate-300 hover:border-primary cursor-pointer'
+                            : 'border-slate-200 cursor-default'
+                      }`}
+                    >
+                      {isSelected && <CheckCircle className="w-4 h-4" />}
+                      {!isSelected && <Circle className="w-3 h-3 opacity-0" />}
+                    </button>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <button
@@ -151,8 +155,8 @@ export function QuotationList({
                       >
                         {offer.codigo}
                       </button>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${OFFER_STATE_COLORS[offer.estado]}`}>
-                        {offer.estado}
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${OFFER_STATE_COLORS[isSelected ? 'Aprobada' : offer.estado]}`}>
+                        {isSelected ? 'Aprobada' : offer.estado}
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 truncate mt-0.5">
@@ -193,14 +197,6 @@ export function QuotationList({
         </div>
       )}
 
-      {selectedOfferId && (
-        <div className="px-6 py-3 bg-blue-50 border-t border-blue-100">
-          <p className="text-xs text-blue-700 font-medium">
-            Cotización seleccionada: {eventOffers.find((o) => o.id === selectedOfferId)?.codigo}
-          </p>
-        </div>
-      )}
-
       {showModal && (
         <QuotationRegistrationModal
           event={event}
@@ -212,6 +208,22 @@ export function QuotationList({
 
       {detailOffer && (
         <QuotationDetailModal offer={detailOffer} event={event} onClose={() => setDetailOffer(null)} />
+      )}
+
+      {confirmOffer && (
+        <ConfirmDialog
+          isOpen
+          title="Seleccionar cotización"
+          message={`¿Está seguro de seleccionar la cotización ${confirmOffer.codigo} por ${formatCurrencyCO(confirmOffer.total)} para crear la oferta económica definitiva? Esta acción marcará la cotización como ganadora y generará el presupuesto final.`}
+          confirmLabel="Sí, seleccionar"
+          cancelLabel="Cancelar"
+          variant="warning"
+          onConfirm={() => {
+            onSelectOffer?.(confirmOffer.id)
+            setConfirmOffer(null)
+          }}
+          onCancel={() => setConfirmOffer(null)}
+        />
       )}
     </div>
   )
