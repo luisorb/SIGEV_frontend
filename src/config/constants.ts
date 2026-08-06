@@ -28,12 +28,12 @@ export const USER_ROLES = [
   'technical_admin',
   'functional_admin',
   'approver',
-  'operator',
+  'consulta',
   'solicitante',
   'analista',
   'supervisor',
   'auditor',
-  'consulta',
+  'operator',
 ] as const
 
 export const LOCAL_CONFIG = {

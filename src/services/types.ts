@@ -18,6 +18,8 @@ export interface AuthUserDto {
   email: string
   isActive: boolean
   roles: RoleDto[]
+  allyId?: string | null
+  ally?: { id: string; code: string; name: string } | null
 }
 
 export interface RoleDto {
@@ -33,6 +35,7 @@ export interface CreateUserDto {
   email: string
   password: string
   roles: string[]
+  allyId?: string
 }
 
 export interface UpdateUserDto {
@@ -43,6 +46,7 @@ export interface UpdateUserDto {
   password?: string
   roles?: string[]
   isActive?: boolean
+  allyId?: string | null
 }
 
 export interface CreateEventDto {
