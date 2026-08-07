@@ -85,16 +85,13 @@ export function EventList({
   const canEdit = userCan('functional_admin', 'operator', 'supervisor', 'analista', 'solicitante')
   const canDelete = userCan('functional_admin')
 
-  const totalItems = _events.reduce((sum, e) => sum + e.items.length, 0)
-  const totalValue = _events.reduce((sum, e) => sum + (e.ofertaEconomica ? e.ofertaEconomica.total : 0), 0)
-
   return (
     <div className="space-y-4 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Órdenes</h1>
           <p className="text-sm text-slate-500">
-            {meta.total} eventos · {totalItems} ítems · Total {formatCurrencyCO(totalValue)}
+            Gestiona la ejecución de eventos: crea, consulta y hace seguimiento de las órdenes con sus ítems, cotizaciones y soportes.
           </p>
         </div>
         {canCreate && (
