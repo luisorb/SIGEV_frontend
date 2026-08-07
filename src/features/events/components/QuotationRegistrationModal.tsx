@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { X, FileUp, Save, Loader2, Receipt } from 'lucide-react'
+import { X, FileUp, Save, Loader2, Receipt, Info } from 'lucide-react'
 import type { Event, TaxCategory } from '../../../types'
 import { TAX_CATEGORIES } from '../../../config/constants'
 import { formatDateCO } from '../../../utils/formatters'
@@ -63,6 +63,7 @@ export function QuotationRegistrationModal({
   const [file, setFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showDocModal, setShowDocModal] = useState(false)
 
   useEffect(() => {
     const tariffIds = Array.from(
@@ -336,9 +337,12 @@ export function QuotationRegistrationModal({
                 Documento soporte del proveedor
               </h4>
             </header>
-            <div className="flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 hover:border-slate-400 transition-colors">
+            <div
+              className="flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 hover:border-slate-400 transition-colors cursor-pointer"
+              onClick={() => setShowDocModal(true)}
+            >
               <FileUp className="w-5 h-5 text-slate-400 shrink-0" />
-              <label className="flex-1 min-w-0 cursor-pointer">
+              <div className="flex-1 min-w-0">
                 <span className="block text-sm truncate">
                   {file ? (
                     <>
@@ -349,17 +353,11 @@ export function QuotationRegistrationModal({
                     <span className="text-slate-400">Seleccione el PDF de la cotización enviada por el proveedor externo...</span>
                   )}
                 </span>
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  className="hidden"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                />
-              </label>
+              </div>
               {file && (
                 <button
                   type="button"
-                  onClick={() => setFile(null)}
+                  onClick={(e) => { e.stopPropagation(); setFile(null) }}
                   className="text-xs font-medium text-red-600 hover:text-red-700 shrink-0"
                 >
                   Quitar
@@ -398,6 +396,32 @@ export function QuotationRegistrationModal({
           </div>
         </div>
       </div>
+
+      {showDocModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-xl shrink-0 bg-primary/10 text-primary">
+                <Info className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-slate-900">Funcionalidad en desarrollo</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  La carga del documento soporte del proveedor está en desarrollo y estará disponible próximamente.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowDocModal(false)}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

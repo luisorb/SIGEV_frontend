@@ -1,5 +1,5 @@
-import { useRef } from 'react'
-import { FileText, Upload, Trash2, Lock, Download } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { FileText, Upload, Trash2, Lock, Download, Info } from 'lucide-react'
 import type { Soporte, TipoSoporte, Attachment, EventState } from '../../../types'
 import { SOPORTES_REQUERIDOS, SOPORTES_ESTATICOS, SOPORTES_MODIFICABLES } from '../../../types'
 import { formatDateCO } from '../../../utils/formatters'
@@ -37,10 +37,16 @@ export function SupportDocuments({
   eventStatus = 'Abierto',
   devolucionLegalizacion = false,
   onUpload,
-  onDelete,
   onDownload,
 }: SupportDocumentsProps) {
   const fileInputRef = useRef<{ [key: string]: HTMLInputElement | null }>({})
+  const [pendingAction, setPendingAction] = useState<'cargar' | 'reemplazar' | 'eliminar' | null>(null)
+
+  const actionMessages: Record<string, string> = {
+    cargar: 'La carga de soportes documentales está en desarrollo y estará disponible próximamente.',
+    reemplazar: 'El reemplazo de soportes documentales está en desarrollo y estará disponible próximamente.',
+    eliminar: 'La eliminación de soportes documentales está en desarrollo y estará disponible próximamente.',
+  }
 
   const folderList = soloModificables ? SOPORTES_MODIFICABLES : SOPORTES_REQUERIDOS
 
@@ -156,7 +162,7 @@ export function SupportDocuments({
                       onChange={(e) => handleFileChange(tipo, e)}
                     />
                     <button
-                      onClick={() => fileInputRef.current[tipo]?.click()}
+                      onClick={() => setPendingAction(hasContent ? 'reemplazar' : 'cargar')}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors"
                     >
                       <Upload className="w-3.5 h-3.5" />
@@ -166,7 +172,7 @@ export function SupportDocuments({
                 )}
                 {hasContent && editable && (
                   <button
-                    onClick={() => onDelete(backendAttachment?.id ?? soporte!.id)}
+                    onClick={() => setPendingAction('eliminar')}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                     title="Eliminar soporte"
                   >
@@ -184,6 +190,30 @@ export function SupportDocuments({
           {soloModificables && ' (solo modificables)'}
         </p>
       </div>
+
+      {pendingAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-xl shrink-0 bg-primary/10 text-primary">
+                <Info className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-slate-900">Funcionalidad en desarrollo</h3>
+                <p className="text-sm text-slate-500 mt-1">{actionMessages[pendingAction]}</p>
+              </div>
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setPendingAction(null)}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
