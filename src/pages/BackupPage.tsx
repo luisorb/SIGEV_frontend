@@ -90,7 +90,7 @@ export function BackupPage() {
           <div>
             <p className="text-sm font-semibold text-slate-900">Respaldos disponibles</p>
             <p className="text-xs text-slate-500">
-              {loading ? 'Cargando...' : `${backups.length} respaldo(s) en el servidor`}
+              {loading ? 'Cargando...' : `${backups.length} respaldo${backups.length !== 1 ? 's' : ''} en el servidor`}
             </p>
           </div>
         </div>
