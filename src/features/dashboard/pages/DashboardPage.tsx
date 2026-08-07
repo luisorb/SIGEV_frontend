@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useDashboard } from '../hooks/useDashboard'
 import { MetricGrid } from '../components/MetricGrid'
 import { DashboardFilters } from '../components/DashboardFilters'
@@ -31,22 +30,10 @@ export function DashboardPage() {
     coberturaTerritorial,
     eventosIncompletos,
     dependencias,
+    filteredEvents,
+    totalRegistrados,
+    totalEnEjecucion,
   } = useDashboard(events, aliados, desembolsos, municipios)
-
-  const filteredEvents = useMemo(() => {
-    const { periodoInicio, periodoFin, desembolsoId, aliadoId, estado, municipioId, dependencia } = filters
-    let result = [...events]
-    if (desembolsoId) result = result.filter((e) => e.desembolsoId === desembolsoId)
-    if (aliadoId) result = result.filter((e) => e.aliadoId === aliadoId)
-    if (estado) result = result.filter((e) => e.estado === estado)
-    if (periodoInicio) result = result.filter((e) => e.createdAt >= periodoInicio)
-    if (periodoFin) result = result.filter((e) => e.createdAt <= periodoFin)
-    if (municipioId) result = result.filter((e) => e.municipioId === municipioId)
-    if (dependencia) result = result.filter((e) => e.dependencia === dependencia)
-    return result
-  }, [events, filters])
-
-  const totalEvents = events.length
 
   if (isLoading) {
     return (
@@ -62,7 +49,7 @@ export function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Panel de Control</h1>
           <p className="text-sm text-slate-500">
-            {totalEvents} eventos registrados · Indicadores globales de ejecución
+            {totalRegistrados} eventos registrados · {totalEnEjecucion} aprobados/en ejecución
           </p>
         </div>
         <DashboardExport
