@@ -143,7 +143,7 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
               <SortHeader column="estado" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Estado</SortHeader>
               <SortHeader column="descripcion" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Descripción</SortHeader>
               <SortHeader column="cantidad" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Cant</SortHeader>
-              <SortHeader column="valorUnitario" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Vr Unit</SortHeader>
+              <SortHeader column="valorUnitario" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Vr. Unit</SortHeader>
               <SortHeader column="categoriaTributaria" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="center">Carga Trib</SortHeader>
               <SortHeader column="base" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Base</SortHeader>
               <SortHeader column="iva" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">IVA</SortHeader>
