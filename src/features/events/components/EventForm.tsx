@@ -119,7 +119,12 @@ export function EventForm({
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Responsable {requiredMark}</label>
-            <input {...register('responsable')} maxLength={100} className={field('responsable')} placeholder="Nombre del responsable" />
+            <input
+              {...register('responsable')}
+              readOnly
+              maxLength={100}
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 bg-slate-50 cursor-not-allowed"
+            />
             {errors.responsable && <p className="text-xs text-red-500">{errors.responsable.message}</p>}
           </div>
           <div className="space-y-1.5">

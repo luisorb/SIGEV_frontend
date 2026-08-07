@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { eventSchema } from '../schemas/eventSchema'
 import type { z } from 'zod'
 import type { Event } from '../../../types'
+import { getCurrentUser } from '../../../config/constants'
 
 type EventFormValues = z.infer<typeof eventSchema>
 
@@ -36,7 +37,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
       : {
           numeroEvento: '',
           sufijo: '',
-          responsable: '',
+          responsable: getCurrentUser(),
           dependencia: '',
           fechaEvento: '',
           asistentes: 0,
