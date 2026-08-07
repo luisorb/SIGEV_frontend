@@ -41,7 +41,7 @@ export function MetricCard({
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <span className="text-xs font-medium text-slate-500 leading-tight block">{label}</span>
-          <p className={`text-xl font-bold tracking-tight ${
+          <p className={`text-base font-bold tracking-tight ${
             value < 0 ? 'text-red-600' : 'text-slate-900'
           }`}>
             {formatted}

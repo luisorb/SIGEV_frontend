@@ -7,6 +7,7 @@ import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
 import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
 import { EventosIncompletos } from '../components/EventosIncompletos'
+import { NumeroEventosCard } from '../components/NumeroEventosCard'
 import { useQuery } from '@tanstack/react-query'
 import { getEventsApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
@@ -85,6 +86,10 @@ export function DashboardPage() {
           <CoberturaTerritorial rows={coberturaTerritorial} />
         </div>
         <div className="space-y-6">
+          <NumeroEventosCard
+            count={metrics.numeroEventos}
+            totalRegistrados={totalRegistrados}
+          />
           <RecentOrders
             events={events}
             aliados={aliados}

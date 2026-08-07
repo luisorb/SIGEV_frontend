@@ -1,4 +1,4 @@
-import { DollarSign, ClipboardList, Calculator, Percent, Receipt } from 'lucide-react'
+import { DollarSign, Calculator, Percent, Receipt } from 'lucide-react'
 import type { DashboardMetrics } from '../types'
 import { MetricCard } from './MetricCard'
 
@@ -10,20 +10,13 @@ export function MetricGrid({ metrics }: MetricGridProps) {
   const total = metrics.baseMasImpuestos + metrics.feeAcumulado
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         icon={DollarSign}
         label="Valor Total Ejecución"
         value={metrics.valorTotalEjecucion}
         accent="blue"
         total={metrics.valorTotalEjecucion + 500_000_000}
-      />
-      <MetricCard
-        icon={ClipboardList}
-        label="Número de Eventos"
-        value={metrics.numeroEventos}
-        format="number"
-        accent="emerald"
       />
       <MetricCard
         icon={Calculator}
