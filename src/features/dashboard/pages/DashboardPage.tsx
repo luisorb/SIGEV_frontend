@@ -50,7 +50,7 @@ export function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Panel de Control</h1>
           <p className="text-sm text-slate-500">
-            {totalRegistrados} eventos registrados · {totalEnEjecucion} aprobados/en ejecución
+            {totalRegistrados} eventos registrados · {totalEnEjecucion} aprobados / en ejecución
           </p>
         </div>
         <DashboardExport

@@ -30,7 +30,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
       <p className="text-slate-500">{d.departamento}</p>
       <p className="text-slate-600">Valor: {formatCurrencyCO(d.valorTotal)}</p>
       <p className="text-slate-600">Eventos: {d.cantidadEventos}</p>
-      <p className="text-slate-600">Part.: {formatPercentage(d.porcentaje)}</p>
+      <p className="text-slate-600">Participación: {formatPercentage(d.porcentaje)}</p>
     </div>
   )
 }
@@ -77,7 +77,7 @@ function TreemapContent({ x, y, width, height, index, municipio, cantidadEventos
         fill="rgba(255,255,255,0.85)"
         fontSize={9}
       >
-        {cantidadEventos} ev.
+        {cantidadEventos} eventos
       </text>
     </g>
   )
