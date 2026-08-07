@@ -178,7 +178,7 @@ function AddItemModalContent({ initialItem, isEditing, aliados, onCancel, onSubm
                   }}
                   className="w-4 h-4 text-primary focus:ring-primary"
                 />
-                <span className="text-sm text-slate-700">No Tarifado</span>
+                <span className="text-sm text-slate-700">No tarifado</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input

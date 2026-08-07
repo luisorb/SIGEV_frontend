@@ -19,7 +19,7 @@ export function OperatorAssignment({ currentOperator, onAssign, readOnly = false
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-2">
           <UserCog className="w-4 h-4 text-slate-500" />
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Asignación Operador Logístico</h2>
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Asignación de Operador Logístico</h2>
         </div>
       </div>
       <div className="px-6 py-4">

@@ -76,7 +76,7 @@ export function QuotationList({
             Listado de cotizaciones
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            {eventOffers.length} cotización{eventOffers.length !== 1 ? 'es' : ''} de {eventOffers.length < 3 ? '3' : ''} requeridas
+            {eventOffers.length} de 3 cotizaciones requeridas
           </p>
         </div>
         {!readOnly && (
