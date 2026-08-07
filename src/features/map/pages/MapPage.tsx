@@ -5,7 +5,6 @@ import { getMunicipalityStatsApi, searchMunicipalitiesApi } from '../../../servi
 import type { MunicipalityResponse } from '../../../services/map.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
-import { formatCurrencyCO } from '../../../utils/formatters'
 import { EVENT_STATES } from '../../../config/constants'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 import { MapPin, SlidersHorizontal, X } from 'lucide-react'
@@ -61,10 +60,6 @@ export function MapPage() {
     return groups.filter((g) => g.municipioId === id)
   }, [groups, selectedMunicipio])
 
-  const totalMunicipios = visibleGroups.length
-  const totalEventos = visibleGroups.reduce((s, g) => s + g.totalEventos, 0)
-  const totalValor = visibleGroups.reduce((s, g) => s + g.totalValor, 0)
-
   function selectMunicipio(mun: MunicipalityResponse) {
     setSelectedMunicipio(mun)
     setSearchTerm(`${mun.name} (${mun.department})`)
@@ -82,7 +77,7 @@ export function MapPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Mapa de Ejecución</h1>
         <p className="text-sm text-slate-500 mt-1">
-          {totalMunicipios} municipio{totalMunicipios !== 1 ? 's' : ''} · {totalEventos} evento{totalEventos !== 1 ? 's' : ''} · {formatCurrencyCO(totalValor)}
+          Visualiza en el mapa la ejecución de los eventos por municipio, con filtros por desembolso, aliado y estado, y consulta sus valores económicos.
         </p>
       </div>
 
