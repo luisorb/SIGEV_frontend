@@ -32,8 +32,6 @@ export function KanbanPage() {
     return m
   }, [municipios])
 
-  const totalEventos = Object.values(counts).reduce((s, c) => s + c, 0)
-
   function formatCompactCO(value: number): string {
     if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
     if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
@@ -47,8 +45,6 @@ export function KanbanPage() {
     }
     return result
   }, [grouped])
-
-  const grandTotal = Object.values(columnTotals).reduce((s, v) => s + v, 0)
 
   if (isLoading) {
     return (
@@ -64,12 +60,12 @@ export function KanbanPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Tablero Kanban</h1>
           <p className="text-sm text-slate-500">
-            {totalEventos} eventos · {formatCompactCO(grandTotal)} · Arrastra tarjetas para cambiar estado
+            Visualiza el flujo de los eventos por estado y cambia su estado arrastrando las tarjetas entre columnas.
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm">
           {Object.entries(counts).map(([estado, count]) => (
-            <div key={estado} className="text-center px-2 py-1 rounded-lg bg-white border border-slate-200 min-w-[80px]">
+            <div key={estado} className="text-center px-2 py-1 rounded-lg bg-white border border-slate-200 min-w-20">
               <p className="text-base font-bold text-slate-900 leading-tight">{count}</p>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">{estado}</p>
               <p className="text-[10px] font-medium text-slate-600">{formatCompactCO(columnTotals[estado] ?? 0)}</p>
