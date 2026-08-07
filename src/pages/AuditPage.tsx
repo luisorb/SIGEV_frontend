@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ClipboardList } from 'lucide-react'
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ClipboardList } from 'lucide-react'
 import { getAllAuditEntries } from '../lib/auditStore'
 import { getAuditApi } from '../services/audit.service'
 import { formatDateCO } from '../utils/formatters'
+import { SearchableSelect } from '../components/SearchableSelect'
 
 const ENTIDADES = ['', 'Event', 'Offer', 'Item', 'Ally', 'User', 'Param']
 const ACCIONES = ['', 'Creación', 'Actualización', 'Eliminación', 'Cambio de estado']
@@ -20,6 +21,7 @@ export function AuditPage() {
   const [search, setSearch] = useState('')
   const [filterEntidad, setFilterEntidad] = useState('')
   const [filterAccion, setFilterAccion] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
   const [sortColumn, setSortColumn] = useState<SortColumn | ''>('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null)
   const [pageSize, setPageSize] = useState(10)
@@ -107,7 +109,7 @@ export function AuditPage() {
         <p className="text-sm text-slate-500">Registro de actividades y trazabilidad del sistema</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+      <div className="flex flex-wrap items-center gap-3 shrink-0">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -115,29 +117,38 @@ export function AuditPage() {
             placeholder="Buscar por usuario, acción, entidad, detalle..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0) }}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
         </div>
-        <select
-          value={filterEntidad}
-          onChange={(e) => { setFilterEntidad(e.target.value); setPage(0) }}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-slate-50 transition-colors ${
+            showFilters ? 'ring-2 ring-primary/30 border-primary' : ''
+          }`}
         >
-          <option value="">Todas las entidades</option>
-          {ENTIDADES.filter(Boolean).map((e) => (
-            <option key={e} value={e}>{e}</option>
-          ))}
-        </select>
-        <select
-          value={filterAccion}
-          onChange={(e) => { setFilterAccion(e.target.value); setPage(0) }}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-        >
-          <option value="">Todas las acciones</option>
-          {ACCIONES.filter(Boolean).map((a) => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
+          <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+          Filtros
+        </button>
+        {showFilters && (
+          <>
+            <SearchableSelect
+              size="sm"
+              className="w-40"
+              options={ENTIDADES.filter(Boolean).map((e) => ({ value: e, label: e }))}
+              value={filterEntidad}
+              onChange={(v) => { setFilterEntidad(v); setPage(0) }}
+              placeholder="Todas las entidades"
+            />
+            <SearchableSelect
+              size="sm"
+              className="w-44"
+              options={ACCIONES.filter(Boolean).map((a) => ({ value: a, label: a }))}
+              value={filterAccion}
+              onChange={(v) => { setFilterAccion(v); setPage(0) }}
+              placeholder="Todas las acciones"
+            />
+          </>
+        )}
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">

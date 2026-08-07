@@ -5,6 +5,7 @@ import type { Offer } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { hasQuotedValues } from '../utils/offerValues'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
   if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1" />
@@ -99,19 +100,17 @@ export function OfferList({
             placeholder="Buscar por código, nombre, cliente, evento o responsable..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
         </div>
-        <select
+        <SearchableSelect
+          size="sm"
+          className="w-40"
+          options={OFFER_STATES.map((s) => ({ value: s, label: s }))}
           value={filterEstado}
-          onChange={(e) => setFilterEstado(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-        >
-          <option value="">Todos los estados</option>
-          {OFFER_STATES.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+          onChange={setFilterEstado}
+          placeholder="Todos los estados"
+        />
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">

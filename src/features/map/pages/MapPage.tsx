@@ -6,7 +6,9 @@ import type { MunicipalityResponse } from '../../../services/map.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { formatCurrencyCO } from '../../../utils/formatters'
-import { MapPin, X } from 'lucide-react'
+import { EVENT_STATES } from '../../../config/constants'
+import { SearchableSelect } from '../../../components/SearchableSelect'
+import { MapPin, SlidersHorizontal, X } from 'lucide-react'
 
 export function MapPage() {
   const { data: aliados = [] } = useAllies()
@@ -15,6 +17,7 @@ export function MapPage() {
   const [selectedDesembolso, setSelectedDesembolso] = useState('')
   const [selectedAliado, setSelectedAliado] = useState('')
   const [selectedEstado, setSelectedEstado] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<MunicipalityResponse[]>([])
@@ -90,7 +93,7 @@ export function MapPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar municipio..."
-            className="w-full pl-9 pr-9 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            className="w-full pl-9 pr-9 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
           {selectedMunicipio && (
             <button
@@ -123,26 +126,43 @@ export function MapPage() {
             </div>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <select value={selectedDesembolso} onChange={(e) => setSelectedDesembolso(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
-            <option value="">Todos los desembolsos</option>
-            {desembolsos.map((d) => (<option key={d.id} value={d.id}>{d.nombre}</option>))}
-          </select>
-          <select value={selectedAliado} onChange={(e) => setSelectedAliado(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
-            <option value="">Todos los aliados</option>
-            {aliados.map((a) => (<option key={a.id} value={a.id}>{a.nombre}</option>))}
-          </select>
-          <select value={selectedEstado} onChange={(e) => setSelectedEstado(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
-            <option value="">Todos los estados</option>
-            <option value="Abierto">Abierto</option>
-            <option value="En ejecución">En ejecución</option>
-            <option value="Ejecutado">Ejecutado</option>
-            <option value="Cerrado">Cerrado</option>
-            <option value="Legalizado">Legalizado</option>
-            <option value="Devuelto">Devuelto</option>
-            <option value="Rechazado">Rechazado</option>
-          </select>
-        </div>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-slate-50 transition-colors ${
+            showFilters ? 'ring-2 ring-primary/30 border-primary' : ''
+          }`}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+          Filtros
+        </button>
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-3">
+          <SearchableSelect
+            size="sm"
+            className="w-44"
+            options={desembolsos.map((d) => ({ value: d.id, label: d.nombre }))}
+            value={selectedDesembolso}
+            onChange={setSelectedDesembolso}
+            placeholder="Todos los desembolsos"
+          />
+          <SearchableSelect
+            size="sm"
+            className="w-44"
+            options={aliados.map((a) => ({ value: a.id, label: a.nombre }))}
+            value={selectedAliado}
+            onChange={setSelectedAliado}
+            placeholder="Todos los aliados"
+          />
+          <SearchableSelect
+            size="sm"
+            className="w-36"
+            options={EVENT_STATES.map((s) => ({ value: s, label: s }))}
+            value={selectedEstado}
+            onChange={setSelectedEstado}
+            placeholder="Todos los estados"
+          />
+          </div>
+        )}
         <div className="flex items-center gap-4 text-sm text-slate-500 ml-auto">
           <span className="font-medium text-slate-700">Leyenda:</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-500" /> Abierto</span>

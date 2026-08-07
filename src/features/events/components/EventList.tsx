@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2 } from 'lucide-react'
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2 } from 'lucide-react'
 import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -108,75 +108,68 @@ export function EventList({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-        <div className="relative w-full sm:w-96">
+      <div className="flex flex-wrap items-center gap-3 shrink-0">
+        <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder="Buscar por número de evento o responsable..."
             value={filters.search}
             onChange={(e) => onFilterChange('search', e.target.value)}
-            className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors shrink-0 ${
-            showFilters || filters.estado || filters.aliadoId || filters.desembolsoId || filters.municipioId
-              ? 'bg-red-50 border-red-300 text-red-700'
-              : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-slate-50 transition-colors ${
+            showFilters ? 'ring-2 ring-primary/30 border-primary' : ''
           }`}
         >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
           Filtros
         </button>
-      </div>
 
-      {showFilters && (
-        <div className="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200 shrink-0">
-          <select
-            value={filters.estado}
-            onChange={(e) => onFilterChange('estado', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-          >
-            <option value="">Todos los estados</option>
-            {EVENT_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <SearchableSelect
-            size="sm"
-            className="w-52"
-            options={municipios.map((m) => ({
-              value: m.id,
-              label: m.nombre,
-              keywords: `${m.nombre} ${m.departamento}`,
-            }))}
-            value={filters.municipioId}
-            onChange={(v) => onFilterChange('municipioId', v)}
-            placeholder="Todos los municipios"
-          />
-          <select
-            value={filters.aliadoId}
-            onChange={(e) => onFilterChange('aliadoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-          >
-            <option value="">Todos los aliados</option>
-            {aliados.map((a) => (
-              <option key={a.id} value={a.id}>{a.nombre}</option>
-            ))}
-          </select>
-          <select
-            value={filters.desembolsoId}
-            onChange={(e) => onFilterChange('desembolsoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-          >
-            <option value="">Todos los desembolsos</option>
-            {desembolsos.map((d) => (
-              <option key={d.id} value={d.id}>{d.nombre}</option>
-            ))}
-          </select>
-        </div>
-      )}
+        {showFilters && (
+          <>
+            <SearchableSelect
+              size="sm"
+              className="w-40"
+              options={EVENT_STATES.map((s) => ({ value: s, label: s }))}
+              value={filters.estado}
+              onChange={(v) => onFilterChange('estado', v)}
+              placeholder="Todos los estados"
+            />
+            <SearchableSelect
+              size="sm"
+              className="w-52"
+              options={municipios.map((m) => ({
+                value: m.id,
+                label: m.nombre,
+                keywords: `${m.nombre} ${m.departamento}`,
+              }))}
+              value={filters.municipioId}
+              onChange={(v) => onFilterChange('municipioId', v)}
+              placeholder="Todos los municipios"
+            />
+            <SearchableSelect
+              size="sm"
+              className="w-44"
+              options={aliados.map((a) => ({ value: a.id, label: a.nombre }))}
+              value={filters.aliadoId}
+              onChange={(v) => onFilterChange('aliadoId', v)}
+              placeholder="Todos los aliados"
+            />
+            <SearchableSelect
+              size="sm"
+              className="w-44"
+              options={desembolsos.map((d) => ({ value: d.id, label: d.nombre }))}
+              value={filters.desembolsoId}
+              onChange={(v) => onFilterChange('desembolsoId', v)}
+              placeholder="Todos los desembolsos"
+            />
+          </>
+        )}
+      </div>
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden flex-1 flex flex-col">
 

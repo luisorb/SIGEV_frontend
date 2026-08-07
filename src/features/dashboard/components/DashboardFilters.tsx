@@ -36,7 +36,7 @@ export function DashboardFilters({
             type="date"
             value={filters.periodoInicio}
             onChange={(e) => onFilterChange('periodoInicio', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
@@ -48,7 +48,7 @@ export function DashboardFilters({
             type="date"
             value={filters.periodoFin}
             onChange={(e) => onFilterChange('periodoFin', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
@@ -56,48 +56,42 @@ export function DashboardFilters({
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
             Desembolso
           </label>
-          <select
+          <SearchableSelect
+            size="sm"
+            className="w-44"
+            options={desembolsos.map((d) => ({ value: d.id, label: d.nombre }))}
             value={filters.desembolsoId}
-            onChange={(e) => onFilterChange('desembolsoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="">Todos</option>
-            {desembolsos.map((d) => (
-              <option key={d.id} value={d.id}>{d.nombre}</option>
-            ))}
-          </select>
+            onChange={(v) => onFilterChange('desembolsoId', v)}
+            placeholder="Todos"
+          />
         </div>
 
         <div className="space-y-1">
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
             Aliado
           </label>
-          <select
+          <SearchableSelect
+            size="sm"
+            className="w-44"
+            options={aliados.map((a) => ({ value: a.id, label: a.nombre }))}
             value={filters.aliadoId}
-            onChange={(e) => onFilterChange('aliadoId', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="">Todos</option>
-            {aliados.map((a) => (
-              <option key={a.id} value={a.id}>{a.nombre}</option>
-            ))}
-          </select>
+            onChange={(v) => onFilterChange('aliadoId', v)}
+            placeholder="Todos"
+          />
         </div>
 
         <div className="space-y-1">
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
             Estado
           </label>
-          <select
+          <SearchableSelect
+            size="sm"
+            className="w-36"
+            options={EVENT_STATES.map((s) => ({ value: s, label: s }))}
             value={filters.estado}
-            onChange={(e) => onFilterChange('estado', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="">Todos</option>
-            {EVENT_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onChange={(v) => onFilterChange('estado', v)}
+            placeholder="Todos"
+          />
         </div>
 
         <div className="space-y-1">
@@ -122,24 +116,22 @@ export function DashboardFilters({
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
             Dependencia
           </label>
-          <select
+          <SearchableSelect
+            size="sm"
+            className="w-44"
+            options={dependencias.map((d) => ({ value: d, label: d }))}
             value={filters.dependencia}
-            onChange={(e) => onFilterChange('dependencia', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="">Todas</option>
-            {dependencias.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
+            onChange={(v) => onFilterChange('dependencia', v)}
+            placeholder="Todas"
+          />
         </div>
 
         {hasActiveFilters && (
           <button
             onClick={onReset}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
             Limpiar
           </button>
         )}
