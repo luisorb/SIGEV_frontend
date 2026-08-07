@@ -1,4 +1,5 @@
-import { RotateCcw } from 'lucide-react'
+import { useState } from 'react'
+import { RotateCcw, SlidersHorizontal } from 'lucide-react'
 import type { DashboardFiltersState } from '../types'
 import type { Ally, Disbursement, Municipality } from '../../../types'
 import { EVENT_STATES } from '../../../config/constants'
@@ -25,9 +26,33 @@ export function DashboardFilters({
   onFilterChange,
   onReset,
 }: DashboardFiltersProps) {
+  const [showFilters, setShowFilters] = useState(false)
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4">
       <div className="flex flex-wrap items-end gap-3">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-slate-50 transition-colors ${
+            showFilters ? 'ring-2 ring-primary/30 border-primary' : ''
+          }`}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+          Filtros
+        </button>
+
+        {hasActiveFilters && (
+          <button
+            onClick={onReset}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Limpiar
+          </button>
+        )}
+
+        {showFilters && (
+        <>
         <div className="space-y-1">
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
             Período inicio
@@ -125,17 +150,9 @@ export function DashboardFilters({
             placeholder="Todas"
           />
         </div>
-
-        {hasActiveFilters && (
-          <button
-            onClick={onReset}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Limpiar
-          </button>
-        )}
-      </div>
+        </>
+      )}
+    </div>
     </div>
   )
 }
