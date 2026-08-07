@@ -25,6 +25,14 @@ export function aliadoName(offer: Offer, aliadoId: string | undefined, aliados?:
   return offer.aliado || 'General'
 }
 
+export function clienteOferta(offer: Offer, aliados?: Ally[]): string {
+  if (offer.aliadoId) {
+    const a = aliados?.find((x) => x.id === offer.aliadoId)
+    if (a?.contacto) return a.contacto
+  }
+  return offer.cliente
+}
+
 export function resolveMunicipio(municipioId: string | undefined, municipios?: Municipality[]) {
   if (!municipioId) return undefined
   return municipios?.find((m) => m.id === municipioId)

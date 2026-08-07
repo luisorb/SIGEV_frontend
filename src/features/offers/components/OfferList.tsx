@@ -5,7 +5,9 @@ import type { Offer } from '../types'
 import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { hasQuotedValues } from '../utils/offerValues'
+import { clienteOferta } from '../utils/exportHelpers'
 import { SearchableSelect } from '../../../components/SearchableSelect'
+import type { Ally } from '../../../types'
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
   if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1" />
@@ -15,6 +17,7 @@ function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | '
 
 interface OfferListProps {
   offers: Offer[]
+  aliados?: Ally[]
   search: string
   onSearchChange: (value: string) => void
   onExport: (id: string) => void
@@ -23,6 +26,7 @@ interface OfferListProps {
 
 export function OfferList({
   offers,
+  aliados = [],
   search,
   onSearchChange,
   onExport,
@@ -65,7 +69,7 @@ export function OfferList({
         : sortColumn === 'nombre'
           ? a.nombre.localeCompare(b.nombre)
           : sortColumn === 'cliente'
-            ? a.cliente.localeCompare(b.cliente)
+            ? clienteOferta(a, aliados).localeCompare(clienteOferta(b, aliados))
             : sortColumn === 'total'
               ? a.total - b.total
               : sortColumn === 'numeroEvento'
@@ -79,7 +83,7 @@ export function OfferList({
                       : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [offers, filterEstado, sortColumn, sortDir])
+  }, [offers, filterEstado, sortColumn, sortDir, aliados])
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
   const safePage = Math.min(page, totalPages - 1)
@@ -206,7 +210,7 @@ export function OfferList({
                     <td className="px-4 py-3 font-medium text-slate-900">{offer.codigo}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{offer.numeroEvento || '—'}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px] truncate" title={offer.nombre}>{offer.nombre}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{offer.cliente}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{clienteOferta(offer, aliados)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${OFFER_STATE_COLORS[offer.estado]}`}>
                         {offer.estado}

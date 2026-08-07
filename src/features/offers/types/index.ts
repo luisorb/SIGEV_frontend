@@ -43,6 +43,7 @@ export interface Offer {
   responsable?: string
   dependencia?: string
   municipio?: string
+  aliadoId?: string
   aliado?: string
   desembolso?: string
   esquema?: string

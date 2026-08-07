@@ -106,6 +106,7 @@ export function mapOfertaEconomicaToOffer(data: OfertaEconomicaResponse): Offer 
     responsable: event?.name ?? '',
     dependencia: '',
     municipio: event?.municipalityName ?? '',
+    aliadoId: data.allyId ? String(data.allyId) : (data.quotation?.ally?.id ?? undefined),
     aliado: data.ally?.name ?? data.quotation?.ally?.name ?? '',
     desembolso: event?.disbursement?.name ?? '',
     esquema: 'cotizacion',

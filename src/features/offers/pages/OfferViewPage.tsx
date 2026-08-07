@@ -13,6 +13,7 @@ import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 import { hasQuotedValues } from '../utils/offerValues'
+import { clienteOferta } from '../utils/exportHelpers'
 import { OFFER_STATE_COLORS } from '../types'
 
 const catColors: Record<string, string> = {
@@ -232,7 +233,7 @@ export function OfferViewPage() {
             </div>
             <div className="border border-slate-100 rounded-lg px-4 py-3">
               {label('Cliente')}
-              {value(offer.cliente)}
+              {value(clienteOferta(offer, aliados))}
             </div>
             <div className="border border-slate-100 rounded-lg px-4 py-3">
               {label('Nombre de la oferta')}
