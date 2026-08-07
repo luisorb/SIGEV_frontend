@@ -4,6 +4,7 @@ import type { ConsolidadoRow, CoberturaItem, DashboardFiltersState, DashboardMet
 import { formatCurrencyCO, formatDateCO, formatDateTimeCO, formatPercentage } from '../../../utils/formatters'
 import type { jsPDF } from 'jspdf'
 import type { CellInput, Styles, UserOptions } from 'jspdf-autotable'
+import type { WorkBook, WorkSheet } from 'xlsx'
 
 interface DashboardExportProps {
   events: Event[]
@@ -132,6 +133,143 @@ function drawPageChrome(doc: jsPDF, pageWidth: number, pageHeight: number, gener
   }
 }
 
+const CURRENCY_FMT = '"$"#,##0.00'
+const PERCENT_FMT = '0.00%'
+const INT_FMT = '#,##0'
+
+type ExportFormat = 'currency' | 'percent' | 'number'
+
+interface ExportColumn {
+  header: string
+  wch: number
+  fmt?: ExportFormat
+}
+
+interface ExportFilterRow {
+  label: string
+  value: string
+}
+
+interface ExportSheetSpec {
+  name: string
+  title: string
+  meta?: string[]
+  columns: ExportColumn[]
+  rows: (string | number)[][]
+  foot?: (string | number | null)[]
+  footSpan?: number
+  filters?: ExportFilterRow[]
+  autofilter?: boolean
+}
+
+interface SheetBuilderUtils {
+  aoa_to_sheet(data: (string | number | null)[][]): WorkSheet
+  encode_cell(cell: { r: number; c: number }): string
+  encode_range(range: { s: { r: number; c: number }; e: { r: number; c: number } }): string
+}
+
+function buildSheet(utils: SheetBuilderUtils, spec: ExportSheetSpec): WorkSheet {
+  const { columns, rows } = spec
+  const aoa: (string | number | null)[][] = [[spec.title]]
+  spec.meta?.forEach((line) => aoa.push([line]))
+  aoa.push([])
+  if (spec.filters?.length) {
+    aoa.push(['Filtros aplicados'])
+    spec.filters.forEach((f) => aoa.push([f.label, f.value]))
+    aoa.push([])
+  }
+  aoa.push(columns.map((c) => c.header))
+  rows.forEach((r) => aoa.push(r))
+  if (spec.foot) aoa.push(spec.foot)
+
+  const ws = utils.aoa_to_sheet(aoa)
+  const lastCol = columns.length - 1
+  const headerRow = aoa.length - 1 - rows.length - (spec.foot ? 1 : 0)
+
+  const merges: NonNullable<WorkSheet['!merges']> = []
+  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: lastCol } })
+  spec.meta?.forEach((_, i) => merges.push({ s: { r: i + 1, c: 0 }, e: { r: i + 1, c: lastCol } }))
+  if (spec.filters?.length) {
+    merges.push({
+      s: { r: headerRow - spec.filters.length - 2, c: 0 },
+      e: { r: headerRow - spec.filters.length - 2, c: lastCol },
+    })
+  }
+  if (spec.foot && (spec.footSpan ?? 1) > 1) {
+    const footRow = aoa.length - 1
+    merges.push({ s: { r: footRow, c: 0 }, e: { r: footRow, c: (spec.footSpan ?? 1) - 1 } })
+  }
+  ws['!merges'] = merges
+
+  ws['!cols'] = columns.map((c) => ({ wch: c.wch }))
+
+  const rowHeights: { hpt: number }[] = []
+  let idx = 0
+  rowHeights[idx++] = { hpt: 22 }
+  spec.meta?.forEach(() => {
+    rowHeights[idx++] = { hpt: 14 }
+  })
+  rowHeights[idx++] = { hpt: 6 }
+  if (spec.filters?.length) {
+    rowHeights[idx++] = { hpt: 14 }
+    spec.filters.forEach(() => {
+      rowHeights[idx++] = { hpt: 14 }
+    })
+    rowHeights[idx++] = { hpt: 6 }
+  }
+  rowHeights[idx++] = { hpt: 18 }
+  rows.forEach(() => {
+    rowHeights[idx++] = { hpt: 16 }
+  })
+  if (spec.foot) rowHeights[idx++] = { hpt: 18 }
+  ws['!rows'] = rowHeights
+
+  const applyFormats = (rowIndex: number) => {
+    columns.forEach((col, c) => {
+      if (!col.fmt) return
+      const cell = ws[utils.encode_cell({ r: rowIndex, c })]
+      if (cell && typeof cell.v === 'number') {
+        cell.z = col.fmt === 'currency' ? CURRENCY_FMT : col.fmt === 'percent' ? PERCENT_FMT : INT_FMT
+      }
+    })
+  }
+  for (let r = headerRow + 1; r < aoa.length; r++) applyFormats(r)
+
+  if (spec.autofilter && rows.length > 0) {
+    ws['!autofilter'] = {
+      ref: utils.encode_range({
+        s: { r: headerRow, c: 0 },
+        e: { r: headerRow + rows.length - 1, c: lastCol },
+      }),
+    }
+  }
+
+  return ws
+}
+
+function buildMaps(aliados: Ally[], desembolsos: Disbursement[], municipios: Municipality[]) {
+  return {
+    aliados: Object.fromEntries(aliados.map((a) => [a.id, a.nombre])),
+    desembolsos: Object.fromEntries(desembolsos.map((d) => [d.id, d.nombre])),
+    municipios: Object.fromEntries(municipios.map((m) => [m.id, m.nombre])),
+  }
+}
+
+function buildFilterRows(
+  filters: DashboardFiltersState,
+  maps: ReturnType<typeof buildMaps>,
+): ExportFilterRow[] {
+  const rows: ExportFilterRow[] = []
+  if (filters.periodoInicio) rows.push({ label: 'Periodo inicial', value: formatDateCO(filters.periodoInicio) })
+  if (filters.periodoFin) rows.push({ label: 'Periodo final', value: formatDateCO(filters.periodoFin) })
+  if (filters.desembolsoId) rows.push({ label: 'Desembolso', value: maps.desembolsos[filters.desembolsoId] || filters.desembolsoId })
+  if (filters.aliadoId) rows.push({ label: 'Aliado', value: maps.aliados[filters.aliadoId] || filters.aliadoId })
+  if (filters.estado) rows.push({ label: 'Estado', value: filters.estado })
+  if (filters.municipioId) rows.push({ label: 'Municipio', value: maps.municipios[filters.municipioId] || filters.municipioId })
+  if (filters.dependencia) rows.push({ label: 'Dependencia', value: filters.dependencia })
+  return rows
+}
+
 export function DashboardExport({
   events,
   aliados,
@@ -147,35 +285,175 @@ export function DashboardExport({
   async function handleExportXLSX() {
     const { utils, writeFile } = await import('xlsx')
 
-    const aliadosMap = Object.fromEntries(aliados.map((a) => [a.id, a.nombre]))
-    const desembolsosMap = Object.fromEntries(desembolsos.map((d) => [d.id, d.nombre]))
-    const municipiosMap = Object.fromEntries(municipios.map((m) => [m.id, m.nombre]))
+    const maps = buildMaps(aliados, desembolsos, municipios)
+    const generatedAt = formatDateTimeCO(new Date())
+    const filterRows = hasActiveFilters ? buildFilterRows(filters, maps) : undefined
 
-    const headers = ['Evento', 'Responsable', 'Estado', 'Municipio', 'Aliado', 'Desembolso', 'Ítems', 'Total']
-    const data: (string | number)[][] = [headers]
+    const wb: WorkBook = utils.book_new()
 
-    for (const event of events) {
-      const total = event.items.reduce((s, i) => s + i.total, 0)
-      data.push([
-        `${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''}`,
-        event.responsable,
-        event.estado,
-        municipiosMap[event.municipioId] || event.municipioId,
-        aliadosMap[event.aliadoId] || event.aliadoId,
-        desembolsosMap[event.desembolsoId] || event.desembolsoId,
-        event.items.length,
-        total,
-      ])
+    utils.book_append_sheet(
+      wb,
+      buildSheet(utils, {
+        name: 'Resumen',
+        title: 'Panel de Control · SIGEV',
+        meta: [
+          `Reporte de ejecución de eventos · ${metrics.numeroEventos} evento(s) en ejecución`,
+          `Generado: ${generatedAt}`,
+        ],
+        columns: [
+          { header: 'Indicador', wch: 34 },
+          { header: 'Valor', wch: 26, fmt: 'currency' },
+        ],
+        rows: [
+          ['Valor Total Ejecución', metrics.valorTotalEjecucion],
+          ['Base + Impuestos', metrics.baseMasImpuestos],
+          ['Fee Técnico Administrativo', metrics.feeAcumulado],
+          ['Impuestos Acumulados', metrics.impuestosAcumulados],
+        ],
+        filters: filterRows,
+      }),
+      'Resumen',
+    )
+
+    if (consolidadoDesembolso.length > 0) {
+      utils.book_append_sheet(
+        wb,
+        buildSheet(utils, {
+          name: 'Por Desembolso',
+          title: '1. Ejecución por Desembolso',
+          columns: [
+            { header: 'Desembolso', wch: 30 },
+            { header: 'Eventos', wch: 10, fmt: 'number' },
+            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+            { header: 'Fee Total', wch: 18, fmt: 'currency' },
+            { header: 'Participación', wch: 14, fmt: 'percent' },
+          ],
+          rows: consolidadoDesembolso.map((row) => [
+            row.nombre,
+            row.cantidadEventos,
+            row.valorTotal,
+            row.feeTotal,
+            row.porcentaje,
+          ]),
+          foot: [
+            'Total',
+            consolidadoDesembolso.reduce((s, r) => s + r.cantidadEventos, 0),
+            consolidadoDesembolso.reduce((s, r) => s + r.valorTotal, 0),
+            consolidadoDesembolso.reduce((s, r) => s + r.feeTotal, 0),
+            1,
+          ],
+          autofilter: true,
+        }),
+        'Por Desembolso',
+      )
     }
 
-    const ws = utils.aoa_to_sheet(data)
-    ws['!cols'] = [
-      { wch: 18 }, { wch: 20 }, { wch: 14 }, { wch: 16 },
-      { wch: 20 }, { wch: 20 }, { wch: 8 }, { wch: 18 },
-    ]
+    if (consolidadoAliado.length > 0) {
+      utils.book_append_sheet(
+        wb,
+        buildSheet(utils, {
+          name: 'Por Aliado',
+          title: '2. Ejecución por Aliado',
+          columns: [
+            { header: 'Aliado', wch: 30 },
+            { header: 'Eventos', wch: 10, fmt: 'number' },
+            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+            { header: 'Fee Total', wch: 18, fmt: 'currency' },
+            { header: 'Participación', wch: 14, fmt: 'percent' },
+          ],
+          rows: consolidadoAliado.map((row) => [
+            row.nombre,
+            row.cantidadEventos,
+            row.valorTotal,
+            row.feeTotal,
+            row.porcentaje,
+          ]),
+          foot: [
+            'Total',
+            consolidadoAliado.reduce((s, r) => s + r.cantidadEventos, 0),
+            consolidadoAliado.reduce((s, r) => s + r.valorTotal, 0),
+            consolidadoAliado.reduce((s, r) => s + r.feeTotal, 0),
+            1,
+          ],
+          autofilter: true,
+        }),
+        'Por Aliado',
+      )
+    }
 
-    const wb = utils.book_new()
-    utils.book_append_sheet(wb, ws, 'Dashboard')
+    if (coberturaTerritorial.length > 0) {
+      utils.book_append_sheet(
+        wb,
+        buildSheet(utils, {
+          name: 'Cobertura',
+          title: '3. Cobertura Territorial',
+          columns: [
+            { header: 'Municipio', wch: 24 },
+            { header: 'Departamento', wch: 22 },
+            { header: 'Eventos', wch: 10, fmt: 'number' },
+            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+            { header: 'Participación', wch: 14, fmt: 'percent' },
+          ],
+          rows: coberturaTerritorial.map((row) => [
+            row.municipio,
+            row.departamento || '-',
+            row.cantidadEventos,
+            row.valorTotal,
+            row.porcentaje,
+          ]),
+          foot: [
+            'Total',
+            null,
+            coberturaTerritorial.reduce((s, r) => s + r.cantidadEventos, 0),
+            coberturaTerritorial.reduce((s, r) => s + r.valorTotal, 0),
+            1,
+          ],
+          autofilter: true,
+        }),
+        'Cobertura',
+      )
+    }
+
+    const detailRows = events.map((event) => {
+      const total = event.items.reduce((s, i) => s + i.total, 0)
+      return [
+        `${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''}`,
+        event.responsable ?? '-',
+        event.estado ?? '-',
+        maps.aliados[event.aliadoId] || event.aliadoId,
+        maps.desembolsos[event.desembolsoId] || event.desembolsoId,
+        maps.municipios[event.municipioId] || event.municipioId,
+        event.items.length,
+        total,
+      ]
+    })
+
+    const totalItems = events.reduce((s, e) => s + e.items.length, 0)
+    const totalValor = events.reduce((s, e) => s + e.items.reduce((a, i) => a + i.total, 0), 0)
+
+    utils.book_append_sheet(
+      wb,
+      buildSheet(utils, {
+        name: 'Detalle de Eventos',
+        title: '4. Detalle de Eventos',
+        columns: [
+          { header: 'Evento', wch: 18 },
+          { header: 'Responsable', wch: 20 },
+          { header: 'Estado', wch: 14 },
+          { header: 'Aliado', wch: 22 },
+          { header: 'Desembolso', wch: 22 },
+          { header: 'Municipio', wch: 18 },
+          { header: 'Ítems', wch: 8, fmt: 'number' },
+          { header: 'Total', wch: 18, fmt: 'currency' },
+        ],
+        rows: detailRows,
+        foot: ['Total', null, null, null, null, null, totalItems, totalValor],
+        footSpan: 6,
+        autofilter: true,
+      }),
+      'Detalle de Eventos',
+    )
+
     writeFile(wb, `dashboard_sigev_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
@@ -188,9 +466,8 @@ export function DashboardExport({
     const pageHeight = doc.internal.pageSize.getHeight()
     const contentWidth = pageWidth - PAGE_MARGIN * 2
 
-    const aliadosMap = Object.fromEntries(aliados.map((a) => [a.id, a.nombre]))
-    const desembolsosMap = Object.fromEntries(desembolsos.map((d) => [d.id, d.nombre]))
-    const municipiosMap = Object.fromEntries(municipios.map((m) => [m.id, m.nombre]))
+    const maps = buildMaps(aliados, desembolsos, municipios)
+    const { aliados: aliadosMap, desembolsos: desembolsosMap, municipios: municipiosMap } = maps
 
     const generatedAt = formatDateTimeCO(new Date())
 
@@ -265,24 +542,14 @@ export function DashboardExport({
     y = summaryTop + summaryHeight + 10
 
     if (hasActiveFilters) {
-      const filterRows: (string)[][] = []
-      if (filters.periodoInicio) filterRows.push(['Periodo inicial', formatDateCO(filters.periodoInicio)])
-      if (filters.periodoFin) filterRows.push(['Periodo final', formatDateCO(filters.periodoFin)])
-      if (filters.desembolsoId)
-        filterRows.push(['Desembolso', desembolsosMap[filters.desembolsoId] || filters.desembolsoId])
-      if (filters.aliadoId)
-        filterRows.push(['Aliado', aliadosMap[filters.aliadoId] || filters.aliadoId])
-      if (filters.estado) filterRows.push(['Estado', filters.estado])
-      if (filters.municipioId)
-        filterRows.push(['Municipio', municipiosMap[filters.municipioId] || filters.municipioId])
-      if (filters.dependencia) filterRows.push(['Dependencia', filters.dependencia])
+      const filterRows = buildFilterRows(filters, maps)
 
       y = ensureSpace(doc, y, pageHeight, filterRows.length)
       y = drawSectionTitle(doc, 'Filtros aplicados', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
         head: ['Criterio', 'Valor'],
-        body: filterRows,
+        body: filterRows.map((f) => [f.label, f.value]),
         columnStyles: { 0: { fontStyle: 'bold' } },
       }, autoTable) + 10
     }
