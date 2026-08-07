@@ -1,7 +1,13 @@
 import { useState, useMemo } from 'react'
-import type { Event, Ally, Disbursement, Municipality } from '../../../types'
+import type { Event, Ally, Disbursement, Municipality, EventState } from '../../../types'
 import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow, CoberturaItem, EventoIncompleto } from '../types'
 
+const ESTADOS_EN_EJECUCION: EventState[] = ['En ejecución', 'Ejecutado', 'Cerrado', 'Legalizado']
+
+function isEventoAprobadoOEnEjecucion(event: Event): boolean {
+  if (event.cotizacionSeleccionadaId) return true
+  return ESTADOS_EN_EJECUCION.includes(event.estado)
+}
 
 export function useDashboard(
   events: Event[],
@@ -45,8 +51,13 @@ export function useDashboard(
     return Array.from(set).sort()
   }, [events])
 
+  const ejecucionEvents = useMemo(
+    () => events.filter(isEventoAprobadoOEnEjecucion),
+    [events],
+  )
+
   const filteredEvents = useMemo(() => {
-    let result = [...events]
+    let result = [...ejecucionEvents]
 
     if (filters.desembolsoId) {
       result = result.filter((e) => e.desembolsoId === filters.desembolsoId)
@@ -71,7 +82,7 @@ export function useDashboard(
     }
 
     return result
-  }, [events, filters])
+  }, [ejecucionEvents, filters])
 
   const metrics = useMemo<DashboardMetrics>(() => {
     let valorTotalEjecucion = 0
@@ -230,6 +241,7 @@ export function useDashboard(
     resetFilters,
     hasActiveFilters,
     metrics,
+    filteredEvents,
     consolidadoDesembolso,
     consolidadoAliado,
     coberturaTerritorial,
@@ -238,5 +250,7 @@ export function useDashboard(
     desembolsosMap,
     municipiosMap,
     dependencias,
+    totalRegistrados: events.length,
+    totalEnEjecucion: ejecucionEvents.length,
   }
 }
