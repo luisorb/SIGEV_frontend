@@ -93,7 +93,9 @@ export function OfferList({
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Ofertas Económicas Definitivas</h1>
-        <p className="text-sm text-slate-500">{offers.length} ofertas registradas</p>
+        <p className="text-sm text-slate-500">
+          Consulta y gestiona las ofertas económicas definitivas de los eventos: revisa su estado, ítems, valores y exporta cada oferta a Excel.
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
