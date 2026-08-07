@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ArrowLeftCircle, AlertTriangle, Lock } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle, Lock, ClipboardList, FileSpreadsheet, FolderOpen, Package } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
@@ -35,6 +35,13 @@ const ESTADO_COLORS: Record<string, string> = {
 
 const TERMINAL_STATES: EventState[] = ['Rechazado']
 
+const DETAIL_TABS = [
+  { key: 'detalles', label: 'Detalles de la Orden', icon: ClipboardList },
+  { key: 'cotizaciones', label: 'Listado de cotizaciones', icon: FileSpreadsheet },
+  { key: 'soportes', label: 'Soportes Documentales', icon: FolderOpen },
+  { key: 'items', label: 'Ítems del Evento', icon: Package },
+] as const
+
 export function EventViewPage() {
   const { id } = useParams()
   const toast = useToast()
@@ -62,6 +69,7 @@ export function EventViewPage() {
 
   const [showHistory, setShowHistory] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [activeTab, setActiveTab] = useState<'detalles' | 'cotizaciones' | 'soportes' | 'items'>('detalles')
 
   const {
     items,
@@ -319,11 +327,11 @@ export function EventViewPage() {
     !canModifyItems || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
   const label = (text: string) => (
-    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1">{text}</p>
+    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">{text}</p>
   )
 
   const value = (text: string) => (
-    <p className="text-sm font-medium text-slate-900">{text}</p>
+    <p className="text-sm font-semibold text-slate-900 mt-1">{text}</p>
   )
 
   return (
@@ -385,60 +393,96 @@ export function EventViewPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Detalles de la Orden</h2>
-        </div>
+      <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
+        {DETAIL_TABS.map((tab) =>
+          tab.key === 'soportes' && !soportesVisible ? null : (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+                activeTab === tab.key
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ),
+        )}
+      </div>
 
-        <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-5 gap-y-4">
-          <div>{label('Número')}{value(event.numeroEvento)}</div>
-          <div>{label('Sufijo')}{value(event.sufijo || '-')}</div>
-          <div>{label('Responsable')}{value(event.responsable || '-')}</div>
-          <div>{label('Dependencia')}{value(event.dependencia || '-')}</div>
-          <div>{label('Fecha')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
-          <div>{label('Municipio')}{value(municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId)}</div>
-          <div>{label('Vereda')}{value(event.vereda || '-')}</div>
-          <div>{label('Aliado')}{value(aliado?.nombre ?? event.aliadoId)}</div>
-          <div>{label('Desembolso')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
-          <div>{label('Operador Logístico')}{value(event.asignadoA || 'No asignado')}</div>
-          <div>{label('Esquema')}<span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded capitalize">{event.esquema}</span></div>
-          <div>{label('Asistentes')}{value(String(event.asistentes))}</div>
-          <div>{label('Días')}{value(String(event.dias))}</div>
-          <div>{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
-        </div>
-
-        <div className="border-t border-slate-100">
-          <div className="px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Estado</span>
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold rounded-full ${ESTADO_COLORS[displayEstado] || 'bg-slate-100 text-slate-800'}`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                {displayEstado}
-              </span>
-            </div>
+      <div className={activeTab === 'detalles' ? '' : 'hidden'}>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 bg-primary/10 rounded-lg">
+              <ClipboardList className="w-4 h-4 text-primary" />
+            </span>
+            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Detalles de la Orden</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${ESTADO_COLORS[displayEstado] || 'bg-slate-100 text-slate-800'}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+              {displayEstado}
+            </span>
             {stateHistory.length > 0 && (
               <button onClick={() => setShowHistory(true)} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Ver historial
               </button>
             )}
-            <div className="ml-auto flex items-center gap-4">
-              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p></div>
-              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p></div>
-              <div className="text-right"><p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p><p className="text-sm font-semibold text-slate-900">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p></div>
-              <div className="text-right pl-4 border-l border-slate-200"><p className="text-[11px] text-primary/60 uppercase tracking-wider font-semibold">Total</p><p className="text-base font-bold text-primary">{formatCurrencyCO(ofertaTotals?.total ?? 0)}</p></div>
+          </div>
+        </div>
+
+        <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Número')}{value(event.numeroEvento)}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Sufijo')}{value(event.sufijo || '-')}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Responsable')}{value(event.responsable || '-')}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Dependencia')}{value(event.dependencia || '-')}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Fecha')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Municipio')}{value(municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId)}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Vereda')}{value(event.vereda || '-')}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Aliado')}{value(aliado?.nombre ?? event.aliadoId)}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Desembolso')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Operador Logístico')}{value(event.asignadoA || 'No asignado')}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Esquema')}<span className="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded capitalize">{event.esquema}</span></div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Asistentes')}{value(String(event.asistentes))}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Días')}{value(String(event.dias))}</div>
+          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
+        </div>
+
+        <div className="border-t border-slate-100 bg-slate-50/30">
+          <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p>
+              <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p>
+              <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p>
+              <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p>
+            </div>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-2.5 text-center">
+              <p className="text-[11px] text-primary/70 uppercase tracking-wider font-semibold">Total</p>
+              <p className="text-base font-bold text-primary mt-0.5">{formatCurrencyCO(ofertaTotals?.total ?? 0)}</p>
             </div>
           </div>
         </div>
 
         {event.observaciones && (
-          <div className="border-t border-slate-100 px-5 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1">Observaciones</p>
+          <div className="border-t border-slate-100 bg-slate-50/30 px-5 py-4">
+            <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1.5">Observaciones</p>
             <p className="text-sm text-slate-700 leading-relaxed">{event.observaciones}</p>
           </div>
         )}
+        </div>
       </div>
 
+      <div className={activeTab === 'cotizaciones' ? '' : 'hidden'}>
       <QuotationList
         eventoId={event.id}
         event={event}
@@ -449,8 +493,10 @@ export function EventViewPage() {
         readOnly={offersReadOnly}
         canSelectQuotation={canSelectQuotation}
       />
+      </div>
 
       {soportesVisible && (
+        <div className={activeTab === 'soportes' ? '' : 'hidden'}>
         <SupportDocuments
           soportes={event.soportes || []}
           attachments={event.attachments ?? []}
@@ -462,8 +508,10 @@ export function EventViewPage() {
           onDelete={handleDeleteSoporte}
           onDownload={handleDownloadAttachment}
         />
+        </div>
       )}
 
+      <div className={activeTab === 'items' ? '' : 'hidden'}>
       <ItemManager
         items={items}
         aliados={aliados}
@@ -474,6 +522,7 @@ export function EventViewPage() {
         readOnly={itemsReadOnly}
         eventAliadoId={event.aliadoId}
       />
+      </div>
 
       <ImportExcelModal
         isOpen={showImportModal}
