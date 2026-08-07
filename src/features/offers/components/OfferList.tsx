@@ -168,7 +168,7 @@ export function OfferList({
                   className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
                 >
                   <div className="flex items-center">
-                    Items
+                    Ítems
                     <SortIcon active={sortColumn === 'items'} direction={sortDir} />
                   </div>
                 </th>

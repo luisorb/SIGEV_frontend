@@ -206,7 +206,7 @@ export function OfferViewPage() {
           }`}
         >
           <Package className="w-4 h-4" />
-          Items de la Orden
+          Ítems de la Orden
         </button>
       </div>
 
@@ -340,7 +340,7 @@ export function OfferViewPage() {
               <span className="p-2 bg-primary/10 rounded-lg">
                 <Package className="w-4 h-4 text-primary" />
               </span>
-              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Items de la Orden</h2>
+              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Ítems de la Orden</h2>
             </div>
             <span className="text-xs font-medium text-slate-400">{displayItems.length} ítems</span>
           </div>
