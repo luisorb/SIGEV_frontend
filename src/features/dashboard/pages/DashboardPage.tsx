@@ -59,6 +59,11 @@ export function DashboardPage() {
           desembolsos={desembolsos}
           municipios={municipios}
           metrics={metrics}
+          consolidadoDesembolso={consolidadoDesembolso}
+          consolidadoAliado={consolidadoAliado}
+          coberturaTerritorial={coberturaTerritorial}
+          filters={filters}
+          hasActiveFilters={hasActiveFilters}
         />
       </div>
 
