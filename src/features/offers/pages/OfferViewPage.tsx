@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, FileDown, Download } from 'lucide-react'
+import { ChevronLeft, FileDown, Download, FileText, ClipboardList, Package } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useOffers, usePermissions } from '../hooks/useOffers'
 import { formatCurrencyCO, formatDateTimeCO, formatDateCO } from '../../../utils/formatters'
@@ -12,6 +13,7 @@ import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 import { hasQuotedValues } from '../utils/offerValues'
+import { OFFER_STATE_COLORS } from '../types'
 
 const catColors: Record<string, string> = {
   IVA: 'bg-blue-50 text-blue-700',
@@ -46,6 +48,8 @@ export function OfferViewPage() {
   const { data: aliados = [] } = useAllies()
   const { data: municipios = [] } = useMunicipalities()
   const rates = useActiveCalculationParams()
+
+  const [activeTab, setActiveTab] = useState<'detalles' | 'orden' | 'items'>('detalles')
 
   if (isLoading) {
     return (
@@ -176,118 +180,173 @@ export function OfferViewPage() {
         )}
       </div>
 
-      <div className="space-y-6">
+      <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
+        <button
+          onClick={() => setActiveTab('detalles')}
+          className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+            activeTab === 'detalles' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          Detalles de la Oferta
+        </button>
+        <button
+          onClick={() => setActiveTab('orden')}
+          className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+            activeTab === 'orden' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+          }`}
+        >
+          <ClipboardList className="w-4 h-4" />
+          Información de la Orden
+        </button>
+        <button
+          onClick={() => setActiveTab('items')}
+          className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+            activeTab === 'items' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          Items de la Orden
+        </button>
+      </div>
+
+      <div className={activeTab === 'detalles' ? '' : 'hidden'}>
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Detalles de la Oferta</h2>
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 bg-primary/10 rounded-lg">
+                <FileText className="w-4 h-4 text-primary" />
+              </span>
+              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Detalles de la Oferta</h2>
             </div>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${OFFER_STATE_COLORS[offer.estado]}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+              {offer.estado}
+            </span>
+          </div>
 
-            <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-4">
-              <div>
-                {label('Código')}
-                {value(offer.codigo)}
-              </div>
-              <div>
-                {label('Cliente')}
-                {value(offer.cliente)}
-              </div>
-              <div>
-                {label('Nombre de la oferta')}
-                {value(offer.nombre)}
-              </div>
-              <div>
-                {label('Desembolso')}
-                {value(offer.desembolso || '—')}
-              </div>
-              <div>
-                {label('Creada')}
-                {value(formatDateTimeCO(offer.createdAt))}
-              </div>
-              <div>
-                {label('Actualizada')}
-                {value(formatDateTimeCO(offer.updatedAt))}
-              </div>
-              <div>
-                {label('Ítems')}
-                {value(String(offer.items.length))}
-              </div>
+          <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Código')}
+              {value(offer.codigo)}
             </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Cliente')}
+              {value(offer.cliente)}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Nombre de la oferta')}
+              {value(offer.nombre)}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Desembolso')}
+              {value(offer.desembolso || '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Creada')}
+              {value(formatDateTimeCO(offer.createdAt))}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Actualizada')}
+              {value(formatDateTimeCO(offer.updatedAt))}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Ítems')}
+              {value(String(offer.items.length))}
+            </div>
+          </div>
 
-            {offer.descripcion && (
-              <div className="border-t border-slate-100 px-5 py-3">
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1">Descripción</p>
-                <p className="text-sm text-slate-700 leading-relaxed">{offer.descripcion}</p>
-              </div>
+          {offer.descripcion && (
+            <div className="border-t border-slate-100 bg-slate-50/30 px-5 py-4">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1.5">Descripción</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{offer.descripcion}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className={activeTab === 'orden' ? '' : 'hidden'}>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 bg-primary/10 rounded-lg">
+                <ClipboardList className="w-4 h-4 text-primary" />
+              </span>
+              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Información de la Orden</h2>
+            </div>
+            {event && (
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${eventStateColors[event.estado] || 'bg-slate-100 text-slate-800'}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                {event.estado}
+              </span>
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Información de la Orden</h2>
+          <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Número')}
+              {value((event?.numeroEvento ?? offer.numeroEvento) || '—')}
             </div>
-            <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-4">
-              <div>
-                {label('Número')}
-                {value((event?.numeroEvento ?? offer.numeroEvento) || '—')}
-              </div>
-              <div>
-                {label('Sufijo')}
-                {value(event?.sufijo || '—')}
-              </div>
-              <div>
-                {label('Responsable')}
-                {value((event?.responsable ?? offer.responsable) || '—')}
-              </div>
-              <div>
-                {label('Dependencia')}
-                {value((event?.dependencia ?? offer.dependencia) || '—')}
-              </div>
-              <div>
-                {label('Fecha del evento')}
-                {value(event?.fechaEvento ? formatDateCO(event.fechaEvento) : '—')}
-              </div>
-              <div>
-                {label('Municipio')}
-                {value(eventMunicipioLabel)}
-              </div>
-              <div>
-                {label('Vereda')}
-                {value(event?.vereda || '—')}
-              </div>
-              <div>
-                {label('Esquema')}
-                <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded capitalize">
-                  {event?.esquema ?? offer.esquema ?? '—'}
-                </span>
-              </div>
-              <div>
-                {label('Asistentes')}
-                {value(event ? String(event.asistentes) : '—')}
-              </div>
-              <div>
-                {label('Días')}
-                {value(event ? String(event.dias) : '—')}
-              </div>
-              <div>
-                {label('Estado')}
-                {event ? (
-                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${eventStateColors[event.estado] || 'bg-slate-100 text-slate-700'}`}>
-                    {event.estado}
-                  </span>
-                ) : value('—')}
-              </div>
-              <div>
-                {label('Aliado general')}
-                {value((aliadoName(event?.aliadoId) ?? offer.aliado) || '—')}
-              </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Sufijo')}
+              {value(event?.sufijo || '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Responsable')}
+              {value((event?.responsable ?? offer.responsable) || '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Dependencia')}
+              {value((event?.dependencia ?? offer.dependencia) || '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Fecha del evento')}
+              {value(event?.fechaEvento ? formatDateCO(event.fechaEvento) : '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Municipio')}
+              {value(eventMunicipioLabel)}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Vereda')}
+              {value(event?.vereda || '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Esquema')}
+              <span className="inline-flex items-center px-2.5 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded-md capitalize">
+                {event?.esquema ?? offer.esquema ?? '—'}
+              </span>
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Asistentes')}
+              {value(event ? String(event.asistentes) : '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Días')}
+              {value(event ? String(event.dias) : '—')}
+            </div>
+            <div className="border border-slate-100 rounded-lg px-4 py-3">
+              {label('Aliado general')}
+              {value((aliadoName(event?.aliadoId) ?? offer.aliado) || '—')}
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Items de la Orden</h2>
+      <div className={activeTab === 'items' ? '' : 'hidden'}>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 bg-primary/10 rounded-lg">
+                <Package className="w-4 h-4 text-primary" />
+              </span>
+              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Items de la Orden</h2>
             </div>
-            {displayItems.length > 0 ? (
+            <span className="text-xs font-medium text-slate-400">{displayItems.length} ítems</span>
+          </div>
+
+          {displayItems.length > 0 ? (
+            <>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50">
@@ -338,37 +397,43 @@ export function OfferViewPage() {
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-slate-50 border-t-2 border-slate-200">
-                    <tr>
-                      <td colSpan={5} className="px-4 py-2.5 text-sm font-semibold text-slate-900">Totales</td>
-                      {hasValues ? (
-                        <>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.subtotal)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.iva)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.impuestoConsumo)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.fee)}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatCurrencyCO(orderTotals.ivaFee)}</td>
-                          <td className="px-4 py-2.5 text-right font-bold text-primary">{formatCurrencyCO(orderTotals.total)}</td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
-                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
-                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
-                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
-                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
-                          <td className="px-4 py-2.5 text-right text-slate-400">—</td>
-                        </>
-                      )}
-                    </tr>
-                  </tfoot>
                 </table>
               </div>
-            ) : (
-              <p className="text-sm text-slate-400 italic px-6 py-4">Sin ítems</p>
-            )}
-          </div>
+
+              <div className="border-t border-slate-100 bg-slate-50/30">
+                <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Subtotal</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.subtotal) : '—'}</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">IVA</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.iva) : '—'}</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Imp. Consumo</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.impuestoConsumo) : '—'}</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.fee) : '—'}</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
+                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">IVA Fee</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.ivaFee) : '—'}</p>
+                  </div>
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-2.5 text-center">
+                    <p className="text-[11px] text-primary/70 uppercase tracking-wider font-semibold">Total</p>
+                    <p className="text-base font-bold text-primary mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.total) : '—'}</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-slate-400 italic px-6 py-4">Sin ítems</p>
+          )}
         </div>
       </div>
+    </div>
   )
 }
