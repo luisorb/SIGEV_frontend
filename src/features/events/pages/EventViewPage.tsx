@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ArrowLeftCircle, AlertTriangle, Lock, ClipboardList, FileSpreadsheet, FolderOpen, Package } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle, ClipboardList, FileSpreadsheet, FolderOpen, Package } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
@@ -403,18 +403,6 @@ export function EventViewPage() {
           <div>
             <p className="text-sm font-semibold text-red-800">Evento rechazado</p>
             {event.observation && <p className="text-xs text-red-700 mt-0.5">Motivo: {event.observation}</p>}
-          </div>
-        </div>
-      )}
-
-      {quotationApproved && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-6 py-4 flex items-start gap-3">
-          <Lock className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-emerald-800">Cotización definitiva aprobada</p>
-            <p className="text-xs text-emerald-700 mt-0.5">
-              No se pueden crear nuevas cotizaciones, ni añadir o modificar los ítems de esta orden.
-            </p>
           </div>
         </div>
       )}

@@ -177,7 +177,7 @@ export function QuotationList({
 
                 return (
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-3 font-medium text-primary">{offer.codigo}</td>
+                    <td className="px-6 py-3 font-medium text-slate-900">{offer.codigo}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${OFFER_STATE_COLORS[displayEstado]}`}>
                         {displayEstado}
