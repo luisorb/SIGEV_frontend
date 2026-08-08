@@ -9,7 +9,7 @@ type EventFormValues = z.infer<typeof eventSchema>
 
 interface UseEventFormOptions {
   event?: Event
-  onSave: (data: EventFormValues) => void
+  onSave: (data: EventFormValues, file?: File | null) => void
 }
 
 export function useEventForm({ event, onSave }: UseEventFormOptions) {

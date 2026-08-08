@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
-import { FileSpreadsheet, Plus, CheckCircle, Circle, FileDown, BadgeCheck, Download } from 'lucide-react'
+import { useMemo, useState, useRef } from 'react'
+import { FileSpreadsheet, Plus, CheckCircle, Circle, FileDown, BadgeCheck, Download, FileUp, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { OFFER_STATE_COLORS } from '../../offers/types'
@@ -20,7 +19,7 @@ interface QuotationListProps {
   event: Event
   offers: Offer[]
   selectedOfferId?: string
-  onSelectOffer?: (offerId: string) => void
+  onSelectOffer?: (offerId: string, file?: File) => void
   readOnly?: boolean
   canSelectQuotation?: boolean
   oferta?: Offer | null
@@ -41,6 +40,8 @@ export function QuotationList({
   const [showModal, setShowModal] = useState(false)
   const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
   const [confirmOffer, setConfirmOffer] = useState<Offer | null>(null)
+  const [approvalFile, setApprovalFile] = useState<File | null>(null)
+  const approvalInputRef = useRef<HTMLInputElement | null>(null)
 
   const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
   const quotationsCount = event.quotations?.length ?? eventOffers.length
@@ -144,7 +145,10 @@ export function QuotationList({
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   {!oferta && (
                     <button
-                      onClick={() => setConfirmOffer(offer)}
+                      onClick={() => {
+                        setApprovalFile(null)
+                        setConfirmOffer(offer)
+                      }}
                       disabled={!canSelect || isSelected}
                       className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                         isSelected
@@ -223,19 +227,90 @@ export function QuotationList({
       )}
 
       {confirmOffer && (
-        <ConfirmDialog
-          isOpen
-          title="Seleccionar cotización"
-          message={`¿Está seguro de seleccionar la cotización ${confirmOffer.codigo} por ${formatCurrencyCO(confirmOffer.total)} para crear la oferta económica definitiva? Esta acción marcará la cotización como ganadora y generará el presupuesto final.`}
-          confirmLabel="Sí, seleccionar"
-          cancelLabel="Cancelar"
-          variant="warning"
-          onConfirm={() => {
-            onSelectOffer?.(confirmOffer.id)
-            setConfirmOffer(null)
-          }}
-          onCancel={() => setConfirmOffer(null)}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-xl shrink-0 bg-amber-100 text-amber-600">
+                <BadgeCheck className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-slate-900">Aprobar Cotización Definitiva</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  La cotización <strong>{confirmOffer.codigo}</strong> por{' '}
+                  <strong>{formatCurrencyCO(confirmOffer.total)}</strong> será aprobada como definitiva. Esta acción la
+                  marcará como ganadora, generará el presupuesto final y no podrá cambiarse después.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setConfirmOffer(null)
+                  setApprovalFile(null)
+                }}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
+                aria-label="Cerrar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="mt-5">
+              <p className="text-sm font-medium text-slate-700">
+                Comunicado de aprobación <span className="text-red-500">*</span>
+              </p>
+              <input
+                ref={approvalInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                className="hidden"
+                onChange={(e) => {
+                  setApprovalFile(e.target.files?.[0] ?? null)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => approvalInputRef.current?.click()}
+                className="mt-1.5 w-full flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 hover:border-slate-400 transition-colors text-left"
+              >
+                <FileUp className="w-5 h-5 text-slate-400 shrink-0" />
+                <span className="flex-1 min-w-0 text-sm truncate">
+                  {approvalFile ? (
+                    <span className="font-mono text-slate-900">{approvalFile.name}</span>
+                  ) : (
+                    <span className="text-slate-400">Seleccione el comunicado oficial de aprobación</span>
+                  )}
+                </span>
+              </button>
+              <p className="text-xs text-slate-400 mt-1.5">
+                Documento obligatorio que respalda la aprobación de la cotización.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setConfirmOffer(null)
+                  setApprovalFile(null)
+                }}
+                className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  const file = approvalFile ?? undefined
+                  onSelectOffer?.(confirmOffer.id, file)
+                  setConfirmOffer(null)
+                  setApprovalFile(null)
+                }}
+                disabled={!approvalFile}
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Aprobar cotización definitiva
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

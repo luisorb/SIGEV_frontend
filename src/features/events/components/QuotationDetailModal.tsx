@@ -30,7 +30,15 @@ export function QuotationDetailModal({ offer, event, onClose }: QuotationDetailM
     let active = true
     getEventAttachmentsApi(event.id)
       .then((list) => {
-        if (active) setAttachments(list.filter((a) => a.category === 'Cotizaciones presentadas'))
+        if (active) {
+          setAttachments(
+            list.filter(
+              (a) =>
+                a.category === 'Cotizaciones presentadas' &&
+                (a.quotationId ? a.quotationId === offer.id : false),
+            ),
+          )
+        }
       })
       .catch(() => {
         if (active) setAttachments([])
@@ -38,7 +46,7 @@ export function QuotationDetailModal({ offer, event, onClose }: QuotationDetailM
     return () => {
       active = false
     }
-  }, [event.id])
+  }, [event.id, offer.id])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">

@@ -82,7 +82,12 @@ export function EventList({
   const { data: municipios = [] } = useMunicipalities()
 
   const canCreate = userCan('functional_admin', 'operator', 'solicitante')
-  const canEdit = userCan('functional_admin', 'operator', 'supervisor', 'analista', 'solicitante')
+  const canEditEvent = (event: Event) =>
+    userCan('functional_admin', 'operator', 'supervisor') ||
+    (event.estado === 'Devuelto' && userCan('analista', 'solicitante')) ||
+    (event.estado === 'Abierto' &&
+      !event.cotizacionSeleccionadaId &&
+      userCan('analista', 'solicitante'))
   const canDelete = userCan('functional_admin')
 
   return (
@@ -231,7 +236,7 @@ export function EventList({
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {canEdit && (
+                          {canEditEvent(event) && (
                             <button
                               onClick={() => navigate(`/ordenes/${event.id}/editar`)}
                               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"

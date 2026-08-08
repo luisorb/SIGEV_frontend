@@ -265,6 +265,7 @@ export interface Attachment {
   fileSize: number
   category?: string
   eventId: string
+  quotationId?: string | null
   uploadedById: string
   createdAt: string
 }

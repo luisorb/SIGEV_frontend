@@ -204,9 +204,12 @@ export function EventViewPage() {
     }
   }
 
-  async function handleSelectOffer(offerId: string) {
+  async function handleSelectOffer(offerId: string, file?: File) {
     if (!event) return
     try {
+      if (file) {
+        await uploadAttachmentApi(event.id, 'Comunicado de aprobación', file)
+      }
       const quotation = await selectQuotation(offerId)
       await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       addAuditEntry({
@@ -236,9 +239,10 @@ export function EventViewPage() {
         fecha: new Date().toISOString(),
         detalle: `Soporte "${tipo}" cargado: ${file.name}`,
       })
-      toast.showToast(`Soporte "${tipo}" cargado`)
+      toast.showToast(`Soporte "${tipo}" cargado correctamente`)
     } catch (error) {
       toast.showToast(getApiErrorMessage(error, `No se pudo cargar el soporte "${tipo}"`), 'error')
+      throw error
     }
   }
 
@@ -306,7 +310,10 @@ export function EventViewPage() {
 
   const canEdit =
     userCan('functional_admin', 'operator', 'supervisor') ||
-    (isDevuelto && userCan('analista', 'solicitante'))
+    (isDevuelto && userCan('analista', 'solicitante')) ||
+    (displayEstado === 'Abierto' &&
+      !event.cotizacionSeleccionadaId &&
+      userCan('analista', 'solicitante'))
 
   const canModifyItems =
     userCan('functional_admin', 'operator') ||
@@ -320,7 +327,6 @@ export function EventViewPage() {
   const canSelectQuotation =
     userCan('approver') && !TERMINAL_STATES.includes(displayEstado) && !quotationApproved
 
-  const soportesVisible = ['En ejecución', 'Ejecutado', 'Cerrado', 'Devuelto'].includes(displayEstado)
   const soportesReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
 
   const itemsReadOnly =
@@ -394,22 +400,20 @@ export function EventViewPage() {
       )}
 
       <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
-        {DETAIL_TABS.map((tab) =>
-          tab.key === 'soportes' && !soportesVisible ? null : (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
-                activeTab === tab.key
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ),
-        )}
+        {DETAIL_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+              activeTab === tab.key
+                ? 'bg-white text-primary shadow-sm'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <div className={activeTab === 'detalles' ? '' : 'hidden'}>
@@ -495,8 +499,7 @@ export function EventViewPage() {
       />
       </div>
 
-      {soportesVisible && (
-        <div className={activeTab === 'soportes' ? '' : 'hidden'}>
+      <div className={activeTab === 'soportes' ? '' : 'hidden'}>
         <SupportDocuments
           soportes={event.soportes || []}
           attachments={event.attachments ?? []}
@@ -508,8 +511,7 @@ export function EventViewPage() {
           onDelete={handleDeleteSoporte}
           onDownload={handleDownloadAttachment}
         />
-        </div>
-      )}
+      </div>
 
       <div className={activeTab === 'items' ? '' : 'hidden'}>
       <ItemManager

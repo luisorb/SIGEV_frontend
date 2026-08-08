@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { AlertTriangle, MapPin } from 'lucide-react'
+import { AlertTriangle, MapPin, FileText, Download, Upload, Lock } from 'lucide-react'
 import type { EventFormValues } from '../schemas/eventSchema'
-import type { Ally, Disbursement, Municipality, Event } from '../../../types'
+import type { Ally, Disbursement, Municipality, Event, Attachment } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
 import { checkDuplicateEventNumber } from '../utils/duplicateCheck'
 import { LocationPicker } from './LocationPicker'
 import { SearchableSelect } from '../../../components/SearchableSelect'
+import { downloadAttachment } from '../../../services/attachments.service'
+import { formatDateCO } from '../../../utils/formatters'
 
 interface EventFormProps {
   event?: Event
@@ -14,7 +16,7 @@ interface EventFormProps {
   desembolsos: Disbursement[]
   municipios: Municipality[]
   events: Event[]
-  onSave: (data: EventFormValues) => void
+  onSave: (data: EventFormValues, file?: File | null) => void
   onCancel: () => void
 }
 
@@ -44,10 +46,16 @@ export function EventForm({
 }: EventFormProps) {
   const { register, handleSubmit, errors, isSubmitting, watchedValues, setValue } = useEventForm({
     event,
-    onSave,
+    onSave: (data) => onSave(data, requerimientoFile),
   })
 
   const [showPicker, setShowPicker] = useState(false)
+  const [requerimientoFile, setRequerimientoFile] = useState<File | null>(null)
+
+  const existingRequerimiento: Attachment | undefined = event?.attachments?.find(
+    (a) => a.category === 'Formato de requerimiento',
+  )
+  const requerimientoLocked = !!event?.cotizacionSeleccionadaId
 
   const duplicate = checkDuplicateEventNumber(
     events,
@@ -220,6 +228,96 @@ export function EventForm({
               placeholder="Observaciones adicionales del evento..."
             />
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+            Formato de requerimiento
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Documento oficial de solicitud del evento. Solo puede cargarse aquí; en el detalle de la orden solo es posible descargarlo.
+          </p>
+        </div>
+        <div className="px-6 py-5">
+          {requerimientoLocked && (
+            <div className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4">
+              <Lock className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-700">Documento inmutable</p>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  La cotización fue aprobada y se creó el presupuesto final, por lo que el Formato de requerimiento no puede modificarse.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {existingRequerimiento && (
+            <div className="flex items-center justify-between gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="shrink-0 w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-green-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-900 truncate">{existingRequerimiento.originalName}</p>
+                  <p className="text-xs text-slate-400">
+                    {(existingRequerimiento.fileSize / 1024).toFixed(1)} KB · {formatDateCO(existingRequerimiento.createdAt)}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => downloadAttachment(existingRequerimiento.id, existingRequerimiento.originalName)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors shrink-0"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Descargar
+              </button>
+            </div>
+          )}
+
+          <div className={`flex items-center gap-3 ${requerimientoLocked ? 'opacity-50' : ''}`}>
+            <label
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border border-dashed rounded-xl cursor-pointer transition-colors ${
+                requerimientoFile
+                  ? 'border-primary/40 bg-primary/5 text-primary'
+                  : 'border-slate-300 text-slate-500 hover:border-primary/40 hover:bg-slate-50'
+              }`}
+            >
+              <Upload className="w-4 h-4 shrink-0" />
+              {requerimientoFile
+                ? requerimientoFile.name
+                : existingRequerimiento
+                  ? 'Reemplazar formato de requerimiento (PDF)'
+                  : 'Cargar formato de requerimiento (PDF)'}
+              <input
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                disabled={requerimientoLocked}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null
+                  setRequerimientoFile(file)
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            {requerimientoFile && !requerimientoLocked && (
+              <button
+                type="button"
+                onClick={() => setRequerimientoFile(null)}
+                className="px-3 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
+              >
+                Quitar
+              </button>
+            )}
+          </div>
+          {!requerimientoLocked && existingRequerimiento && requerimientoFile && (
+            <p className="text-xs text-amber-600 mt-2">
+              Al guardar, el archivo actual será reemplazado por el nuevo.
+            </p>
+          )}
         </div>
       </div>
 

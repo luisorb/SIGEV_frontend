@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { EventForm } from '../components/EventForm'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventApi, updateEventApi, getEventsApi } from '../../../services/events.service'
+import { uploadAttachmentApi } from '../../../services/attachments.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
@@ -29,7 +30,7 @@ export function EventDetailPage() {
   const { data: municipios = [] } = useMunicipalities()
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
 
-  async function handleSave(data: EventFormValues) {
+  async function handleSave(data: EventFormValues, file?: File | null) {
     if (!event || !id) return
 
     try {
@@ -51,6 +52,10 @@ export function EventDetailPage() {
         longitud: data.longitud || undefined,
         observaciones: data.observaciones ?? '',
       })
+
+      if (file) {
+        await uploadAttachmentApi(id, 'Formato de requerimiento', file)
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['events'] })
       await queryClient.invalidateQueries({ queryKey: ['event', id] })
@@ -85,7 +90,10 @@ export function EventDetailPage() {
 
   const canEdit =
     userCan('functional_admin', 'operator', 'supervisor') ||
-    (event.estado === 'Devuelto' && userCan('analista', 'solicitante'))
+    (event.estado === 'Devuelto' && userCan('analista', 'solicitante')) ||
+    (event.estado === 'Abierto' &&
+      !event.cotizacionSeleccionadaId &&
+      userCan('analista', 'solicitante'))
 
   if (!canEdit) {
     return (
@@ -97,7 +105,9 @@ export function EventDetailPage() {
         <p className="max-w-md text-sm text-slate-500">
           {event.estado === 'Devuelto'
             ? 'Su rol no le permite corregir el evento en este estado.'
-            : 'Los roles analista y solicitante solo pueden editar el evento cuando está en estado Devuelto.'}
+            : event.estado === 'Abierto'
+              ? 'Los roles analista y solicitante solo pueden editar el evento en estado Abierto si la cotización no ha sido aprobada.'
+              : 'Los roles analista y solicitante solo pueden editar el evento cuando está en estado Devuelto.'}
         </p>
         <Link to={`/ordenes/${event.id}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-dark transition-colors">
           <ChevronLeft className="w-4 h-4" />

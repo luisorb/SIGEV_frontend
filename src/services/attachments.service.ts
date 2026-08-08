@@ -17,10 +17,12 @@ export async function uploadAttachmentApi(
   eventId: string,
   category: string,
   file: File,
+  quotationId?: string,
 ): Promise<Attachment> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('category', category)
+  if (quotationId) formData.append('quotationId', quotationId)
   const response = await api.post<Attachment>(
     `/api/v1/attachments/event/${eventId}`,
     formData,

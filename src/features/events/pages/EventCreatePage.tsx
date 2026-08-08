@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { EventForm } from '../components/EventForm'
 import { createEventApi, getEventsApi } from '../../../services/events.service'
+import { uploadAttachmentApi } from '../../../services/attachments.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
@@ -21,7 +22,7 @@ export function EventCreatePage() {
   const { data: municipios = [] } = useMunicipalities()
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
 
-  async function handleSave(data: EventFormValues) {
+  async function handleSave(data: EventFormValues, file?: File | null) {
     try {
       const partial: Partial<Event> = {
         numeroEvento: data.numeroEvento,
@@ -42,6 +43,10 @@ export function EventCreatePage() {
       }
 
       const newEvent = await createEventApi(partial)
+
+      if (file) {
+        await uploadAttachmentApi(newEvent.id, 'Formato de requerimiento', file)
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['events'] })
       await queryClient.invalidateQueries({ queryKey: ['map-stats'] })
