@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ClipboardList } from 'lucide-react'
+import { keepPreviousData } from '@tanstack/react-query'
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ClipboardList, Loader2 } from 'lucide-react'
 import { getAllAuditEntries } from '../lib/auditStore'
 import { getAuditApi } from '../services/audit.service'
 import { formatDateCO } from '../utils/formatters'
@@ -27,13 +28,28 @@ export function AuditPage() {
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(0)
 
-  const { data: serverAudit = [] } = useQuery({
-    queryKey: ['audit'],
-    queryFn: getAuditApi,
+  const {
+    data: serverPage = { data: [], total: 0, page: 0, pageSize, totalPages: 0 },
+    isPending,
+    isFetching,
+  } = useQuery({
+    queryKey: ['audit', page, pageSize, search, filterEntidad, filterAccion, sortColumn, sortDir],
+    queryFn: () =>
+      getAuditApi({
+        page,
+        pageSize,
+        search,
+        entidad: filterEntidad || undefined,
+        accion: filterAccion || undefined,
+        sortBy: sortColumn || undefined,
+        sortDir: sortDir ?? undefined,
+      }),
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
   })
 
   function handleSort(column: SortColumn) {
+    setPage(0)
     if (sortColumn !== column) {
       setSortColumn(column)
       setSortDir('asc')
@@ -45,11 +61,8 @@ export function AuditPage() {
     }
   }
 
-  const filteredAndSorted = useMemo(() => {
-    const localEntries = getAllAuditEntries()
-    let result = [...serverAudit, ...localEntries].sort(
-      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
-    )
+  const localEntries = useMemo(() => {
+    let result = getAllAuditEntries()
 
     if (filterEntidad) result = result.filter((e) => e.entidad === filterEntidad)
     if (filterAccion) result = result.filter((e) => e.accion.startsWith(filterAccion))
@@ -67,37 +80,24 @@ export function AuditPage() {
       )
     }
 
-    if (!sortDir) return result
+    return [...result].sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+    )
+  }, [filterEntidad, filterAccion, search])
 
-    return [...result].sort((a, b) => {
-      let cmp = 0
-      switch (sortColumn) {
-        case 'fecha':
-          cmp = new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-          break
-        case 'usuario':
-          cmp = a.usuario.localeCompare(b.usuario)
-          break
-        case 'accion':
-          cmp = a.accion.localeCompare(b.accion)
-          break
-        case 'entidad':
-          cmp = a.entidad.localeCompare(b.entidad)
-          break
-        case 'entidadId':
-          cmp = a.entidadId.localeCompare(b.entidadId)
-          break
-        case 'detalle':
-          cmp = a.detalle.localeCompare(b.detalle)
-          break
-      }
-      return sortDir === 'asc' ? cmp : -cmp
-    })
-  }, [filterEntidad, filterAccion, search, sortColumn, sortDir, serverAudit])
-
-  const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / pageSize))
+  const totalCount = (serverPage.total ?? 0) + localEntries.length
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const safePage = Math.min(page, totalPages - 1)
-  const paged = filteredAndSorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
+
+  const rows = useMemo(() => {
+    const serverRows = serverPage.data ?? []
+    if (safePage === 0) {
+      const localRows = localEntries.slice(0, pageSize)
+      const remaining = pageSize - localRows.length
+      return [...localRows, ...serverRows.slice(0, Math.max(0, remaining))]
+    }
+    return serverRows
+  }, [safePage, localEntries, serverPage.data, pageSize])
 
   return (
     <div className="space-y-4">
@@ -177,14 +177,23 @@ export function AuditPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paged.length === 0 ? (
+              {isPending && rows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-16 text-center">
+                    <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Cargando registros...
+                    </div>
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center text-sm text-slate-400">
                     No hay registros de auditoría.
                   </td>
                 </tr>
               ) : (
-                paged.map((entry) => (
+                rows.map((entry) => (
                   <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-3 sm:px-4 py-3 text-sm text-slate-500 whitespace-nowrap">{formatDateCO(entry.fecha)}</td>
                     <td className="px-3 sm:px-4 py-3 text-sm font-medium text-slate-900 whitespace-nowrap">{entry.usuario}</td>
@@ -199,10 +208,13 @@ export function AuditPage() {
           </table>
         </div>
 
-        {filteredAndSorted.length > 0 && (
+        {totalCount > 0 && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
             <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span>Mostrando página {safePage + 1} de {totalPages} ({filteredAndSorted.length} resultados)</span>
+              <span>Mostrando página {safePage + 1} de {totalPages} ({totalCount} resultados)</span>
+              {isFetching && (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+              )}
               <span className="text-slate-300">|</span>
               <label htmlFor="audit-pageSize" className="sr-only">Filas por página</label>
               <select

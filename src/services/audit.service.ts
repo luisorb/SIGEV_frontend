@@ -26,6 +26,12 @@ const ENTIDAD_MAP: Record<string, string> = {
   disbursements: 'Disbursement',
 }
 
+const ENTIDAD_LABEL_TO_KEYS: Record<string, string[]> = {}
+for (const [key, label] of Object.entries(ENTIDAD_MAP)) {
+  if (!ENTIDAD_LABEL_TO_KEYS[label]) ENTIDAD_LABEL_TO_KEYS[label] = []
+  ENTIDAD_LABEL_TO_KEYS[label].push(key)
+}
+
 function methodToAccion(action: string): string {
   const method = action.split(' ')[0]?.toUpperCase()
   const url = action.split(' ')[1] ?? ''
@@ -61,11 +67,63 @@ function mapBackendAudit(log: BackendAuditLog): AuditEntry {
   }
 }
 
-export async function getAuditApi(): Promise<AuditEntry[]> {
+export interface GetAuditParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  entidad?: string
+  accion?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
+}
+
+export interface PaginatedAudit {
+  data: AuditEntry[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+interface BackendPaginatedAudit {
+  data: BackendAuditLog[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export async function getAuditApi(params: GetAuditParams = {}): Promise<PaginatedAudit> {
+  const empty: PaginatedAudit = {
+    data: [],
+    total: 0,
+    page: params.page ?? 0,
+    pageSize: params.pageSize ?? 10,
+    totalPages: 0,
+  }
   try {
-    const response = await api.get<BackendAuditLog[]>('/api/v1/audit')
-    return (response.data ?? []).map(mapBackendAudit)
+    const query: Record<string, string> = {}
+    if (params.page !== undefined) query.page = String(params.page + 1)
+    if (params.pageSize !== undefined) query.pageSize = String(params.pageSize)
+    if (params.search?.trim()) query.search = params.search.trim()
+    if (params.entidad) {
+      const keys = ENTIDAD_LABEL_TO_KEYS[params.entidad]
+      if (keys?.length) query.entity = keys.join(',')
+    }
+    if (params.accion) query.action = params.accion
+    if (params.sortBy) query.sortBy = params.sortBy
+    if (params.sortDir) query.sortDir = params.sortDir
+
+    const response = await api.get<BackendPaginatedAudit>('/api/v1/audit', { params: query })
+    const res = response.data
+    return {
+      data: (res?.data ?? []).map(mapBackendAudit),
+      total: res?.total ?? 0,
+      page: res?.page ?? 1,
+      pageSize: res?.pageSize ?? params.pageSize ?? 10,
+      totalPages: res?.totalPages ?? 0,
+    }
   } catch {
-    return []
+    return empty
   }
 }
