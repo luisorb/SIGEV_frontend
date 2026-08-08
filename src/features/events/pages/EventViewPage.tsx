@@ -6,7 +6,7 @@ import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
 import { ImportExcelModal } from '../components/ImportExcelModal'
 import { useItems, type ManagedItem } from '../hooks/useItems'
-import { useQuotations } from '../../offers/hooks/useQuotations'
+import { useQuotations, QUOTATIONS_KEY } from '../../offers/hooks/useQuotations'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventApi, updateEventApi } from '../../../services/events.service'
 import { getOfertaEconomicaByEventApi, mapOfertaEconomicaToOffer } from '../../../services/offers.service'
@@ -47,7 +47,7 @@ export function EventViewPage() {
   const toast = useToast()
   const queryClient = useQueryClient()
   const { can: userCan } = useRolePermissions()
-  const { allQuotations: offers, selectQuotation } = useQuotations()
+  const { allQuotations: offers, selectQuotation, changeState } = useQuotations()
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
@@ -223,6 +223,26 @@ export function EventViewPage() {
       toast.showToast('Oferta económica definitiva generada')
     } catch (error) {
       toast.showToast(getApiErrorMessage(error, 'No se pudo seleccionar la cotización'), 'error')
+    }
+  }
+
+  async function handleRejectOffer(offerId: string, observation: string) {
+    if (!event) return
+    try {
+      await changeState(offerId, 'Rechazada', observation)
+      await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
+      await queryClient.invalidateQueries({ queryKey: QUOTATIONS_KEY })
+      addAuditEntry({
+        accion: 'Rechazo de cotización',
+        entidad: 'Quotation',
+        entidadId: offerId,
+        usuario: getCurrentUser(),
+        fecha: new Date().toISOString(),
+        detalle: `Cotización rechazada en el evento ${event.numeroEvento}: ${observation}`,
+      })
+      toast.showToast('Cotización rechazada')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo rechazar la cotización'), 'error')
     }
   }
 
@@ -493,6 +513,7 @@ export function EventViewPage() {
         offers={offers}
         selectedOfferId={event.cotizacionSeleccionadaId}
         onSelectOffer={handleSelectOffer}
+        onRejectOffer={handleRejectOffer}
         oferta={ofertaEconomica ?? null}
         readOnly={offersReadOnly}
         canSelectQuotation={canSelectQuotation}

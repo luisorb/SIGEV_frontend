@@ -57,6 +57,7 @@ export interface Offer {
   feeTercerosTotal: number
   ivaFeeTotal: number
   total: number
+  observations?: string | null
   createdAt: string
   updatedAt: string
 }

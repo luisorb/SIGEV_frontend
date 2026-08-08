@@ -126,6 +126,7 @@ export function mapQuotationResponse(data: QuotationResponse): Offer {
     feeTercerosTotal: items.reduce((sum, it) => sum + it.feeTerceros, 0),
     ivaFeeTotal: items.reduce((sum, it) => sum + it.ivaFee, 0),
     total,
+    observations: data.observations ?? null,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   }

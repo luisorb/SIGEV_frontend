@@ -95,6 +95,18 @@ export function QuotationDetailModal({ offer, event, onClose }: QuotationDetailM
         </div>
 
         <div className="px-6 py-6 space-y-7">
+          {offer.estado === 'Rechazada' && offer.observations && (
+            <section className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <header className="flex items-center gap-2 mb-1.5">
+                <span className="w-1 h-3.5 bg-red-500 rounded-sm" aria-hidden="true" />
+                <h4 className="text-[11px] font-mono uppercase tracking-widest text-red-700">
+                  Motivo de rechazo
+                </h4>
+              </header>
+              <p className="text-sm text-red-900 leading-relaxed">{offer.observations}</p>
+            </section>
+          )}
+
           <section>
             <header className="flex items-center gap-2 mb-3">
               <span className="w-1 h-3.5 bg-primary rounded-sm" aria-hidden="true" />
