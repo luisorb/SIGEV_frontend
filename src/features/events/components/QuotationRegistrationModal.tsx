@@ -106,6 +106,9 @@ export function QuotationRegistrationModal({
         return `Ingrese el valor unitario negociado del ítem "${label}"`
       }
     }
+    if (!file) {
+      return 'El documento soporte del proveedor es obligatorio'
+    }
     if (file && !file.name.toLowerCase().endsWith('.pdf')) {
       return 'El documento soporte debe ser un archivo PDF'
     }
@@ -334,7 +337,7 @@ export function QuotationRegistrationModal({
             <header className="flex items-center gap-2 mb-3">
               <span className="w-1 h-3.5 bg-primary rounded-sm" aria-hidden="true" />
               <h4 className="text-[11px] font-mono uppercase tracking-widest text-slate-500">
-                Documento soporte del proveedor
+                Documento soporte del proveedor <span className="text-red-500">*</span>
               </h4>
             </header>
             <input
@@ -360,7 +363,7 @@ export function QuotationRegistrationModal({
                       <span className="text-slate-400 font-mono"> ({(file.size / 1024).toFixed(1)} KB)</span>
                     </>
                   ) : (
-                    <span className="text-slate-400">Seleccione el PDF de la cotización enviada por el proveedor externo...</span>
+                    <span className="text-slate-400">Seleccione el PDF de la cotización enviada por el proveedor externo (obligatorio)...</span>
                   )}
                 </span>
               </div>
