@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ChevronLeft, FileDown, Download, FileText, ClipboardList, Package } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useOffers, usePermissions } from '../hooks/useOffers'
+import { usePermissions } from '../hooks/useOffers'
 import { formatCurrencyCO, formatDateTimeCO, formatDateCO } from '../../../utils/formatters'
 import { exportOfferToExcel } from '../utils/excelExport'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { getEventApi } from '../../../services/events.service'
+import { getOfertaEconomicaApi, mapOfertaEconomicaToOffer } from '../../../services/offers.service'
 import { downloadAttachment } from '../../../services/attachments.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
@@ -35,10 +36,13 @@ const eventStateColors: Record<string, string> = {
 
 export function OfferViewPage() {
   const { id } = useParams()
-  const { getOffer, isLoading } = useOffers()
   const { can } = usePermissions()
 
-  const offer = id ? getOffer(id) : undefined
+  const { data: offer, isLoading } = useQuery({
+    queryKey: ['offers', id],
+    queryFn: () => getOfertaEconomicaApi(id!).then(mapOfertaEconomicaToOffer),
+    enabled: !!id,
+  })
 
   const { data: event } = useQuery({
     queryKey: ['event', offer?.eventoId],

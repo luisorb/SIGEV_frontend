@@ -33,7 +33,7 @@ export function Breadcrumbs() {
   })
 
   const { data: quotations = [] } = useQuery({
-    queryKey: ['offers'],
+    queryKey: ['quotations'],
     queryFn: async () => (await getQuotationsApi()).map(mapQuotationResponse),
     enabled: Boolean(offerId),
   })
