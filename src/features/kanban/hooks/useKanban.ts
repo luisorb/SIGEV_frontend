@@ -70,7 +70,7 @@ export function useKanban({ events }: UseKanbanOptions) {
     const hasDefinitiveQuotation =
       event.quotations?.some((q) => q.isDefinitive) === true ||
       !!event.cotizacionSeleccionadaId
-    if (!hasDefinitiveQuotation) {
+    if (!hasDefinitiveQuotation && targetState !== 'Rechazado') {
       toast.showToast('La orden debe contar con al menos una cotización aprobada de forma definitiva antes de cambiar su estado', 'error')
       return
     }

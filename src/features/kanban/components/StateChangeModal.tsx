@@ -21,11 +21,15 @@ interface StateChangeModalProps {
 export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateChangeModalProps) {
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
-  const isDevolucion = pendingChange.to === 'Devuelto'
+  const requiresObservation = pendingChange.to === 'Devuelto' || pendingChange.to === 'Rechazado'
 
   function handleConfirm() {
-    if (isDevolucion && reason.trim().length < 3) {
-      setError('La observación es obligatoria (mínimo 3 caracteres) para devolver el evento')
+    if (requiresObservation && reason.trim().length < 3) {
+      setError(
+        pendingChange.to === 'Rechazado'
+          ? 'La observación o motivo del rechazo es obligatorio (mínimo 3 caracteres)'
+          : 'La observación es obligatoria (mínimo 3 caracteres) para devolver el evento',
+      )
       return
     }
     onConfirm(reason)
@@ -58,7 +62,7 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-slate-700">
               Observación / Motivo
-              {isDevolucion && <span className="text-red-500"> *</span>}
+              {requiresObservation && <span className="text-red-500"> *</span>}
             </label>
             <textarea
               value={reason}
@@ -66,7 +70,7 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
                 setReason(e.target.value)
                 if (error) setError('')
               }}
-              placeholder={isDevolucion ? 'Obligatorio: describe el motivo de la devolución...' : 'Opcional: describe el motivo del cambio de estado...'}
+              placeholder={requiresObservation ? (pendingChange.to === 'Rechazado' ? 'Obligatorio: describe el motivo del rechazo...' : 'Obligatorio: describe el motivo de la devolución...') : 'Opcional: describe el motivo del cambio de estado...'}
               rows={3}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
             />

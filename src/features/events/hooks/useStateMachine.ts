@@ -48,6 +48,12 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       isDevolucion: true,
       validate: () => null,
     },
+    {
+      to: 'Rechazado',
+      roles: ['approver'],
+      isRechazo: true,
+      validate: () => null,
+    },
   ],
   Ejecutado: [
     {
