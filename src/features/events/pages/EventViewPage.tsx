@@ -534,6 +534,7 @@ export function EventViewPage() {
           readOnly={soportesReadOnly}
           eventStatus={displayEstado}
           devolucionLegalizacion={esDevolucionLegalizacion}
+          quotationApproved={quotationApproved}
           onUpload={handleUploadSoporte}
           onDelete={handleDeleteSoporte}
           onDownload={handleDownloadAttachment}

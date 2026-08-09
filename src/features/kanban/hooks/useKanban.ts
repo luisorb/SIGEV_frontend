@@ -70,9 +70,18 @@ export function useKanban({ events }: UseKanbanOptions) {
     const hasDefinitiveQuotation =
       event.quotations?.some((q) => q.isDefinitive) === true ||
       !!event.cotizacionSeleccionadaId
-    if (!hasDefinitiveQuotation && targetState !== 'Rechazado') {
-      toast.showToast('La orden debe contar con al menos una cotización aprobada de forma definitiva antes de cambiar su estado', 'error')
-      return
+    const isDevolucionInicial = event.estado === 'Abierto' && targetState === 'Devuelto'
+
+    if (targetState !== 'Rechazado') {
+      if (isDevolucionInicial) {
+        if ((event.quotations?.length ?? 0) < 1) {
+          toast.showToast('La orden debe contar con al menos una cotización para devolverla a ajustes', 'error')
+          return
+        }
+      } else if (!hasDefinitiveQuotation) {
+        toast.showToast('La orden debe contar con al menos una cotización aprobada de forma definitiva antes de cambiar su estado', 'error')
+        return
+      }
     }
 
     if (event.estado === 'En ejecución' && targetState === 'Ejecutado') {

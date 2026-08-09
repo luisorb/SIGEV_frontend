@@ -24,6 +24,7 @@ interface SupportDocumentsProps {
   readOnly?: boolean
   eventStatus?: EventState
   devolucionLegalizacion?: boolean
+  quotationApproved?: boolean
   onUpload: (tipo: TipoSoporte, file: File) => Promise<void>
   onDelete: (attachmentId: string) => void
   onDownload?: (attachment: Attachment) => void
@@ -35,6 +36,7 @@ export function SupportDocuments({
   readOnly = false,
   eventStatus = 'Abierto',
   devolucionLegalizacion = false,
+  quotationApproved = false,
   onUpload,
   onDelete,
   onDownload,
@@ -60,7 +62,7 @@ export function SupportDocuments({
 
   function isFolderEditable(tipo: TipoSoporte): boolean {
     if (readOnly) return false
-    if (tipo === 'Formato de requerimiento') return false
+    if (tipo === 'Formato de requerimiento' && quotationApproved) return false
     if (isEstatico(tipo)) {
       return (
         eventStatus === 'Abierto' ||
@@ -69,9 +71,8 @@ export function SupportDocuments({
       )
     }
     return (
-      eventStatus === 'Abierto' ||
       eventStatus === 'En ejecución' ||
-      eventStatus === 'Devuelto'
+      (eventStatus === 'Devuelto' && devolucionLegalizacion)
     )
   }
 
