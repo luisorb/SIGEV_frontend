@@ -20,6 +20,16 @@ interface StateChangeModalProps {
 
 export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateChangeModalProps) {
   const [reason, setReason] = useState('')
+  const [error, setError] = useState('')
+  const isDevolucion = pendingChange.to === 'Devuelto'
+
+  function handleConfirm() {
+    if (isDevolucion && reason.trim().length < 3) {
+      setError('La observación es obligatoria (mínimo 3 caracteres) para devolver el evento')
+      return
+    }
+    onConfirm(reason)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -48,14 +58,19 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-slate-700">
               Observación / Motivo
+              {isDevolucion && <span className="text-red-500"> *</span>}
             </label>
             <textarea
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Opcional: describe el motivo del cambio de estado..."
+              onChange={(e) => {
+                setReason(e.target.value)
+                if (error) setError('')
+              }}
+              placeholder={isDevolucion ? 'Obligatorio: describe el motivo de la devolución...' : 'Opcional: describe el motivo del cambio de estado...'}
               rows={3}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
             />
+            {error && <p className="text-xs text-red-600">{error}</p>}
           </div>
         </div>
 
@@ -67,7 +82,7 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
             Cancelar
           </button>
           <button
-            onClick={() => onConfirm(reason)}
+            onClick={handleConfirm}
             className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
           >
             Confirmar Cambio

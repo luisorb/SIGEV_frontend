@@ -17,12 +17,12 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   Abierto: [
     {
       to: 'En ejecución',
-      roles: ['operator', 'functional_admin'],
+      roles: ['approver'],
       validate: () => null,
     },
     {
       to: 'Devuelto',
-      roles: ['approver', 'supervisor'],
+      roles: ['approver'],
       isDevolucion: true,
       validate: () => null,
     },
@@ -36,7 +36,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   'En ejecución': [
     {
       to: 'Ejecutado',
-      roles: ['operator', 'functional_admin'],
+      roles: ['approver'],
       validate: (event) => {
         if (event.items.length === 0) return 'Debe tener al menos un ítem antes de marcar como ejecutado'
         return null
@@ -44,7 +44,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
     },
     {
       to: 'Devuelto',
-      roles: ['approver', 'supervisor'],
+      roles: ['approver'],
       isDevolucion: true,
       validate: () => null,
     },
@@ -62,7 +62,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
     },
     {
       to: 'Devuelto',
-      roles: ['approver', 'supervisor'],
+      roles: ['approver'],
       isDevolucion: true,
       validate: () => null,
     },
@@ -70,7 +70,12 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   Devuelto: [
     {
       to: 'En ejecución',
-      roles: ['operator', 'analista', 'functional_admin'],
+      roles: ['approver'],
+      validate: () => null,
+    },
+    {
+      to: 'Cerrado',
+      roles: ['approver'],
       validate: () => null,
     },
   ],
@@ -80,8 +85,6 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       roles: ['approver'],
       validate: () => null,
     },
-  ],
-  Legalizado: [
     {
       to: 'Devuelto',
       roles: ['approver'],
@@ -89,6 +92,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       validate: () => null,
     },
   ],
+  Legalizado: [],
   Rechazado: [],
 }
 

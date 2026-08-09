@@ -339,6 +339,11 @@ export function EventViewPage() {
     userCan('functional_admin', 'operator') ||
     (isDevuelto && userCan('analista'))
 
+  const canEditSoportes =
+    userCan('functional_admin', 'operator', 'supervisor') ||
+    (isDevuelto && userCan('analista')) ||
+    (esDevolucionLegalizacion && userCan('solicitante'))
+
   const canManageOffers = userCan('functional_admin', 'operator')
   const quotationApproved = !!event.cotizacionSeleccionadaId
   const offersReadOnly =
@@ -347,7 +352,7 @@ export function EventViewPage() {
   const canSelectQuotation =
     userCan('approver') && !TERMINAL_STATES.includes(displayEstado) && !quotationApproved
 
-  const soportesReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
+  const soportesReadOnly = !canEditSoportes || TERMINAL_STATES.includes(displayEstado)
 
   const itemsReadOnly =
     !canModifyItems || TERMINAL_STATES.includes(displayEstado) || quotationApproved
