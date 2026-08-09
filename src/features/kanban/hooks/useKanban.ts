@@ -75,6 +75,23 @@ export function useKanban({ events }: UseKanbanOptions) {
       return
     }
 
+    if (event.estado === 'En ejecución' && targetState === 'Ejecutado') {
+      const requiredFolders = ['Facturas normalizadas', 'Registro fotográfico', 'Listado de asistencia']
+      const loadedFolders = new Set(
+        (event.attachments ?? [])
+          .map((a) => a.category)
+          .filter((c): c is string => !!c),
+      )
+      const missing = requiredFolders.filter((folder) => !loadedFolders.has(folder))
+      if (missing.length > 0) {
+        toast.showToast(
+          `Para pasar la orden a "Ejecutado" cada carpeta de soportes debe tener al menos un documento. Faltan documentos en: ${missing.join(', ')}.`,
+          'error',
+        )
+        return
+      }
+    }
+
     setPendingChange({
       eventId: activeId,
       from: event.estado,
