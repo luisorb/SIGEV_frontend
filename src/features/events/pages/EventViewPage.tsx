@@ -442,14 +442,12 @@ export function EventViewPage() {
         </div>
       )}
 
-      {dateStatus && DATE_NOTICE_STATES.includes(displayEstado) && (
-        <div className={`rounded-xl px-6 py-4 flex items-start gap-3 ${dateStatus.overdue ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
-          <CalendarClock className={`w-5 h-5 shrink-0 mt-0.5 ${dateStatus.overdue ? 'text-amber-500' : 'text-blue-500'}`} />
+      {dateStatus?.overdue && DATE_NOTICE_STATES.includes(displayEstado) && (
+        <div className="rounded-xl px-6 py-4 flex items-start gap-3 bg-amber-50 border border-amber-200">
+          <CalendarClock className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
           <div>
-            <p className={`text-sm font-semibold ${dateStatus.overdue ? 'text-amber-800' : 'text-blue-800'}`}>
-              {dateStatus.overdue ? 'Evento fuera de la fecha programada' : 'Evento programado para el futuro'}
-            </p>
-            <p className={`text-xs mt-0.5 ${dateStatus.overdue ? 'text-amber-700' : 'text-blue-700'}`}>{dateStatus.text}</p>
+            <p className="text-sm font-semibold text-amber-800">Evento fuera de la fecha programada</p>
+            <p className="text-xs mt-0.5 text-amber-700">{dateStatus.text}</p>
           </div>
         </div>
       )}
