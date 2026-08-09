@@ -35,7 +35,7 @@ export function useKanban({ events }: UseKanbanOptions) {
         aliadoId: event.aliadoId,
         desembolsoId: event.desembolsoId,
         estado: event.estado,
-        itemCount: event.items.length,
+        itemCount: event.ofertaEconomica?.items?.length ?? event.items.length,
         totalEconomico: event.ofertaEconomica?.total ?? 0,
       }
       groups[event.estado]?.push(card)
