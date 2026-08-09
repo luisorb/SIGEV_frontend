@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Folder, FolderOpen, ChevronRight, FileText, Upload, Trash2, Lock, Download, Loader2, X } from 'lucide-react'
 import type { Soporte, TipoSoporte, Attachment, EventState } from '../../../types'
-import { SOPORTES_REQUERIDOS, SOPORTES_ESTATICOS, SOPORTES_MODIFICABLES } from '../../../types'
+import { SOPORTES_REQUERIDOS, SOPORTES_ESTATICOS } from '../../../types'
 import { formatDateCO } from '../../../utils/formatters'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
@@ -22,7 +22,6 @@ interface SupportDocumentsProps {
   soportes: Soporte[]
   attachments?: Attachment[]
   readOnly?: boolean
-  soloModificables?: boolean
   eventStatus?: EventState
   devolucionLegalizacion?: boolean
   onUpload: (tipo: TipoSoporte, file: File) => Promise<void>
@@ -34,7 +33,6 @@ export function SupportDocuments({
   soportes,
   attachments = [],
   readOnly = false,
-  soloModificables = false,
   eventStatus = 'Abierto',
   devolucionLegalizacion = false,
   onUpload,
@@ -46,7 +44,7 @@ export function SupportDocuments({
   const [uploadingTipo, setUploadingTipo] = useState<TipoSoporte | null>(null)
   const [openFolder, setOpenFolder] = useState<TipoSoporte | null>(null)
 
-  const folderList = soloModificables ? SOPORTES_MODIFICABLES : SOPORTES_REQUERIDOS
+  const folderList = SOPORTES_REQUERIDOS
 
   function getSoporte(tipo: TipoSoporte): Soporte | undefined {
     return soportes.find((s) => s.tipo === tipo)
@@ -127,12 +125,10 @@ export function SupportDocuments({
           <div>
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
               Soportes Documentales
-              {soloModificables && <span className="ml-2 text-amber-600 font-normal">(solo carpetas modificables)</span>}
+              {devolucionLegalizacion && <span className="ml-2 text-amber-600 font-normal">(carpetas 5-7 editables)</span>}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {soloModificables
-                ? 'Carpetas 5-7: pueden ser reemplazadas tras devolución del aprobador'
-                : 'Carpetas obligatorias para el cierre del evento'}
+              Carpetas obligatorias para el cierre del evento
             </p>
           </div>
         </div>
@@ -190,8 +186,7 @@ export function SupportDocuments({
 
       <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100">
         <p className="text-xs text-slate-400">
-          {loadedCount} de {soloModificables ? SOPORTES_MODIFICABLES.length : SOPORTES_REQUERIDOS.length} carpetas cargadas
-          {soloModificables && ' (solo modificables)'}
+          {loadedCount} de {SOPORTES_REQUERIDOS.length} carpetas cargadas
         </p>
       </div>
 

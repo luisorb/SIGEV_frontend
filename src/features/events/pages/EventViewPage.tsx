@@ -532,7 +532,6 @@ export function EventViewPage() {
           soportes={event.soportes || []}
           attachments={event.attachments ?? []}
           readOnly={soportesReadOnly}
-          soloModificables={esDevolucionLegalizacion}
           eventStatus={displayEstado}
           devolucionLegalizacion={esDevolucionLegalizacion}
           onUpload={handleUploadSoporte}

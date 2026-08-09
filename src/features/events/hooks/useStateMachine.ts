@@ -75,11 +75,6 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   ],
   Devuelto: [
     {
-      to: 'En ejecución',
-      roles: ['approver'],
-      validate: () => null,
-    },
-    {
       to: 'Cerrado',
       roles: ['approver'],
       validate: () => null,
