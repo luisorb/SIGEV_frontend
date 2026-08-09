@@ -73,8 +73,6 @@ export function SupportDocuments({
     return (
       eventStatus === 'Abierto' ||
       eventStatus === 'En ejecución' ||
-      eventStatus === 'Ejecutado' ||
-      eventStatus === 'Cerrado' ||
       eventStatus === 'Devuelto'
     )
   }

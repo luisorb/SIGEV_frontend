@@ -35,6 +35,8 @@ const ESTADO_COLORS: Record<string, string> = {
 
 const TERMINAL_STATES: EventState[] = ['Rechazado']
 
+const SOPORTES_LOCKED_STATES: EventState[] = ['Ejecutado', 'Cerrado', 'Legalizado']
+
 const DETAIL_TABS = [
   { key: 'detalles', label: 'Detalles de la Orden', icon: ClipboardList },
   { key: 'cotizaciones', label: 'Listado de cotizaciones', icon: FileSpreadsheet },
@@ -352,7 +354,10 @@ export function EventViewPage() {
   const canSelectQuotation =
     userCan('approver') && !TERMINAL_STATES.includes(displayEstado) && !quotationApproved
 
-  const soportesReadOnly = !canEditSoportes || TERMINAL_STATES.includes(displayEstado)
+  const soportesReadOnly =
+    SOPORTES_LOCKED_STATES.includes(displayEstado) ||
+    !canEditSoportes ||
+    TERMINAL_STATES.includes(displayEstado)
 
   const itemsReadOnly =
     !canModifyItems || TERMINAL_STATES.includes(displayEstado) || quotationApproved
