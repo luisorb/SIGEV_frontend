@@ -9,8 +9,6 @@ const SORTABLE_TEXT_COLUMNS = [
   'fechaEvento', 'esquema', 'aliadoId', 'desembolsoId',
 ] as const
 
-const SORTABLE_NUMERIC_COLUMNS = ['itemsCount'] as const
-
 export function useEventList(events: Event[]) {
   const [filters, setFilters] = useState<EventListFilters>({
     search: '',
@@ -67,10 +65,6 @@ export function useEventList(events: Event[]) {
           const totalA = a.ofertaEconomica ? a.ofertaEconomica.total : 0
           const totalB = b.ofertaEconomica ? b.ofertaEconomica.total : 0
           cmp = totalA - totalB
-        } else if ((SORTABLE_NUMERIC_COLUMNS as readonly string[]).includes(sortColumn)) {
-          const aVal = sortColumn === 'itemsCount' ? a.items.length : Number(a[sortColumn as keyof Event] ?? 0)
-          const bVal = sortColumn === 'itemsCount' ? b.items.length : Number(b[sortColumn as keyof Event] ?? 0)
-          cmp = aVal - bVal
         } else if ((SORTABLE_TEXT_COLUMNS as readonly string[]).includes(sortColumn)) {
           const aVal = String(a[sortColumn as keyof Event] ?? '')
           const bVal = String(b[sortColumn as keyof Event] ?? '')

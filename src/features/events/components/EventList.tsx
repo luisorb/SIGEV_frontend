@@ -187,7 +187,6 @@ export function EventList({
                 <SortHeader column="aliadoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Aliado</SortHeader>
                 <SortHeader column="desembolsoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Desembolso</SortHeader>
                 <SortHeader column="esquema" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Esquema</SortHeader>
-                <SortHeader column="itemsCount" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Ítems</SortHeader>
                 <SortHeader column="totalCalculado" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Total</SortHeader>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
@@ -195,7 +194,7 @@ export function EventList({
             <tbody className="divide-y divide-slate-100">
               {_events.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
                     No hay órdenes registradas. Crea la primera orden.
                   </td>
                 </tr>
@@ -223,7 +222,6 @@ export function EventList({
                       <td className="px-4 py-3 text-sm text-slate-600">{aliado?.nombre ?? event.aliadoId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{desembolso?.nombre ?? event.desembolsoId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600 capitalize">{event.esquema}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{event.items.length}</td>
                       <td className="px-4 py-3 text-sm font-medium text-slate-900">
                         {formatCurrencyCO(eventTotal)}
                       </td>
