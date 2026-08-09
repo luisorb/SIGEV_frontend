@@ -51,7 +51,7 @@ export function QuotationList({
   const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
   const quotationsCount = event.quotations?.length ?? eventOffers.length
 
-  const canSelect = canSelectQuotation && eventOffers.length >= 3
+  const canSelect = canSelectQuotation && eventOffers.length >= 1
 
   const presupuestoAttachment = event.attachments?.find((a) => a.category === 'Presupuesto final')
 
@@ -86,7 +86,7 @@ export function QuotationList({
               Listado de cotizaciones
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {eventOffers.length} de 3 cotizaciones requeridas
+              {eventOffers.length} cotización{eventOffers.length !== 1 ? 'es' : ''} registrada{eventOffers.length !== 1 ? 's' : ''} · se requieren 3 para cerrar el evento
             </p>
           </div>
         </div>
@@ -242,7 +242,7 @@ export function QuotationList({
       {eventOffers.length > 0 && eventOffers.length < 3 && !readOnly && (
         <div className="px-6 py-3 bg-amber-50 border-t border-amber-100">
           <p className="text-xs text-amber-700">
-            Se requieren al menos 3 cotizaciones. Actualmente hay {eventOffers.length}.
+            Actualmente hay {eventOffers.length}. El Aprobador puede aprobar una cotización, pero se requieren al menos 3 para cerrar el evento.
           </p>
         </div>
       )}
