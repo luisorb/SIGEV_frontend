@@ -44,10 +44,8 @@ export function useOffers() {
     return offers.filter(
       (o) =>
         o.codigo.toLowerCase().includes(q) ||
-        o.cliente.toLowerCase().includes(q) ||
         (o.numeroEvento ?? '').toLowerCase().includes(q) ||
-        (o.responsable ?? '').toLowerCase().includes(q) ||
-        (o.municipio ?? '').toLowerCase().includes(q)
+        (o.responsable ?? '').toLowerCase().includes(q)
     )
   }, [offers, search])
 

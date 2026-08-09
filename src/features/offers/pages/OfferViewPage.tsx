@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, FileDown, Download, FileText, ClipboardList, Package } from 'lucide-react'
+import { ChevronLeft, FileDown, Download, FileText, Package } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { usePermissions } from '../hooks/useOffers'
-import { formatCurrencyCO, formatDateTimeCO, formatDateCO } from '../../../utils/formatters'
+import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { exportOfferToExcel } from '../utils/excelExport'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
@@ -14,8 +14,6 @@ import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 import { hasQuotedValues } from '../utils/offerValues'
-import { clienteOferta } from '../utils/exportHelpers'
-import { OFFER_STATE_COLORS } from '../types'
 
 const catColors: Record<string, string> = {
   IVA: 'bg-blue-50 text-blue-700',
@@ -54,7 +52,7 @@ export function OfferViewPage() {
   const { data: municipios = [] } = useMunicipalities()
   const rates = useActiveCalculationParams()
 
-  const [activeTab, setActiveTab] = useState<'detalles' | 'orden' | 'items'>('detalles')
+  const [activeTab, setActiveTab] = useState<'detalles' | 'items'>('detalles')
 
   if (isLoading) {
     return (
@@ -119,11 +117,11 @@ export function OfferViewPage() {
   }
 
   const label = (text: string) => (
-    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1">{text}</p>
+    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">{text}</p>
   )
 
   const value = (text: string) => (
-    <p className="text-sm font-medium text-slate-900">{text}</p>
+    <p className="text-sm font-semibold text-slate-900 mt-1">{text}</p>
   )
 
   const eventMunicipio = event ? municipios.find((m) => m.id === event.municipioId) : undefined
@@ -196,15 +194,6 @@ export function OfferViewPage() {
           Detalles de la Oferta
         </button>
         <button
-          onClick={() => setActiveTab('orden')}
-          className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
-            activeTab === 'orden' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-          }`}
-        >
-          <ClipboardList className="w-4 h-4" />
-          Información de la Orden
-        </button>
-        <button
           onClick={() => setActiveTab('items')}
           className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
             activeTab === 'items' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
@@ -218,47 +207,41 @@ export function OfferViewPage() {
       <div className={activeTab === 'detalles' ? '' : 'hidden'}>
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">
+                <FileText className="w-4 h-4" />
               </span>
-              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Detalles de la Oferta</h2>
+              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Detalles de la Oferta</h2>
             </div>
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${OFFER_STATE_COLORS[offer.estado]}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-              {offer.estado}
-            </span>
           </div>
 
-          <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Código')}
-              {value(offer.codigo)}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Cliente')}
-              {value(clienteOferta(offer, aliados))}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Nombre de la oferta')}
-              {value(offer.nombre)}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Desembolso')}
-              {value(offer.desembolso || '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Creada')}
-              {value(formatDateTimeCO(offer.createdAt))}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Actualizada')}
-              {value(formatDateTimeCO(offer.updatedAt))}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Ítems')}
-              {value(String(offer.items.length))}
-            </div>
+          <div className="px-6 py-5">
+            <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
+              <div className="bg-white px-4 py-3.5">{label('Código')}{value(offer.codigo)}</div>
+              <div className="bg-white px-4 py-3.5">{label('N° Evento')}{value(offer.numeroEvento || '—')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Cliente')}{value(offer.responsable || '—')}</div>
+              <div className="bg-white px-4 py-3.5">
+                {label('Estado')}
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 mt-1 text-xs font-semibold rounded-full ${eventStateColors[offer.eventoEstado ?? ''] || 'bg-slate-100 text-slate-800'}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                  {offer.eventoEstado || '—'}
+                </span>
+              </div>
+              <div className="bg-white px-4 py-3.5">{label('Ítems')}{value(String(offer.items.length))}</div>
+              <div className="bg-white px-4 py-3.5">{label('Total')}{hasValues ? value(formatCurrencyCO(offer.total)) : <p className="text-sm text-slate-400 italic mt-1">Pendiente por cotizar</p>}</div>
+              <div className="bg-white px-4 py-3.5">{label('Fecha')}{value(offer.fechaEjecucion ? formatDateCO(offer.fechaEjecucion) : '—')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Dependencia')}{value((event?.dependencia ?? offer.dependencia) || '—')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Municipio')}{value(eventMunicipioLabel)}</div>
+              <div className="bg-white px-4 py-3.5">{label('Vereda')}{value(event?.vereda || '—')}</div>
+              <div className="bg-white px-4 py-3.5">
+                {label('Esquema')}
+                <span className="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded capitalize">{event?.esquema ?? offer.esquema ?? '—'}</span>
+              </div>
+              <div className="bg-white px-4 py-3.5">{label('Asistentes')}{value(event ? String(event.asistentes) : '—')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Días')}{value(event ? String(event.dias) : '—')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Aliado general')}{value((aliadoName(event?.aliadoId) ?? offer.aliado) || '—')}</div>
+              <div className="bg-white px-4 py-3.5" aria-hidden="true" />
+            </dl>
           </div>
 
           {offer.descripcion && (
@@ -267,74 +250,6 @@ export function OfferViewPage() {
               <p className="text-sm text-slate-700 leading-relaxed">{offer.descripcion}</p>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className={activeTab === 'orden' ? '' : 'hidden'}>
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 bg-primary/10 rounded-lg">
-                <ClipboardList className="w-4 h-4 text-primary" />
-              </span>
-              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Información de la Orden</h2>
-            </div>
-            {event && (
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${eventStateColors[event.estado] || 'bg-slate-100 text-slate-800'}`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                {event.estado}
-              </span>
-            )}
-          </div>
-
-          <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Número')}
-              {value((event?.numeroEvento ?? offer.numeroEvento) || '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Sufijo')}
-              {value(event?.sufijo || '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Responsable')}
-              {value((event?.responsable ?? offer.responsable) || '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Dependencia')}
-              {value((event?.dependencia ?? offer.dependencia) || '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Fecha del evento')}
-              {value(event?.fechaEvento ? formatDateCO(event.fechaEvento) : '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Municipio')}
-              {value(eventMunicipioLabel)}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Vereda')}
-              {value(event?.vereda || '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Esquema')}
-              <span className="inline-flex items-center px-2.5 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded-md capitalize">
-                {event?.esquema ?? offer.esquema ?? '—'}
-              </span>
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Asistentes')}
-              {value(event ? String(event.asistentes) : '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Días')}
-              {value(event ? String(event.dias) : '—')}
-            </div>
-            <div className="border border-slate-100 rounded-lg px-4 py-3">
-              {label('Aliado general')}
-              {value((aliadoName(event?.aliadoId) ?? offer.aliado) || '—')}
-            </div>
-          </div>
         </div>
       </div>
 

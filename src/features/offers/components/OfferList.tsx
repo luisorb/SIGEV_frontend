@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Eye, FileDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { Offer } from '../types'
-import { OFFER_STATES } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { hasQuotedValues } from '../utils/offerValues'
 import { SearchableSelect } from '../../../components/SearchableSelect'
+import { EVENT_STATES } from '../../../config/constants'
 
 const EVENT_STATE_COLORS: Record<string, string> = {
   Abierto: 'bg-yellow-100 text-yellow-800',
@@ -66,7 +66,7 @@ export function OfferList({
   const sorted = useMemo(() => {
     let filtered = offers
     if (filterEstado) {
-      filtered = filtered.filter((o) => o.estado === filterEstado)
+      filtered = filtered.filter((o) => o.eventoEstado === filterEstado)
     }
     if (!sortDir) return [...filtered]
     return [...filtered].sort((a, b) => {
@@ -107,7 +107,7 @@ export function OfferList({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar por código, cliente, evento o responsable..."
+            placeholder="Buscar por código, evento o cliente..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
@@ -116,7 +116,7 @@ export function OfferList({
         <SearchableSelect
           size="sm"
           className="w-40"
-          options={OFFER_STATES.map((s) => ({ value: s, label: s }))}
+          options={EVENT_STATES.map((s) => ({ value: s, label: s }))}
           value={filterEstado}
           onChange={setFilterEstado}
           placeholder="Todos los estados"
