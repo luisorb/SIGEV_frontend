@@ -25,7 +25,6 @@ interface SupportDocumentsProps {
   soloModificables?: boolean
   eventStatus?: EventState
   devolucionLegalizacion?: boolean
-  canEditLegalizacion?: boolean
   onUpload: (tipo: TipoSoporte, file: File) => Promise<void>
   onDelete: (attachmentId: string) => void
   onDownload?: (attachment: Attachment) => void
@@ -38,7 +37,6 @@ export function SupportDocuments({
   soloModificables = false,
   eventStatus = 'Abierto',
   devolucionLegalizacion = false,
-  canEditLegalizacion = true,
   onUpload,
   onDelete,
   onDownload,
@@ -62,18 +60,9 @@ export function SupportDocuments({
     return (SOPORTES_ESTATICOS as readonly TipoSoporte[]).includes(tipo)
   }
 
-  function isLegalizacion(tipo: TipoSoporte): boolean {
-    return (
-      tipo === 'Facturas normalizadas' ||
-      tipo === 'Registro fotográfico' ||
-      tipo === 'Listado de asistencia'
-    )
-  }
-
   function isFolderEditable(tipo: TipoSoporte): boolean {
     if (readOnly) return false
     if (tipo === 'Formato de requerimiento') return false
-    if (isLegalizacion(tipo) && !canEditLegalizacion) return false
     if (isEstatico(tipo)) {
       return (
         eventStatus === 'Abierto' ||
