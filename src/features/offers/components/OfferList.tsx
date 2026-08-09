@@ -2,12 +2,20 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Eye, FileDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { Offer } from '../types'
-import { OFFER_STATES, OFFER_STATE_COLORS } from '../types'
+import { OFFER_STATES } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { hasQuotedValues } from '../utils/offerValues'
-import { clienteOferta } from '../utils/exportHelpers'
 import { SearchableSelect } from '../../../components/SearchableSelect'
-import type { Ally } from '../../../types'
+
+const EVENT_STATE_COLORS: Record<string, string> = {
+  Abierto: 'bg-yellow-100 text-yellow-800',
+  'En ejecución': 'bg-blue-100 text-blue-800',
+  Ejecutado: 'bg-orange-100 text-orange-800',
+  Cerrado: 'bg-slate-100 text-slate-800',
+  Legalizado: 'bg-purple-100 text-purple-800',
+  Devuelto: 'bg-amber-100 text-amber-800',
+  Rechazado: 'bg-rose-100 text-rose-800',
+}
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
   if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1" />
@@ -17,7 +25,6 @@ function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | '
 
 interface OfferListProps {
   offers: Offer[]
-  aliados?: Ally[]
   search: string
   onSearchChange: (value: string) => void
   onExport: (id: string) => void
@@ -26,7 +33,6 @@ interface OfferListProps {
 
 export function OfferList({
   offers,
-  aliados = [],
   search,
   onSearchChange,
   onExport,
@@ -66,24 +72,22 @@ export function OfferList({
     return [...filtered].sort((a, b) => {
       const cmp = sortColumn === 'codigo'
         ? a.codigo.localeCompare(b.codigo)
-        : sortColumn === 'nombre'
-          ? a.nombre.localeCompare(b.nombre)
-          : sortColumn === 'cliente'
-            ? clienteOferta(a, aliados).localeCompare(clienteOferta(b, aliados))
-            : sortColumn === 'total'
-              ? a.total - b.total
-              : sortColumn === 'numeroEvento'
-                ? (a.numeroEvento ?? '').localeCompare(b.numeroEvento ?? '')
-                : sortColumn === 'estado'
-                  ? a.estado.localeCompare(b.estado)
-                  : sortColumn === 'items'
-                    ? a.items.length - b.items.length
-                    : sortColumn === 'createdAt'
-                      ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                      : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        : sortColumn === 'cliente'
+          ? (a.responsable ?? '').localeCompare(b.responsable ?? '')
+          : sortColumn === 'total'
+            ? a.total - b.total
+            : sortColumn === 'numeroEvento'
+              ? (a.numeroEvento ?? '').localeCompare(b.numeroEvento ?? '')
+              : sortColumn === 'estado'
+                ? (a.eventoEstado ?? '').localeCompare(b.eventoEstado ?? '')
+                : sortColumn === 'items'
+                  ? a.items.length - b.items.length
+                  : sortColumn === 'fecha'
+                    ? (a.fechaEjecucion ?? '').localeCompare(b.fechaEjecucion ?? '')
+                    : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [offers, filterEstado, sortColumn, sortDir, aliados])
+  }, [offers, filterEstado, sortColumn, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
   const safePage = Math.min(page, totalPages - 1)
@@ -103,7 +107,7 @@ export function OfferList({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar por código, nombre, cliente, evento o responsable..."
+            placeholder="Buscar por código, cliente, evento o responsable..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
@@ -143,15 +147,6 @@ export function OfferList({
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort('nombre')}
-                  className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
-                >
-                  <div className="flex items-center">
-                    Nombre
-                    <SortIcon active={sortColumn === 'nombre'} direction={sortDir} />
-                  </div>
-                </th>
-                <th
                   onClick={() => handleSort('cliente')}
                   className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
                 >
@@ -188,12 +183,12 @@ export function OfferList({
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort('createdAt')}
+                  onClick={() => handleSort('fecha')}
                   className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 select-none"
                 >
                   <div className="flex items-center justify-end">
                     Fecha
-                    <SortIcon active={sortColumn === 'createdAt'} direction={sortDir} />
+                    <SortIcon active={sortColumn === 'fecha'} direction={sortDir} />
                   </div>
                 </th>
                 <th className="px-4 py-3 w-20" />
@@ -202,7 +197,7 @@ export function OfferList({
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-400">
                     No hay ofertas definitivas para mostrar.
                   </td>
                 </tr>
@@ -211,11 +206,10 @@ export function OfferList({
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{offer.codigo}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{offer.numeroEvento || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px] truncate" title={offer.nombre}>{offer.nombre}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{clienteOferta(offer, aliados)}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px] truncate" title={offer.responsable}>{offer.responsable || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${OFFER_STATE_COLORS[offer.estado]}`}>
-                        {offer.estado}
+                      <span className={`inline-flex whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium ${EVENT_STATE_COLORS[offer.eventoEstado ?? ''] || 'bg-slate-100 text-slate-800'}`}>
+                        {offer.eventoEstado || '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{offer.items.length}</td>
@@ -227,7 +221,7 @@ export function OfferList({
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500 text-right">
-                      {formatDateCO(offer.createdAt)}
+                      {offer.fechaEjecucion ? formatDateCO(offer.fechaEjecucion) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">

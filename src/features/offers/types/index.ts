@@ -40,6 +40,8 @@ export interface Offer {
   cliente: string
   eventoId?: string
   numeroEvento?: string
+  eventoEstado?: string
+  fechaEjecucion?: string
   responsable?: string
   dependencia?: string
   municipio?: string

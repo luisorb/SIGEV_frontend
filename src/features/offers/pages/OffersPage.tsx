@@ -75,7 +75,6 @@ export function OffersPage() {
   return (
     <OfferList
       offers={offers}
-      aliados={aliados}
       search={search}
       onSearchChange={setSearch}
       onExport={handleExport}

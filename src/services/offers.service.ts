@@ -52,6 +52,8 @@ export interface OfertaEconomicaResponse {
     code: string
     suffix?: string | null
     name?: string | null
+    status?: string | null
+    startDate?: string | null
     municipalityName?: string | null
     municipalityCategory?: string | null
     disbursement?: { name: string } | null
@@ -103,6 +105,8 @@ export function mapOfertaEconomicaToOffer(data: OfertaEconomicaResponse): Offer 
     cliente: data.quotation?.cliente ?? '',
     eventoId: data.eventId,
     numeroEvento,
+    eventoEstado: event?.status ?? '',
+    fechaEjecucion: event?.startDate ? String(event.startDate).slice(0, 10) : '',
     responsable: event?.name ?? '',
     dependencia: '',
     municipio: event?.municipalityName ?? '',
