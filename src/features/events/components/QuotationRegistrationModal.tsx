@@ -17,6 +17,18 @@ const taxCategoryLabels: Record<TaxCategory, string> = {
   Reembolso: 'Reembolso',
 }
 
+const MAX_SOPORTE_MB = 10
+const MAX_SOPORTE_BYTES = MAX_SOPORTE_MB * 1024 * 1024
+
+function soporteFileError(file: File): string | null {
+  const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')
+  if (!isPdf) return 'El documento soporte debe ser un archivo PDF'
+  if (file.size > MAX_SOPORTE_BYTES) {
+    return `El documento PDF no puede superar los ${MAX_SOPORTE_MB} MB`
+  }
+  return null
+}
+
 interface QuotationItemForm {
   eventItemId: string
   nombre: string
@@ -109,10 +121,7 @@ export function QuotationRegistrationModal({
     if (!file) {
       return 'El documento soporte del proveedor es obligatorio'
     }
-    if (file && !file.name.toLowerCase().endsWith('.pdf')) {
-      return 'El documento soporte debe ser un archivo PDF'
-    }
-    return null
+    return soporteFileError(file)
   }
 
   function buildDto(): OfferInput {
@@ -343,10 +352,12 @@ export function QuotationRegistrationModal({
             <input
               ref={docInputRef}
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+              accept=".pdf"
               className="hidden"
               onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null)
+                const selected = e.target.files?.[0] ?? null
+                setFile(selected)
+                setError(selected ? soporteFileError(selected) : null)
                 e.target.value = ''
               }}
             />
@@ -378,7 +389,7 @@ export function QuotationRegistrationModal({
               )}
             </div>
             <p className="text-[11px] text-slate-400 mt-1.5">
-              El PDF se guarda en la carpeta de soportes «Cotizaciones presentadas» del evento.
+              El PDF (máximo {MAX_SOPORTE_MB} MB) se guarda en la carpeta de soportes «Cotizaciones presentadas» del evento.
             </p>
           </section>
 

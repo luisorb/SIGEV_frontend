@@ -14,6 +14,18 @@ import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
 
+const MAX_APROBACION_MB = 10
+const MAX_APROBACION_BYTES = MAX_APROBACION_MB * 1024 * 1024
+
+function getApprovalFileError(file: File): string | null {
+  const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')
+  if (!isPdf) return 'El comunicado de aprobación debe ser un archivo PDF'
+  if (file.size > MAX_APROBACION_BYTES) {
+    return `El documento PDF no puede superar los ${MAX_APROBACION_MB} MB`
+  }
+  return null
+}
+
 interface QuotationListProps {
   eventoId: string
   event: Event
@@ -46,6 +58,7 @@ export function QuotationList({
   const [rejectOffer, setRejectOffer] = useState<Offer | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [approvalFile, setApprovalFile] = useState<File | null>(null)
+  const [approvalFileError, setApprovalFileError] = useState<string | null>(null)
   const approvalInputRef = useRef<HTMLInputElement | null>(null)
 
   const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
@@ -209,6 +222,7 @@ export function QuotationList({
                           <button
                             onClick={() => {
                               setApprovalFile(null)
+                              setApprovalFileError(null)
                               setConfirmOffer(offer)
                             }}
                             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition-colors"
@@ -340,6 +354,7 @@ export function QuotationList({
                 onClick={() => {
                   setConfirmOffer(null)
                   setApprovalFile(null)
+                  setApprovalFileError(null)
                 }}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
                 aria-label="Cerrar"
@@ -355,10 +370,12 @@ export function QuotationList({
               <input
                 ref={approvalInputRef}
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                accept=".pdf"
                 className="hidden"
                 onChange={(e) => {
-                  setApprovalFile(e.target.files?.[0] ?? null)
+                  const selected = e.target.files?.[0] ?? null
+                  setApprovalFile(selected)
+                  setApprovalFileError(selected ? getApprovalFileError(selected) : null)
                   e.target.value = ''
                 }}
               />
@@ -377,8 +394,11 @@ export function QuotationList({
                 </span>
               </button>
               <p className="text-xs text-slate-400 mt-1.5">
-                Documento obligatorio que respalda la aprobación de la cotización.
+                Documento obligatorio (PDF, máximo {MAX_APROBACION_MB} MB) que respalda la aprobación de la cotización.
               </p>
+              {approvalFileError && (
+                <p className="text-xs text-red-500 mt-1.5">{approvalFileError}</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
@@ -386,6 +406,7 @@ export function QuotationList({
                 onClick={() => {
                   setConfirmOffer(null)
                   setApprovalFile(null)
+                  setApprovalFileError(null)
                 }}
                 className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
@@ -393,12 +414,14 @@ export function QuotationList({
               </button>
               <button
                 onClick={() => {
+                  if (approvalFileError || !approvalFile) return
                   const file = approvalFile ?? undefined
                   onSelectOffer?.(confirmOffer.id, file)
                   setConfirmOffer(null)
                   setApprovalFile(null)
+                  setApprovalFileError(null)
                 }}
-                disabled={!approvalFile}
+                disabled={!approvalFile || !!approvalFileError}
                 className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Aprobar cotización definitiva
