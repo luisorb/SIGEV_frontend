@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ArrowLeftCircle, AlertTriangle, ClipboardList, FileSpreadsheet, FolderOpen, Package } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardList, FileSpreadsheet, FolderOpen, Package } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
@@ -34,6 +34,8 @@ const ESTADO_COLORS: Record<string, string> = {
 }
 
 const TERMINAL_STATES: EventState[] = ['Rechazado']
+
+const DATE_NOTICE_STATES: EventState[] = ['Abierto', 'En ejecución', 'Ejecutado', 'Cerrado', 'Devuelto']
 
 const SOPORTES_LOCKED_STATES: EventState[] = ['Ejecutado', 'Cerrado', 'Legalizado']
 
@@ -120,6 +122,22 @@ export function EventViewPage() {
 
   const stateHistory = event ? getStateHistory(event.id) : []
   const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Abierto') as EventState
+
+  const dateStatus = useMemo(() => {
+    const raw = event?.fechaEvento
+    if (!raw) return null
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+    if (!match) return null
+    const today = new Date()
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
+    const eventTime = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime()
+    if (eventTime === todayStart) return null
+    const formatted = formatDateCO(raw)
+    if (eventTime < todayStart) {
+      return { overdue: true, text: `La fecha de ejecución programada (${formatted}) ya pasó.` }
+    }
+    return { overdue: false, text: `La fecha de ejecución programada (${formatted}) aún no llega.` }
+  }, [event?.fechaEvento])
 
   const selectedQuotation = offers.find((o) => o.id === event?.cotizacionSeleccionadaId)
 
@@ -420,6 +438,18 @@ export function EventViewPage() {
           <div>
             <p className="text-sm font-semibold text-red-800">Evento rechazado</p>
             {event.observation && <p className="text-xs text-red-700 mt-0.5">Motivo: {event.observation}</p>}
+          </div>
+        </div>
+      )}
+
+      {dateStatus && DATE_NOTICE_STATES.includes(displayEstado) && (
+        <div className={`rounded-xl px-6 py-4 flex items-start gap-3 ${dateStatus.overdue ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
+          <CalendarClock className={`w-5 h-5 shrink-0 mt-0.5 ${dateStatus.overdue ? 'text-amber-500' : 'text-blue-500'}`} />
+          <div>
+            <p className={`text-sm font-semibold ${dateStatus.overdue ? 'text-amber-800' : 'text-blue-800'}`}>
+              {dateStatus.overdue ? 'Evento fuera de la fecha programada' : 'Evento programado para el futuro'}
+            </p>
+            <p className={`text-xs mt-0.5 ${dateStatus.overdue ? 'text-amber-700' : 'text-blue-700'}`}>{dateStatus.text}</p>
           </div>
         </div>
       )}

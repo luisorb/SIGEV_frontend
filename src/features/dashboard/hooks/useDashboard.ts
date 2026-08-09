@@ -70,10 +70,10 @@ export function useDashboard(
       result = result.filter((e) => e.estado === filters.estado)
     }
     if (filters.periodoInicio) {
-      result = result.filter((e) => e.createdAt >= filters.periodoInicio)
+      result = result.filter((e) => e.fechaEvento >= filters.periodoInicio)
     }
     if (filters.periodoFin) {
-      result = result.filter((e) => e.createdAt <= filters.periodoFin)
+      result = result.filter((e) => e.fechaEvento <= filters.periodoFin)
     }
     if (filters.municipioId) {
       result = result.filter((e) => e.municipioId === filters.municipioId)

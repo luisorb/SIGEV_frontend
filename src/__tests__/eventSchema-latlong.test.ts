@@ -6,7 +6,7 @@ const base = {
   sufijo: '',
   responsable: 'Test',
   dependencia: '',
-  fechaEvento: '',
+  fechaEvento: '2026-08-15',
   asistentes: 0,
   dias: 0,
   municipioId: '1',

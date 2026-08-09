@@ -161,8 +161,9 @@ export function EventForm({
             <input {...register('dependencia')} maxLength={100} className={inputBase} placeholder="Ej: Secretaría de Cultura" />
           </div>
           <div className="space-y-1.5">
-            <label className={labelBase}>Fecha del Evento</label>
+            <label className={labelBase}>Fecha del Evento {requiredMark}</label>
             <input type="date" {...register('fechaEvento')} className={inputBase} />
+            {errors.fechaEvento && <p className="text-xs text-red-500">{errors.fechaEvento.message}</p>}
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Asistentes</label>

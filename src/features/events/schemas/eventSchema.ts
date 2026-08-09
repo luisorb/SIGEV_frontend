@@ -16,7 +16,7 @@ export const eventSchema = z.object({
     .default(''),
   fechaEvento: z
     .string()
-    .default(''),
+    .min(1, 'La fecha del evento es obligatoria'),
   asistentes: z
     .number()
     .min(0, 'Los asistentes no pueden ser negativos')
