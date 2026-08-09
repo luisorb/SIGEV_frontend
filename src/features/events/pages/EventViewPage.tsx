@@ -427,11 +427,11 @@ export function EventViewPage() {
       <div className={activeTab === 'detalles' ? '' : 'hidden'}>
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 bg-primary/10 rounded-lg">
-              <ClipboardList className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">
+              <ClipboardList className="w-4 h-4" />
             </span>
-            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Detalles de la Orden</h2>
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Detalles de la Orden</h2>
           </div>
           <div className="flex items-center gap-3">
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${ESTADO_COLORS[displayEstado] || 'bg-slate-100 text-slate-800'}`}>
@@ -447,40 +447,49 @@ export function EventViewPage() {
           </div>
         </div>
 
-        <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Número')}{value(event.numeroEvento)}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Sufijo')}{value(event.sufijo || '-')}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Responsable')}{value(event.responsable || '-')}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Dependencia')}{value(event.dependencia || '-')}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Fecha')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Municipio')}{value(municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId)}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Vereda')}{value(event.vereda || '-')}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Aliado')}{value(aliado?.nombre ?? event.aliadoId)}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Desembolso')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Operador Logístico')}{value(event.asignadoA || 'No asignado')}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Esquema')}<span className="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded capitalize">{event.esquema}</span></div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Asistentes')}{value(String(event.asistentes))}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Días')}{value(String(event.dias))}</div>
-          <div className="border border-slate-100 rounded-lg px-4 py-3">{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
+        <div className="px-6 py-5">
+          <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
+            <div className="bg-white px-4 py-3.5">{label('Número')}{value(event.numeroEvento)}</div>
+            <div className="bg-white px-4 py-3.5">{label('Sufijo')}{value(event.sufijo || '-')}</div>
+            <div className="bg-white px-4 py-3.5">{label('Fecha del evento')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
+            <div className="bg-white px-4 py-3.5">
+              {label('Esquema')}
+              <span className="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded capitalize">{event.esquema}</span>
+            </div>
+            <div className="bg-white px-4 py-3.5">{label('Responsable')}{value(event.responsable || '-')}</div>
+            <div className="bg-white px-4 py-3.5">{label('Dependencia')}{value(event.dependencia || '-')}</div>
+            <div className="bg-white px-4 py-3.5">{label('Asistentes')}{value(String(event.asistentes))}</div>
+            <div className="bg-white px-4 py-3.5">{label('Días')}{value(String(event.dias))}</div>
+            <div className="bg-white px-4 py-3.5">{label('Municipio')}{value(municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId)}</div>
+            <div className="bg-white px-4 py-3.5">{label('Vereda')}{value(event.vereda || '-')}</div>
+            <div className="bg-white px-4 py-3.5">{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
+            <div className="bg-white px-4 py-3.5">{label('Aliado')}{value(aliado?.nombre ?? event.aliadoId)}</div>
+            <div className="bg-white px-4 py-3.5">{label('Desembolso')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
+            <div className="bg-white px-4 py-3.5" aria-hidden="true" />
+            <div className="bg-white px-4 py-3.5" aria-hidden="true" />
+          </dl>
         </div>
 
-        <div className="border-t border-slate-100 bg-slate-50/30">
-          <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
-              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p>
-              <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p>
-            </div>
-            <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
-              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p>
-              <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p>
-            </div>
-            <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
-              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p>
-              <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p>
-            </div>
-            <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-2.5 text-center">
-              <p className="text-[11px] text-primary/70 uppercase tracking-wider font-semibold">Total</p>
-              <p className="text-base font-bold text-primary mt-0.5">{formatCurrencyCO(ofertaTotals?.total ?? 0)}</p>
+        <div className="border-t border-slate-100 bg-slate-50/30 px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Totales</p>
+            <div className="flex items-center gap-8">
+              <div className="text-right">
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p>
+                <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p>
+                <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p>
+                <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-primary/70 uppercase tracking-wider font-semibold">Total</p>
+                <p className="text-base font-bold text-primary mt-0.5">{formatCurrencyCO(ofertaTotals?.total ?? 0)}</p>
+              </div>
             </div>
           </div>
         </div>

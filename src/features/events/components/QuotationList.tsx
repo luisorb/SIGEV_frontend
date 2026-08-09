@@ -77,13 +77,18 @@ export function QuotationList({
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
-            Listado de cotizaciones
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {eventOffers.length} de 3 cotizaciones requeridas
-          </p>
+        <div className="flex items-center gap-2">
+          <span className="text-slate-400">
+            <FileSpreadsheet className="w-4 h-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+              Listado de cotizaciones
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {eventOffers.length} de 3 cotizaciones requeridas
+            </p>
+          </div>
         </div>
         {!readOnly && (
           <button
