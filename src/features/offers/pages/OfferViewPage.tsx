@@ -135,7 +135,7 @@ export function OfferViewPage() {
     return a?.nombre ?? aliadoId
   }
 
-  const displayItems = offer.items.length ? offer.items : event?.items ?? []
+  const displayItems = offer.items
 
   const hasValues = hasQuotedValues(offer.items)
 
