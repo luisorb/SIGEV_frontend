@@ -216,7 +216,7 @@ export function EventList({
                       <td className="px-4 py-3 text-sm text-slate-600">{municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{event.fechaEvento ? formatDateCO(event.fechaEvento) : '-'}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${stateColors[event.estado] || ''}`}>
+                        <span className={`inline-flex whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium ${stateColors[event.estado] || ''}`}>
                           {event.estado}
                         </span>
                       </td>
