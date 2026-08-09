@@ -349,6 +349,10 @@ export function EventViewPage() {
 
   const soportesReadOnly = !canModifyItems || TERMINAL_STATES.includes(displayEstado)
 
+  const canEditLegalizacion =
+    userCan('functional_admin', 'supervisor') ||
+    (isDevuelto && userCan('analista', 'solicitante'))
+
   const itemsReadOnly =
     !canModifyItems || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
@@ -525,6 +529,7 @@ export function EventViewPage() {
           soloModificables={esDevolucionLegalizacion}
           eventStatus={displayEstado}
           devolucionLegalizacion={esDevolucionLegalizacion}
+          canEditLegalizacion={canEditLegalizacion}
           onUpload={handleUploadSoporte}
           onDelete={handleDeleteSoporte}
           onDownload={handleDownloadAttachment}
