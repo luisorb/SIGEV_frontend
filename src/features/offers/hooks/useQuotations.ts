@@ -17,7 +17,7 @@ export type QuotationPermission = 'create' | 'changeState' | 'delete'
 
 const PERMISSION_ROLES: Record<QuotationPermission, readonly string[]> = {
   create: ['functional_admin', 'operator'],
-  changeState: ['functional_admin', 'operator', 'approver'],
+  changeState: ['approver'],
   delete: ['functional_admin'],
 }
 
