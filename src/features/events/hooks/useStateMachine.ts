@@ -10,7 +10,12 @@ export interface TransitionRule {
   roles: string[]
   isDevolucion?: boolean
   isRechazo?: boolean
+  isAllowed?: (event: Event) => boolean
   validate: (event: Event, ctx: TransitionContext) => string | null
+}
+
+function origenDevuelto(event: Event): EventState | null {
+  return (event.devueltoDesde as EventState | null) ?? (event.devolucionLegalizacion ? 'Cerrado' : null)
 }
 
 const TRANSITIONS: Record<EventState, TransitionRule[]> = {
@@ -59,12 +64,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
     {
       to: 'Cerrado',
       roles: ['approver'],
-      validate: (_event, ctx) => {
-        if (ctx.quotationsCount < 3 && !ctx.authorizeException) {
-          return `Se requieren al menos 3 cotizaciones para cerrar (actual: ${ctx.quotationsCount})`
-        }
-        return null
-      },
+      validate: () => null,
     },
     {
       to: 'Devuelto',
@@ -75,13 +75,33 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   ],
   Devuelto: [
     {
+      to: 'Abierto',
+      roles: ['approver'],
+      isAllowed: (event) => origenDevuelto(event) === 'Abierto',
+      validate: () => null,
+    },
+    {
       to: 'En ejecución',
       roles: ['approver'],
+      isAllowed: (event) => {
+        const origin = origenDevuelto(event)
+        return origin === 'En ejecución' || origin === null
+      },
+      validate: () => null,
+    },
+    {
+      to: 'Ejecutado',
+      roles: ['approver'],
+      isAllowed: (event) => origenDevuelto(event) === 'Ejecutado',
       validate: () => null,
     },
     {
       to: 'Cerrado',
       roles: ['approver'],
+      isAllowed: (event) => {
+        const origin = origenDevuelto(event)
+        return origin === 'Cerrado' || origin === null
+      },
       validate: () => null,
     },
   ],
@@ -103,16 +123,34 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
 }
 
 export function useStateMachine() {
-  function getTransitionRules(state: EventState, roleNames: string[]): TransitionRule[] {
-    return TRANSITIONS[state]?.filter((rule) => rule.roles.some((role) => roleNames.includes(role))) ?? []
+  function getTransitionRules(
+    state: EventState,
+    roleNames: string[],
+    event?: Event,
+  ): TransitionRule[] {
+    return (
+      TRANSITIONS[state]?.filter(
+        (rule) =>
+          rule.roles.some((role) => roleNames.includes(role)) &&
+          (!rule.isAllowed || (event ? rule.isAllowed(event) : true)),
+      ) ?? []
+    )
   }
 
-  function canTransition(from: EventState, to: EventState, roleNames: string[]): boolean {
-    return getTransitionRules(from, roleNames).some((rule) => rule.to === to)
+  function canTransition(
+    from: EventState | Event,
+    to: EventState,
+    roleNames: string[],
+  ): boolean {
+    const state = typeof from === 'string' ? from : from.estado
+    const event = typeof from === 'string' ? undefined : from
+    return getTransitionRules(state, roleNames, event).some(
+      (rule) => rule.to === to,
+    )
   }
 
   function validateTransition(event: Event, to: EventState, ctx: TransitionContext, roleNames: string[]): string | null {
-    const rule = getTransitionRules(event.estado, roleNames).find((r) => r.to === to)
+    const rule = getTransitionRules(event.estado, roleNames, event).find((r) => r.to === to)
     if (!rule) {
       return `Su rol no permite pasar de "${event.estado}" a "${to}"`
     }
@@ -131,8 +169,8 @@ export function useStateMachine() {
     return (TRANSITIONS[state]?.length ?? 0) === 0
   }
 
-  function getAvailableTransitions(state: EventState, roleNames: string[]): EventState[] {
-    return getTransitionRules(state, roleNames).map((rule) => rule.to)
+  function getAvailableTransitions(state: EventState, roleNames: string[], event?: Event): EventState[] {
+    return getTransitionRules(state, roleNames, event).map((rule) => rule.to)
   }
 
   return {

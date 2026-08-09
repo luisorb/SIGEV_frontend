@@ -341,10 +341,17 @@ export function EventViewPage() {
     userCan('functional_admin', 'operator') ||
     (isDevuelto && userCan('analista'))
 
+  const devueltoPermiteSoportes =
+    isDevuelto &&
+    (esDevolucionLegalizacion ||
+      localEvent?.devueltoDesde === 'En ejecución' ||
+      localEvent?.devueltoDesde === 'Ejecutado' ||
+      localEvent?.devueltoDesde === 'Cerrado')
+
   const canEditSoportes =
     userCan('functional_admin', 'operator', 'supervisor') ||
     (isDevuelto && userCan('analista')) ||
-    (esDevolucionLegalizacion && userCan('solicitante'))
+    (devueltoPermiteSoportes && userCan('solicitante'))
 
   const canManageOffers = userCan('functional_admin', 'operator')
   const quotationApproved = !!event.cotizacionSeleccionadaId
@@ -534,6 +541,7 @@ export function EventViewPage() {
           readOnly={soportesReadOnly}
           eventStatus={displayEstado}
           devolucionLegalizacion={esDevolucionLegalizacion}
+          devueltoDesde={localEvent?.devueltoDesde ?? event.devueltoDesde ?? null}
           quotationApproved={quotationApproved}
           onUpload={handleUploadSoporte}
           onDelete={handleDeleteSoporte}

@@ -77,6 +77,7 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     activo: data.isActive !== false,
     eliminadoAt: data.deletedAt ? String(data.deletedAt) : undefined,
     devolucionLegalizacion: data.devolucionLegalizacion === true,
+    devueltoDesde: data.devueltoDesde ? String(data.devueltoDesde) : null,
     cotizacionSeleccionadaId: data.cotizacionSeleccionadaId ? String(data.cotizacionSeleccionadaId) : undefined,
     ofertaEconomica: data.ofertaEconomica
       ? {

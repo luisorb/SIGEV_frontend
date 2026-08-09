@@ -24,6 +24,7 @@ interface SupportDocumentsProps {
   readOnly?: boolean
   eventStatus?: EventState
   devolucionLegalizacion?: boolean
+  devueltoDesde?: string | null
   quotationApproved?: boolean
   onUpload: (tipo: TipoSoporte, file: File) => Promise<void>
   onDelete: (attachmentId: string) => void
@@ -36,6 +37,7 @@ export function SupportDocuments({
   readOnly = false,
   eventStatus = 'Abierto',
   devolucionLegalizacion = false,
+  devueltoDesde = null,
   quotationApproved = false,
   onUpload,
   onDelete,
@@ -60,6 +62,22 @@ export function SupportDocuments({
     return (SOPORTES_ESTATICOS as readonly TipoSoporte[]).includes(tipo)
   }
 
+  function devueltoPermiteEstaticos(): boolean {
+    return (
+      !devolucionLegalizacion &&
+      (devueltoDesde === 'Abierto' || devueltoDesde === null)
+    )
+  }
+
+  function devueltoPermiteSoportes(): boolean {
+    return (
+      devolucionLegalizacion ||
+      devueltoDesde === 'En ejecución' ||
+      devueltoDesde === 'Ejecutado' ||
+      devueltoDesde === 'Cerrado'
+    )
+  }
+
   function isFolderEditable(tipo: TipoSoporte): boolean {
     if (readOnly) return false
     if (tipo === 'Formato de requerimiento' && quotationApproved) return false
@@ -67,12 +85,12 @@ export function SupportDocuments({
       return (
         eventStatus === 'Abierto' ||
         eventStatus === 'En ejecución' ||
-        (eventStatus === 'Devuelto' && !devolucionLegalizacion)
+        (eventStatus === 'Devuelto' && devueltoPermiteEstaticos())
       )
     }
     return (
       eventStatus === 'En ejecución' ||
-      (eventStatus === 'Devuelto' && devolucionLegalizacion)
+      (eventStatus === 'Devuelto' && devueltoPermiteSoportes())
     )
   }
 
@@ -126,7 +144,9 @@ export function SupportDocuments({
           <div>
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
               Soportes Documentales
-              {devolucionLegalizacion && <span className="ml-2 text-amber-600 font-normal">(carpetas 5-7 editables)</span>}
+              {devueltoPermiteSoportes() && (
+                <span className="ml-2 text-amber-600 font-normal">(carpetas 5-7 editables)</span>
+              )}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Carpetas obligatorias para el cierre del evento

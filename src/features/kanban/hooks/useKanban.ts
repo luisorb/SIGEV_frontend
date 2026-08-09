@@ -62,8 +62,13 @@ export function useKanban({ events }: UseKanbanOptions) {
 
     if (event.estado === targetState) return
 
-    if (!canTransition(event.estado, targetState, roleNames)) {
-      toast.showToast(`Su rol no permite mover el evento de "${event.estado}" a "${targetState}"`, 'error')
+    if (!canTransition(event, targetState, roleNames)) {
+      toast.showToast(
+        event.estado === 'Devuelto'
+          ? `Para salir de "Devuelto" el evento debe regresar al estado del que provenía (${event.devueltoDesde ?? 'origen desconocido'})`
+          : `Su rol no permite mover el evento de "${event.estado}" a "${targetState}"`,
+        'error',
+      )
       return
     }
 
@@ -71,6 +76,7 @@ export function useKanban({ events }: UseKanbanOptions) {
       event.quotations?.some((q) => q.isDefinitive) === true ||
       !!event.cotizacionSeleccionadaId
     const isDevolucionInicial = event.estado === 'Abierto' && targetState === 'Devuelto'
+    const retornoDevueltoAbierto = event.estado === 'Devuelto' && targetState === 'Abierto'
 
     if (targetState !== 'Rechazado') {
       if (isDevolucionInicial) {
@@ -78,6 +84,8 @@ export function useKanban({ events }: UseKanbanOptions) {
           toast.showToast('La orden debe contar con al menos una cotización para devolverla a ajustes', 'error')
           return
         }
+      } else if (retornoDevueltoAbierto) {
+        // Regla de oro: retorno de la devolución al estado Abierto, no exige cotización definitiva
       } else if (!hasDefinitiveQuotation) {
         toast.showToast('La orden debe contar con al menos una cotización aprobada de forma definitiva antes de cambiar su estado', 'error')
         return
@@ -111,13 +119,18 @@ export function useKanban({ events }: UseKanbanOptions) {
   const confirmStateChange = useCallback(async (reason?: string) => {
     if (!pendingChange) return
 
-    const { eventId, to } = pendingChange
+    const { eventId, from, to } = pendingChange
     try {
       await changeEventStatusApi(eventId, to, { observation: reason || undefined })
       queryClient.setQueryData<Event[]>(['events'], (prev) =>
         prev?.map((e) =>
           e.id === eventId
-            ? { ...e, estado: to, updatedAt: new Date().toISOString() }
+            ? {
+                ...e,
+                estado: to,
+                devueltoDesde: to === 'Devuelto' ? from : null,
+                updatedAt: new Date().toISOString(),
+              }
             : e,
         ),
       )

@@ -208,6 +208,7 @@ export interface Event {
   activo?: boolean
   eliminadoAt?: string
   devolucionLegalizacion?: boolean
+  devueltoDesde?: string | null
   createdAt: string
   updatedAt: string
 }
