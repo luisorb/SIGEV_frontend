@@ -1,11 +1,11 @@
 import { useMemo, useState, useRef } from 'react'
-import { FileSpreadsheet, Plus, BadgeCheck, Download, FileUp, X, Eye, ThumbsDown } from 'lucide-react'
+import { FileSpreadsheet, Plus, BadgeCheck, Download, FileUp, X, Eye } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { OFFER_STATE_COLORS } from '../../offers/types'
 import { hasQuotedValues } from '../../offers/utils/offerValues'
-import { QUOTATIONS_KEY, useQuotationPermissions } from '../../offers/hooks/useQuotations'
+import { QUOTATIONS_KEY } from '../../offers/hooks/useQuotations'
 import type { Event } from '../../../types'
 import { downloadAttachment } from '../../../services/attachments.service'
 import { QuotationRegistrationModal } from './QuotationRegistrationModal'
@@ -32,7 +32,6 @@ interface QuotationListProps {
   offers: Offer[]
   selectedOfferId?: string
   onSelectOffer?: (offerId: string, file?: File) => void
-  onRejectOffer?: (offerId: string, observation: string) => void
   readOnly?: boolean
   canSelectQuotation?: boolean
   oferta?: Offer | null
@@ -44,19 +43,15 @@ export function QuotationList({
   offers,
   selectedOfferId,
   onSelectOffer,
-  onRejectOffer,
   readOnly = false,
   canSelectQuotation = false,
   oferta,
 }: QuotationListProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
-  const { can: canQuotation } = useQuotationPermissions()
   const [showModal, setShowModal] = useState(false)
   const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
   const [confirmOffer, setConfirmOffer] = useState<Offer | null>(null)
-  const [rejectOffer, setRejectOffer] = useState<Offer | null>(null)
-  const [rejectReason, setRejectReason] = useState('')
   const [approvalFile, setApprovalFile] = useState<File | null>(null)
   const [approvalFileError, setApprovalFileError] = useState<string | null>(null)
   const approvalInputRef = useRef<HTMLInputElement | null>(null)
@@ -185,13 +180,6 @@ export function QuotationList({
                 const isSelected = offer.id === selectedOfferId
                 const displayEstado: Offer['estado'] = isSelected ? 'Aprobada' : offer.estado
                 const canApprove = canSelect && !isSelected && offer.estado !== 'Rechazada'
-                const canReject =
-                  canQuotation('changeState') &&
-                  !isSelected &&
-                  offer.estado !== 'Rechazada' &&
-                  offer.estado !== 'Aprobada' &&
-                  !oferta &&
-                  !selectedOfferId
 
                 return (
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
@@ -231,18 +219,6 @@ export function QuotationList({
                             <BadgeCheck className="w-4 h-4" />
                           </button>
                         )}
-                        {canReject && (
-                          <button
-                            onClick={() => {
-                              setRejectReason('')
-                              setRejectOffer(offer)
-                            }}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
-                            title="Rechazar cotización"
-                          >
-                            <ThumbsDown className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -272,67 +248,6 @@ export function QuotationList({
 
       {detailOffer && (
         <QuotationDetailModal offer={detailOffer} event={event} onClose={() => setDetailOffer(null)} />
-      )}
-
-      {rejectOffer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-2 rounded-xl shrink-0 bg-red-100 text-red-600">
-                <ThumbsDown className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-slate-900">Rechazar cotización</h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  La cotización <strong>{rejectOffer.codigo}</strong> por{' '}
-                  <strong>{formatCurrencyCO(rejectOffer.total)}</strong> será rechazada. Indique el motivo del rechazo.
-                </p>
-              </div>
-              <button
-                onClick={() => setRejectOffer(null)}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
-                aria-label="Cerrar"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="mt-5">
-              <label htmlFor="rejectReason" className="block text-sm font-medium text-slate-700">
-                Motivo del rechazo <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="rejectReason"
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={3}
-                placeholder="Describa el motivo por el cual se rechaza esta cotización..."
-                className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setRejectOffer(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  const reason = rejectReason.trim()
-                  if (!reason) return
-                  onRejectOffer?.(rejectOffer.id, reason)
-                  setRejectOffer(null)
-                }}
-                disabled={!rejectReason.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Rechazar cotización
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {confirmOffer && (
