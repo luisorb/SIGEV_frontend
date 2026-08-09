@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { AlertTriangle, MapPin, FileText, Download, Upload, Lock } from 'lucide-react'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event, Attachment } from '../../../types'
@@ -44,18 +44,40 @@ export function EventForm({
   onSave,
   onCancel,
 }: EventFormProps) {
-  const { register, handleSubmit, errors, isSubmitting, watchedValues, setValue } = useEventForm({
+  const { register, handleSubmit: submitForm, errors, isSubmitting, watchedValues, setValue } = useEventForm({
     event,
-    onSave: (data) => onSave(data, requerimientoFile),
+    onSave: (data) => {
+      const error = validateRequerimiento()
+      setRequerimientoError(error)
+      if (error) return
+      onSave(data, requerimientoFile)
+    },
   })
 
   const [showPicker, setShowPicker] = useState(false)
   const [requerimientoFile, setRequerimientoFile] = useState<File | null>(null)
+  const [requerimientoError, setRequerimientoError] = useState<string | null>(null)
 
   const existingRequerimiento: Attachment | undefined = event?.attachments?.find(
     (a) => a.category === 'Formato de requerimiento',
   )
   const requerimientoLocked = !!event?.cotizacionSeleccionadaId
+
+  const hasRequerimiento = !!requerimientoFile || !!existingRequerimiento || requerimientoLocked
+
+  function validateRequerimiento(): string | null {
+    if (requerimientoLocked) return null
+    if (!hasRequerimiento) return 'El formato de requerimiento es obligatorio'
+    if (requerimientoFile && !requerimientoFile.type.includes('pdf') && !requerimientoFile.name.toLowerCase().endsWith('.pdf')) {
+      return 'Solo se admiten archivos PDF'
+    }
+    return null
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void submitForm()
+  }
 
   const duplicate = checkDuplicateEventNumber(
     events,
@@ -100,8 +122,7 @@ export function EventForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {duplicate && (
+    <form onSubmit={handleSubmit} className="space-y-8">      {duplicate && (
         <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
           <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
           <div>
@@ -233,11 +254,16 @@ export function EventForm({
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
-            Formato de requerimiento
-          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">
+              <FileText className="w-4 h-4" />
+            </span>
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+              Formato de requerimiento {requiredMark}
+            </h2>
+          </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Documento oficial de solicitud del evento. Solo puede cargarse aquí; en el detalle de la orden solo es posible descargarlo.
+            Documento oficial de solicitud del evento. Solo se admite un archivo PDF. Solo puede cargarse aquí; en el detalle de la orden solo es posible descargarlo.
           </p>
         </div>
         <div className="px-6 py-5">
@@ -299,6 +325,11 @@ export function EventForm({
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null
                   setRequerimientoFile(file)
+                  setRequerimientoError(
+                    file && !file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')
+                      ? 'Solo se admiten archivos PDF'
+                      : null,
+                  )
                   e.target.value = ''
                 }}
               />
@@ -306,13 +337,19 @@ export function EventForm({
             {requerimientoFile && !requerimientoLocked && (
               <button
                 type="button"
-                onClick={() => setRequerimientoFile(null)}
+                onClick={() => {
+                  setRequerimientoFile(null)
+                  setRequerimientoError(null)
+                }}
                 className="px-3 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
               >
                 Quitar
               </button>
             )}
           </div>
+          {requerimientoError && (
+            <p className="text-xs text-red-500 mt-2">{requerimientoError}</p>
+          )}
           {!requerimientoLocked && existingRequerimiento && requerimientoFile && (
             <p className="text-xs text-amber-600 mt-2">
               Al guardar, el archivo actual será reemplazado por el nuevo.
