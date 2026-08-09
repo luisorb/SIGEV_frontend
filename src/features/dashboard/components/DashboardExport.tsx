@@ -1,4 +1,4 @@
-import { Download, FileText } from 'lucide-react'
+import { FileSpreadsheet, FileText } from 'lucide-react'
 import type { Event, Ally, Disbursement, Municipality } from '../../../types'
 import type { ConsolidadoRow, CoberturaItem, DashboardFiltersState, DashboardMetrics } from '../types'
 import { formatCurrencyCO, formatDateCO, formatDateTimeCO, formatPercentage } from '../../../utils/formatters'
@@ -664,14 +664,16 @@ export function DashboardExport({
     <div className="flex items-center gap-2">
       <button
         onClick={handleExportXLSX}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+        title="Descargar el panel de control en formato Excel (.xlsx) para analizar los datos en tu hoja de cálculo"
+        className="group inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 active:scale-[0.98] shadow-sm hover:shadow-md transition-all duration-150"
       >
-        <Download className="w-4 h-4" />
+        <FileSpreadsheet className="w-4 h-4" />
         Excel
       </button>
       <button
         onClick={handleExportPDF}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+        title="Descargar el panel de control en formato PDF listo para imprimir o compartir"
+        className="group inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 active:scale-[0.98] shadow-sm hover:shadow-md transition-all duration-150"
       >
         <FileText className="w-4 h-4" />
         PDF
