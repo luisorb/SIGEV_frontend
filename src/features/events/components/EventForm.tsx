@@ -35,6 +35,18 @@ const inputError = 'border-red-300 focus:ring-red-300/40 focus:border-red-400'
 const labelBase = 'block text-sm font-medium text-slate-700'
 const requiredMark = <span className="text-red-400 ml-0.5">*</span>
 
+const MAX_REQUERIMIENTO_MB = 10
+const MAX_REQUERIMIENTO_BYTES = MAX_REQUERIMIENTO_MB * 1024 * 1024
+
+function requerimientoFileError(file: File): string | null {
+  const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')
+  if (!isPdf) return 'Solo se admiten archivos PDF'
+  if (file.size > MAX_REQUERIMIENTO_BYTES) {
+    return `El documento PDF no puede superar los ${MAX_REQUERIMIENTO_MB} MB`
+  }
+  return null
+}
+
 export function EventForm({
   event,
   aliados,
@@ -68,9 +80,7 @@ export function EventForm({
   function validateRequerimiento(): string | null {
     if (requerimientoLocked) return null
     if (!hasRequerimiento) return 'El formato de requerimiento es obligatorio'
-    if (requerimientoFile && !requerimientoFile.type.includes('pdf') && !requerimientoFile.name.toLowerCase().endsWith('.pdf')) {
-      return 'Solo se admiten archivos PDF'
-    }
+    if (requerimientoFile) return requerimientoFileError(requerimientoFile)
     return null
   }
 
@@ -264,7 +274,7 @@ export function EventForm({
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Documento oficial de solicitud del evento. Solo se admite un archivo PDF. Solo puede cargarse aquí; en el detalle de la orden solo es posible descargarlo.
+            Documento oficial de solicitud del evento. Solo se admite un archivo PDF de máximo {MAX_REQUERIMIENTO_MB} MB. Solo puede cargarse aquí; en el detalle de la orden solo es posible descargarlo.
           </p>
         </div>
         <div className="px-6 py-5">
@@ -326,11 +336,7 @@ export function EventForm({
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null
                   setRequerimientoFile(file)
-                  setRequerimientoError(
-                    file && !file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')
-                      ? 'Solo se admiten archivos PDF'
-                      : null,
-                  )
+                  setRequerimientoError(file ? requerimientoFileError(file) : null)
                   e.target.value = ''
                 }}
               />
