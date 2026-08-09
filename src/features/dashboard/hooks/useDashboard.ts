@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { Event, Ally, Disbursement, Municipality, EventState } from '../../../types'
 import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow, CoberturaItem, EventoIncompleto } from '../types'
+import { getEventEconomics } from '../../../utils/eventEconomics'
 
 const ESTADOS_EN_EJECUCION: EventState[] = ['En ejecución', 'Ejecutado', 'Cerrado', 'Legalizado']
 
@@ -91,12 +92,11 @@ export function useDashboard(
     let impuestosAcumulados = 0
 
     for (const event of filteredEvents) {
-      for (const item of event.items) {
-        valorTotalEjecucion += item.total
-        baseMasImpuestos += item.base + item.iva + item.impuestoConsumo
-        feeAcumulado += item.feeTarifado + item.feeTerceros + item.ivaFee
-        impuestosAcumulados += item.iva + item.impuestoConsumo + item.ivaFee
-      }
+      const e = getEventEconomics(event)
+      valorTotalEjecucion += e.total
+      baseMasImpuestos += e.base + e.iva + e.impuestoConsumo
+      feeAcumulado += e.feeTarifado + e.feeTerceros + e.ivaFee
+      impuestosAcumulados += e.iva + e.impuestoConsumo + e.ivaFee
     }
 
     return {
@@ -123,10 +123,9 @@ export function useDashboard(
         }
       }
       groups[event.desembolsoId].cantidadEventos++
-      for (const item of event.items) {
-        groups[event.desembolsoId].valorTotal += item.total
-        groups[event.desembolsoId].feeTotal += item.feeTarifado + item.feeTerceros + item.ivaFee
-      }
+      const e = getEventEconomics(event)
+      groups[event.desembolsoId].valorTotal += e.total
+      groups[event.desembolsoId].feeTotal += e.feeTarifado + e.feeTerceros + e.ivaFee
     }
 
     const total = Object.values(groups).reduce((s, g) => s + g.valorTotal, 0)
@@ -153,10 +152,9 @@ export function useDashboard(
         }
       }
       groups[event.aliadoId].cantidadEventos++
-      for (const item of event.items) {
-        groups[event.aliadoId].valorTotal += item.total
-        groups[event.aliadoId].feeTotal += item.feeTarifado + item.feeTerceros + item.ivaFee
-      }
+      const e = getEventEconomics(event)
+      groups[event.aliadoId].valorTotal += e.total
+      groups[event.aliadoId].feeTotal += e.feeTarifado + e.feeTerceros + e.ivaFee
     }
 
     const total = Object.values(groups).reduce((s, g) => s + g.valorTotal, 0)
@@ -176,9 +174,7 @@ export function useDashboard(
         groups[event.municipioId] = { cantidadEventos: 0, valorTotal: 0 }
       }
       groups[event.municipioId].cantidadEventos++
-      for (const item of event.items) {
-        groups[event.municipioId].valorTotal += item.total
-      }
+      groups[event.municipioId].valorTotal += getEventEconomics(event).total
     }
 
     const totalValor = Object.values(groups).reduce((s, g) => s + g.valorTotal, 0)

@@ -69,7 +69,10 @@ export function useMatrix(
   const detailedRows = useMemo<DetailedRow[]>(() => {
     const rows: DetailedRow[] = []
     for (const event of filteredEvents) {
-      for (const item of event.items) {
+      const sourceItems = event.ofertaEconomica?.items?.length
+        ? event.ofertaEconomica.items
+        : event.items
+      for (const item of sourceItems) {
         const effectiveAliadoId = getEffectiveAliadoId(item, event)
         rows.push({
           eventoId: event.id,
@@ -103,7 +106,10 @@ export function useMatrix(
     const groups: Record<string, Record<string, { eventos: Set<string>; valor: number; fee: number }>> = {}
 
     for (const event of filteredEvents) {
-      for (const item of event.items) {
+      const sourceItems = event.ofertaEconomica?.items?.length
+        ? event.ofertaEconomica.items
+        : event.items
+      for (const item of sourceItems) {
         const dId = event.desembolsoId
         const aId = getEffectiveAliadoId(item, event)
         if (!groups[dId]) groups[dId] = {}

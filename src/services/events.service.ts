@@ -31,6 +31,32 @@ function mapBackendItem(data: Record<string, unknown>): Item {
   }
 }
 
+function mapBackendOfertaItem(data: Record<string, unknown>): Item {
+  const ivaRate = Number(data.ivaRate ?? 0)
+  const consumptionTaxRate = Number(data.consumptionTaxRate ?? 0)
+  const categoriaTributaria: TaxCategory =
+    ivaRate > 0 ? 'IVA' : consumptionTaxRate > 0 ? 'Consumo' : 'Tercero'
+  return {
+    id: String(data.id ?? ''),
+    eventoId: String(data.ofertaEconomicaId ?? ''),
+    nombre: data.description ? String(data.description) : undefined,
+    descripcion: String(data.description ?? ''),
+    cantidad: Number(data.quantity ?? 0),
+    valorUnitario: Number(data.unitPrice ?? 0),
+    categoriaTributaria,
+    aliadoId: data.allyId ? String(data.allyId) : undefined,
+    tariffId: data.tariffId ? String(data.tariffId) : undefined,
+    isTariffed: data.isTariffed === true,
+    base: Number(data.baseValue ?? 0),
+    iva: Number(data.ivaValue ?? 0),
+    impuestoConsumo: Number(data.consumptionTaxValue ?? 0),
+    feeTarifado: Number(data.feeTarifadoValue ?? 0),
+    feeTerceros: Number(data.feeTercerosValue ?? 0),
+    ivaFee: Number(data.feeIvaValue ?? 0),
+    total: Number(data.totalValue ?? 0),
+  }
+}
+
 function mapBackendEvent(data: Record<string, unknown>): Event {
   return {
     id: String(data.id ?? ''),
@@ -80,10 +106,22 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     devueltoDesde: data.devueltoDesde ? String(data.devueltoDesde) : null,
     cotizacionSeleccionadaId: data.cotizacionSeleccionadaId ? String(data.cotizacionSeleccionadaId) : undefined,
     ofertaEconomica: data.ofertaEconomica
-      ? {
-          id: String((data.ofertaEconomica as Record<string, unknown>).id ?? ''),
-          total: Number((data.ofertaEconomica as Record<string, unknown>).total ?? 0),
-        }
+      ? (() => {
+          const o = data.ofertaEconomica as Record<string, unknown>
+          return {
+            id: String(o.id ?? ''),
+            total: Number(o.total ?? 0),
+            baseTotal: Number(o.baseTotal ?? 0),
+            ivaTotal: Number(o.ivaTotal ?? 0),
+            impuestoConsumoTotal: Number(o.impuestoConsumoTotal ?? 0),
+            feeTarifadoTotal: Number(o.feeTarifadoTotal ?? 0),
+            feeTercerosTotal: Number(o.feeTercerosTotal ?? 0),
+            ivaFeeTotal: Number(o.ivaFeeTotal ?? 0),
+            items: Array.isArray(o.items)
+              ? (o.items as Record<string, unknown>[]).map(mapBackendOfertaItem)
+              : undefined,
+          }
+        })()
       : undefined,
     createdAt: String(data.createdAt ?? new Date().toISOString()),
     updatedAt: String(data.updatedAt ?? new Date().toISOString()),

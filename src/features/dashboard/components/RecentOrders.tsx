@@ -43,7 +43,7 @@ export function RecentOrders({ events, aliados, desembolsos }: RecentOrdersProps
         <div className="absolute left-[22px] top-0 bottom-0 w-px bg-slate-200" />
         <div className="divide-y divide-slate-100">
           {recent.map((event) => {
-            const total = event.items.reduce((s, i) => s + i.total, 0)
+            const total = event.ofertaEconomica?.total ?? 0
             const s = stateStyles[event.estado] || stateStyles.Abierto
             return (
               <div key={event.id} className="relative px-5 py-3.5 pl-[52px] hover:bg-slate-50 transition-colors group">

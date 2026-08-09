@@ -2,6 +2,7 @@ import { FileSpreadsheet, FileText } from 'lucide-react'
 import type { Event, Ally, Disbursement, Municipality } from '../../../types'
 import type { ConsolidadoRow, CoberturaItem, DashboardFiltersState, DashboardMetrics } from '../types'
 import { formatCurrencyCO, formatDateCO, formatDateTimeCO, formatPercentage } from '../../../utils/formatters'
+import { getEventEconomics } from '../../../utils/eventEconomics'
 import type { jsPDF } from 'jspdf'
 import type { CellInput, Styles, UserOptions } from 'jspdf-autotable'
 import type { WorkBook, WorkSheet } from 'xlsx'
@@ -415,7 +416,7 @@ export function DashboardExport({
     }
 
     const detailRows = events.map((event) => {
-      const total = event.items.reduce((s, i) => s + i.total, 0)
+      const total = getEventEconomics(event).total
       return [
         `${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''}`,
         event.responsable ?? '-',
@@ -429,7 +430,7 @@ export function DashboardExport({
     })
 
     const totalItems = events.reduce((s, e) => s + e.items.length, 0)
-    const totalValor = events.reduce((s, e) => s + e.items.reduce((a, i) => a + i.total, 0), 0)
+    const totalValor = events.reduce((s, e) => s + getEventEconomics(e).total, 0)
 
     utils.book_append_sheet(
       wb,
@@ -615,7 +616,7 @@ export function DashboardExport({
       doc.text('No hay eventos para el período y filtros seleccionados.', PAGE_MARGIN, y)
     } else {
       const detailBody = events.map((event) => {
-        const total = event.items.reduce((s, i) => s + i.total, 0)
+        const total = getEventEconomics(event).total
         return [
           `${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''}`,
           event.responsable ?? '-',
@@ -629,7 +630,7 @@ export function DashboardExport({
       })
 
       const totalItems = events.reduce((s, e) => s + e.items.length, 0)
-      const totalValor = events.reduce((s, e) => s + e.items.reduce((a, i) => a + i.total, 0), 0)
+      const totalValor = events.reduce((s, e) => s + getEventEconomics(e).total, 0)
 
       renderTable(doc, {
         startY: y,

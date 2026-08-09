@@ -314,6 +314,13 @@ export interface Event {
   ofertaEconomica?: {
     id: string
     total: number
+    baseTotal: number
+    ivaTotal: number
+    impuestoConsumoTotal: number
+    feeTarifadoTotal: number
+    feeTercerosTotal: number
+    ivaFeeTotal: number
+    items?: Item[]
   }
   municipalityCategory?: string
   observation?: string
