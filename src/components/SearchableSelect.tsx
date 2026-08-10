@@ -5,6 +5,7 @@ export interface SearchableSelectOption {
   value: string
   label: string
   keywords?: string
+  color?: string
 }
 
 interface SearchableSelectProps {
@@ -219,6 +220,12 @@ export function SearchableSelect({
                     isSelected ? 'font-medium text-primary' : '',
                   ].join(' ')}
                 >
+                  {option.color && (
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: option.color }}
+                    />
+                  )}
                   <span className="truncate flex-1">{option.label}</span>
                   {isSelected && <Check className={`${iconClass} text-primary shrink-0`} />}
                 </button>

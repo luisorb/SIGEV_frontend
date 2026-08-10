@@ -149,7 +149,7 @@ export function MapPage() {
           <SearchableSelect
             size="sm"
             className="w-44"
-            options={aliados.map((a) => ({ value: a.id, label: a.nombre }))}
+            options={aliados.map((a) => ({ value: a.id, label: a.nombre, color: a.color }))}
             value={selectedAliado}
             onChange={setSelectedAliado}
             placeholder="Todos los aliados"
@@ -164,16 +164,6 @@ export function MapPage() {
           />
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-500 ml-auto">
-          <span className="font-medium text-slate-700">Leyenda:</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#64748B' }} /> Sin aliado</span>
-          {aliados.map((a) => (
-            <span key={a.id} className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: a.color }} />
-              {a.nombre}
-            </span>
-          ))}
-        </div>
       </div>
 
       <div className="h-[600px] rounded-xl overflow-hidden relative z-0">
