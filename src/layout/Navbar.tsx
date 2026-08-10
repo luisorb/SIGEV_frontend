@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Menu, LogOut, Settings } from 'lucide-react'
+import { Menu, LogOut } from 'lucide-react'
 import { useAuth } from '../features/auth/useAuth'
 import { Breadcrumbs } from './Breadcrumbs'
 import { ROLE_LABELS } from '../lib/permissions'
@@ -68,10 +68,6 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
               <p className="text-sm font-medium text-slate-900">{user?.nombre ?? 'Usuario'}</p>
               <p className="text-xs text-slate-500">{userRoles}</p>
             </div>
-            <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-              <Settings className="w-4 h-4" />
-              Configuración
-            </button>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
