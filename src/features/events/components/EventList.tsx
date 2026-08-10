@@ -77,7 +77,7 @@ export function EventList({
   const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
   const { can: userCan } = useRolePermissions()
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
 

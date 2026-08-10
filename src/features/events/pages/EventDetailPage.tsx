@@ -25,7 +25,7 @@ export function EventDetailPage() {
     enabled: !!id,
   })
 
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })

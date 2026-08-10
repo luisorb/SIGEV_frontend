@@ -16,7 +16,7 @@ import { useMunicipalities } from '../../../hooks/useMunicipalities'
 
 export function DashboardPage() {
   const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
 

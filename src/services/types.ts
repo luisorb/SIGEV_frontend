@@ -127,19 +127,14 @@ export interface CreateAllyDto {
   code: string
   name: string
   color?: string
-  document?: string
-  contactName?: string
-  contactEmail?: string
+  isActive?: boolean
 }
 
 export interface UpdateAllyDto {
   code?: string
   name?: string
   color?: string
-  document?: string
-  contactName?: string
-  contactEmail?: string
-  active?: boolean
+  isActive?: boolean
 }
 
 export interface CreateDisbursementDto {

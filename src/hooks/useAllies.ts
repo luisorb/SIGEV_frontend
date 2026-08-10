@@ -5,25 +5,22 @@ import type { CreateAllyDto, UpdateAllyDto } from '../services/types'
 
 const ALLIES_KEY = ['allies']
 
-function mapAllyResponse(data: { id: string; code: string; name: string; color?: string; document?: string; contactName?: string; contactEmail?: string; active?: boolean }): Ally {
+function mapAllyResponse(data: { id: string; code: string; name: string; color?: string; active?: boolean; isActive?: boolean }): Ally {
   return {
     id: data.id,
     codigo: data.code,
     nombre: data.name,
-    nit: data.document ?? '',
-    contacto: data.contactName ?? '',
-    email: data.contactEmail ?? '',
-    telefono: '',
     color: data.color ?? '#6366F1',
-    activo: data.active ?? true,
+    activo: data.isActive ?? data.active ?? true,
   }
 }
 
-export function useAllies() {
+export function useAllies(options?: { all?: boolean }) {
+  const all = options?.all ?? false
   return useQuery({
-    queryKey: ALLIES_KEY,
+    queryKey: [...ALLIES_KEY, { all }],
     queryFn: async () => {
-      const data = await getAlliesApi()
+      const data = await getAlliesApi({ all })
       return data.map(mapAllyResponse)
     },
   })

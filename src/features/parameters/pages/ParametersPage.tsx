@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useToast } from '../../../components/ToastProvider'
-import { Settings, Handshake, Banknote, Calculator, Plus, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from 'lucide-react'
+import { Settings, Handshake, Banknote, Calculator, Plus, Save, Search, Pencil, Power, PowerOff, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from 'lucide-react'
 import { useParameters } from '../hooks/useParameters'
 import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
@@ -11,8 +11,9 @@ import type { Ally, Disbursement } from '../../../types'
 
 type Tab = 'tasas' | 'aliados' | 'desembolsos'
 
-type AllyForm = Omit<Ally, 'id' | 'telefono'>
-const EMPTY_ALLY: AllyForm = { codigo: '', nombre: '', nit: '', contacto: '', email: '', color: '#3B82F6', activo: true }
+type AllyForm = Omit<Ally, 'id'>
+const EMPTY_ALLY: AllyForm = { codigo: '', nombre: '', color: '#3B82F6', activo: true }
+const PRESET_COLORS = ['#3B82F6', '#6366F1', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#64748B']
 
 type DesForm = Omit<Disbursement, 'id'>
 const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', vigenciaInicio: '', vigenciaFin: '', valorReferencia: 0, activo: true }
@@ -55,11 +56,11 @@ function LoadingOverlay({ show, message }: LoadingOverlayProps) {
 }
 
 function AliadosTab({ showToast }: { showToast: (message: string, type?: 'success' | 'error') => void }) {
-  const { data: aliados = [], isLoading, error } = useAllies()
+  const { data: aliados = [], isLoading, error } = useAllies({ all: true })
   const createAlly = useCreateAlly()
   const updateAlly = useUpdateAlly()
   const [search, setSearch] = useState('')
-  const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'nit' | 'contacto' | 'email' | 'estado'>('nombre')
+  const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'estado'>('nombre')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [pageSize, setPageSize] = useState(8)
   const [page, setPage] = useState(0)
@@ -71,13 +72,12 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
 
   function openCreate() { setEditing(null); setForm(EMPTY_ALLY); setErrors({}); setModalOpen(true) }
 
-  function openEdit(a: Ally) { setEditing(a); setForm({ codigo: a.codigo, nombre: a.nombre, nit: a.nit, contacto: a.contacto, email: a.email, color: a.color, activo: a.activo }); setErrors({}); setModalOpen(true) }
+  function openEdit(a: Ally) { setEditing(a); setForm({ codigo: a.codigo, nombre: a.nombre, color: a.color, activo: a.activo }); setErrors({}); setModalOpen(true) }
 
   async function handleSave() {
     const newErrors: Partial<Record<keyof AllyForm, string>> = {}
     if (!form.codigo.trim()) newErrors.codigo = 'El código es obligatorio'
     if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
-    if (!form.nit.trim()) newErrors.nit = 'El NIT es obligatorio'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     try {
       if (editing) {
@@ -86,10 +86,8 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
           data: {
             code: form.codigo,
             name: form.nombre,
-            document: form.nit,
-            contactName: form.contacto || undefined,
-            contactEmail: form.email || undefined,
             color: form.color,
+            isActive: form.activo,
           },
         })
         showToast(`Aliado "${form.nombre}" actualizado correctamente`)
@@ -97,10 +95,8 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
         await createAlly.mutateAsync({
           code: form.codigo,
           name: form.nombre,
-          document: form.nit,
-          contactName: form.contacto || undefined,
-          contactEmail: form.email || undefined,
           color: form.color,
+          isActive: form.activo,
         })
         showToast(`Aliado "${form.nombre}" creado correctamente`)
       }
@@ -112,7 +108,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
 
   async function handleToggleActivo(a: Ally) {
     try {
-      await updateAlly.mutateAsync({ id: a.id, data: { active: !a.activo } })
+      await updateAlly.mutateAsync({ id: a.id, data: { isActive: !a.activo } })
       showToast(`Aliado "${a.nombre}" ${a.activo ? 'inactivado' : 'activado'} correctamente`)
       setConfirmToggle(null)
     } catch {
@@ -124,7 +120,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
     return errors[field] ? inputBase + ' ' + inputError : inputBase
   }
 
-  function toggleSort(col: 'codigo' | 'nombre' | 'nit' | 'contacto' | 'email' | 'estado') {
+  function toggleSort(col: 'codigo' | 'nombre' | 'estado') {
     if (sortColumn === col) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
@@ -140,21 +136,12 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
       !search
         || a.codigo.toLowerCase().includes(q)
         || a.nombre.toLowerCase().includes(q)
-        || a.nit.toLowerCase().includes(q)
-        || (a.contacto ?? '').toLowerCase().includes(q)
-        || (a.email ?? '').toLowerCase().includes(q)
     ).sort((a, b) => {
       const cmp = sortColumn === 'codigo'
         ? a.codigo.localeCompare(b.codigo)
         : sortColumn === 'nombre'
           ? a.nombre.localeCompare(b.nombre)
-          : sortColumn === 'nit'
-            ? a.nit.localeCompare(b.nit)
-            : sortColumn === 'contacto'
-              ? (a.contacto ?? '').localeCompare(b.contacto ?? '')
-              : sortColumn === 'email'
-                ? (a.email ?? '').localeCompare(b.email ?? '')
-                : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
+          : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
       return sortDir === 'asc' ? cmp : -cmp
     })
   }, [aliados, search, sortColumn, sortDir])
@@ -163,7 +150,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
   const safePage = Math.min(page, totalPages - 1)
   const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
-  function sortHeader(col: 'codigo' | 'nombre' | 'nit' | 'contacto' | 'email' | 'estado', label: string, className = '') {
+  function sortHeader(col: 'codigo' | 'nombre' | 'estado', label: string, className = '') {
     const justify = className.includes('text-right') ? 'justify-end' : className.includes('text-center') ? 'justify-center' : ''
     return (
       <th
@@ -192,7 +179,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input type="text" placeholder="Buscar por código, nombre o NIT..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+          <input type="text" placeholder="Buscar por código o nombre..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
         </div>
         <button onClick={openCreate} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
           <Plus className="w-4 h-4" /> Nuevo Aliado
@@ -205,16 +192,13 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
               <tr>
                 {sortHeader('codigo', 'Código')}
                 {sortHeader('nombre', 'Nombre')}
-                {sortHeader('nit', 'NIT')}
-                {sortHeader('contacto', 'Contacto')}
-                {sortHeader('email', 'Email')}
                 {sortHeader('estado', 'Estado', 'text-center')}
                 <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
+                <tr><td colSpan={4} className="px-4 py-12 text-center text-slate-500">No hay aliados registrados</td></tr>
               ) : (
                 paged.map((a) => (
                   <tr key={a.id} className={`hover:bg-slate-50 transition-colors ${!a.activo ? 'opacity-50' : ''}`}>
@@ -225,9 +209,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
                         <span className="font-medium text-slate-900 text-sm sm:text-base">{a.nombre}</span>
                       </div>
                     </td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.nit}</td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.contacto || '-'}</td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{a.email || '-'}</td>
+
                     <td className="px-3 sm:px-4 py-3 text-center">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${a.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{a.activo ? 'Activo' : 'Inactivo'}</span>
                     </td>
@@ -314,49 +296,94 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Código {requiredMark}</label>
-                  <input type="text" value={form.codigo} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: ALY-001" className={inp('codigo')} />
-                  {errors.codigo && <p className="text-xs text-red-500">{errors.codigo}</p>}
+            <div className="p-5 sm:p-6 space-y-6 overflow-y-auto">
+              {/* Información general */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-primary/70" />
+                  <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Información general</h4>
                 </div>
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Nombre {requiredMark}</label>
-                  <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Aliado SAS" className={inp('nombre')} />
-                  {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className={labelBase}>NIT {requiredMark}</label>
-                  <input type="text" value={form.nit} onChange={(e) => { setForm({ ...form, nit: e.target.value }); if (errors.nit) setErrors((prev) => ({ ...prev, nit: '' })) }} placeholder="Ej: 900.123.456-7" className={inp('nit')} />
-                  {errors.nit && <p className="text-xs text-red-500">{errors.nit}</p>}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Contacto</label>
-                  <input type="text" value={form.contacto} onChange={(e) => setForm({ ...form, contacto: e.target.value })} placeholder="Nombre del contacto" className={inputBase} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Email</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contacto@ejemplo.com" className={inputBase} />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Color</label>
-                  <div className="flex items-center gap-2">
-                    <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-9 px-0.5 border border-slate-300 rounded-lg cursor-pointer" />
-                    <span className="text-xs text-slate-500 font-mono">{form.color}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className={labelBase}>Código {requiredMark}</label>
+                    <input type="text" value={form.codigo} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: ALY-001" className={inp('codigo')} />
+                    {errors.codigo && <p className="text-xs text-red-500 mt-1">{errors.codigo}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className={labelBase}>Nombre {requiredMark}</label>
+                    <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Aliado SAS" className={inp('nombre')} />
+                    {errors.nombre && <p className="text-xs text-red-500 mt-1">{errors.nombre}</p>}
                   </div>
                 </div>
               </div>
+
+              <div className="border-t border-slate-200" />
+
+              {/* Identidad visual */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-primary/70" />
+                  <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Identidad visual</h4>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative shrink-0">
+                    <input
+                      type="color"
+                      value={form.color}
+                      onChange={(e) => setForm({ ...form, color: e.target.value })}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      title="Elegir color personalizado"
+                    />
+                    <span
+                      className="block w-12 h-10 rounded-lg border border-slate-200 shadow-sm cursor-pointer transition-transform hover:scale-105"
+                      style={{ backgroundColor: form.color }}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={form.color}
+                    onChange={(e) => setForm({ ...form, color: e.target.value })}
+                    maxLength={7}
+                    placeholder="#3B82F6"
+                    className={`${inputBase} font-mono uppercase tracking-wide max-w-[7.5rem]`}
+                  />
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {PRESET_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setForm({ ...form, color: c })}
+                        title={c}
+                        className={`w-7 h-7 rounded-full border transition-all ${form.color.toLowerCase() === c ? 'ring-2 ring-primary ring-offset-2 scale-110 border-transparent' : 'border-slate-200 hover:scale-110'}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200" />
+
+              {/* Estado */}
+              <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Estado</p>
+                  <p className="text-xs text-slate-500">{form.activo ? 'El aliado está activo en el catálogo' : 'El aliado está inactivo en el catálogo'}</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={form.activo}
+                  onClick={() => setForm({ ...form, activo: !form.activo })}
+                  className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${form.activo ? 'bg-green-500' : 'bg-slate-300'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.activo ? 'translate-x-5' : ''}`} />
+                </button>
+              </div>
             </div>
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl shrink-0">
-              <button onClick={() => setModalOpen(false)} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Aliado'}</button>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-5 sm:px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
+              <button onClick={() => setModalOpen(false)} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all">Cancelar</button>
+              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"><Save className="w-4 h-4" />{editing ? 'Guardar Cambios' : 'Crear Aliado'}</button>
             </div>
           </div>
         </div>

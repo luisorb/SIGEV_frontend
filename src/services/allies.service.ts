@@ -6,14 +6,13 @@ export interface AllyResponse {
   code: string
   name: string
   color?: string
-  document?: string
-  contactName?: string
-  contactEmail?: string
   active?: boolean
+  isActive?: boolean
 }
 
-export async function getAlliesApi(): Promise<AllyResponse[]> {
-  const response = await api.get<AllyResponse[]>('/api/v1/allies')
+export async function getAlliesApi(options?: { all?: boolean }): Promise<AllyResponse[]> {
+  const query = options?.all ? '?all=true' : ''
+  const response = await api.get<AllyResponse[]>(`/api/v1/allies${query}`)
   return response.data
 }
 

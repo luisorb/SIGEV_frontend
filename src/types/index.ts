@@ -64,10 +64,6 @@ export interface Ally {
   id: string
   codigo: string
   nombre: string
-  nit: string
-  contacto: string
-  email: string
-  telefono: string
   color: string
   activo: boolean
 }

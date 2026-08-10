@@ -48,7 +48,7 @@ export function OfferViewPage() {
     enabled: !!offer?.eventoId,
   })
 
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: municipios = [] } = useMunicipalities()
   const rates = useActiveCalculationParams()
 

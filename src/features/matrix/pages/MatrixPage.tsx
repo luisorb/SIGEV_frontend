@@ -14,7 +14,7 @@ import { SearchableSelect } from '../../../components/SearchableSelect'
 
 export function MatrixPage() {
   const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
 

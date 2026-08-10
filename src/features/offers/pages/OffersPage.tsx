@@ -18,7 +18,7 @@ export function OffersPage() {
   } = useOffers()
 
   const { can } = usePermissions()
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: municipios = [] } = useMunicipalities()
   const rates = useActiveCalculationParams()
 

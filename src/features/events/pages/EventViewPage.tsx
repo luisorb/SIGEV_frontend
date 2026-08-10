@@ -65,7 +65,7 @@ export function EventViewPage() {
     enabled: !!id,
   })
 
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements()
   const { data: municipios = [] } = useMunicipalities()
 
