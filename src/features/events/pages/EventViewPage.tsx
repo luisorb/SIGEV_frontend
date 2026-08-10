@@ -4,7 +4,6 @@ import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardLi
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
-import { ImportExcelModal } from '../components/ImportExcelModal'
 import { useItems, type ManagedItem } from '../hooks/useItems'
 import { useQuotations } from '../../offers/hooks/useQuotations'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -73,7 +72,6 @@ export function EventViewPage() {
   const [localOverrides] = useState<Partial<Event>>({})
 
   const [showHistory, setShowHistory] = useState(false)
-  const [showImportModal, setShowImportModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'detalles' | 'cotizaciones' | 'soportes' | 'items'>('detalles')
 
   const {
@@ -572,25 +570,10 @@ export function EventViewPage() {
         onAddItem={handleAddItem}
         onUpdateItem={handleUpdateItem}
         onRemoveItem={handleRemoveItem}
-        onOpenImport={!itemsReadOnly ? () => setShowImportModal(true) : undefined}
         readOnly={itemsReadOnly}
         eventAliadoId={event.aliadoId}
       />
       </div>
-
-      <ImportExcelModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImport={(importedItems) => {
-          let nextItems: ManagedItem[] = []
-          for (const item of importedItems) {
-            nextItems = addItem(item)
-          }
-          persistItems(nextItems).catch((error) => {
-            toast.showToast(getApiErrorMessage(error, 'No se pudieron guardar los ítems importados'), 'error')
-          })
-        }}
-      />
 
       {showHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">

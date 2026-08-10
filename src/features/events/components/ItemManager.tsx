@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { ItemInput, Ally } from '../../../types'
 import { ItemRow } from './ItemRow'
@@ -11,7 +11,6 @@ interface ItemManagerProps {
   onAddItem?: (item: ItemInput) => void | Promise<void>
   onUpdateItem?: (id: string, updates: ItemInput) => void | Promise<void>
   onRemoveItem?: (id: string) => void | Promise<void>
-  onOpenImport?: () => void
   readOnly?: boolean
   eventAliadoId?: string
 }
@@ -22,7 +21,6 @@ export function ItemManager({
   onAddItem,
   onUpdateItem,
   onRemoveItem,
-  onOpenImport,
   readOnly = false,
   eventAliadoId,
 }: ItemManagerProps) {
@@ -78,15 +76,6 @@ export function ItemManager({
           </div>
           {!readOnly && (
             <div className="flex items-center gap-2">
-              {onOpenImport && (
-                <button
-                  onClick={onOpenImport}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Importar Excel
-                </button>
-              )}
               {onAddItem && (
                 <button
                   onClick={() => setShowAddModal(true)}
@@ -121,7 +110,7 @@ export function ItemManager({
                   <div className="flex flex-col items-center gap-2">
                     <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     <p className="text-sm text-slate-400">
-                      {readOnly ? 'Sin ítems registrados' : 'No hay ítems. Agrega uno manualmente o importa desde Excel.'}
+                      {readOnly ? 'Sin ítems registrados' : 'No hay ítems. Agrega uno manualmente.'}
                     </p>
                   </div>
                 </td>
