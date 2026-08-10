@@ -22,18 +22,18 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   Abierto: [
     {
       to: 'En ejecución',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       validate: () => null,
     },
     {
       to: 'Devuelto',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isDevolucion: true,
       validate: () => null,
     },
     {
       to: 'Rechazado',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isRechazo: true,
       validate: () => null,
     },
@@ -41,7 +41,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   'En ejecución': [
     {
       to: 'Ejecutado',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       validate: (event) => {
         if (event.items.length === 0) return 'Debe tener al menos un ítem antes de marcar como ejecutado'
         return null
@@ -49,13 +49,13 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
     },
     {
       to: 'Devuelto',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isDevolucion: true,
       validate: () => null,
     },
     {
       to: 'Rechazado',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isRechazo: true,
       validate: () => null,
     },
@@ -63,12 +63,12 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   Ejecutado: [
     {
       to: 'Cerrado',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       validate: () => null,
     },
     {
       to: 'Devuelto',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isDevolucion: true,
       validate: () => null,
     },
@@ -76,13 +76,13 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
   Devuelto: [
     {
       to: 'Abierto',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isAllowed: (event) => origenDevuelto(event) === 'Abierto',
       validate: () => null,
     },
     {
       to: 'En ejecución',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isAllowed: (event) => {
         const origin = origenDevuelto(event)
         return origin === 'En ejecución' || origin === null
@@ -91,13 +91,13 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
     },
     {
       to: 'Ejecutado',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isAllowed: (event) => origenDevuelto(event) === 'Ejecutado',
       validate: () => null,
     },
     {
       to: 'Cerrado',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isAllowed: (event) => {
         const origin = origenDevuelto(event)
         return origin === 'Cerrado' || origin === null
@@ -113,7 +113,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
     },
     {
       to: 'Devuelto',
-      roles: ['approver'],
+      roles: ['approver', 'supervisor'],
       isDevolucion: true,
       validate: () => null,
     },
