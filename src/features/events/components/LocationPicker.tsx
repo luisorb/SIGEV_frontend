@@ -114,7 +114,7 @@ export function LocationPicker({ latitud, longitud, municipio, onSelect, onClose
           </p>
         </div>
 
-        <div ref={containerRef} className="h-[380px] w-full" />
+        <div ref={containerRef} className="h-[380px] w-full relative z-0" />
 
         <div className="flex items-center justify-between px-5 py-4 border-t border-slate-200">
           <div className="flex items-center gap-2 text-sm text-slate-600">

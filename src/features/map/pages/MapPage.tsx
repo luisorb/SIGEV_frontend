@@ -10,7 +10,7 @@ import { SearchableSelect } from '../../../components/SearchableSelect'
 import { MapPin, SlidersHorizontal, X } from 'lucide-react'
 
 export function MapPage() {
-  const { data: aliados = [] } = useAllies()
+  const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements()
 
   const [selectedDesembolso, setSelectedDesembolso] = useState('')
@@ -59,6 +59,12 @@ export function MapPage() {
     const id = selectedMunicipio.divipolaCode ?? selectedMunicipio.id
     return groups.filter((g) => g.municipioId === id)
   }, [groups, selectedMunicipio])
+
+  const aliadosMap = useMemo(() => {
+    const m: Record<string, { nombre: string; color: string }> = {}
+    for (const a of aliados) m[a.id] = { nombre: a.nombre, color: a.color }
+    return m
+  }, [aliados])
 
   function selectMunicipio(mun: MunicipalityResponse) {
     setSelectedMunicipio(mun)
@@ -158,23 +164,25 @@ export function MapPage() {
           />
           </div>
         )}
-        <div className="flex items-center gap-4 text-sm text-slate-500 ml-auto">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-500 ml-auto">
           <span className="font-medium text-slate-700">Leyenda:</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-500" /> Abierto</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-500" /> En ejecución</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-500" /> Ejecutado</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-500" /> Devuelto</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-purple-500" /> Legalizado</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#64748B' }} /> Sin aliado</span>
+          {aliados.map((a) => (
+            <span key={a.id} className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: a.color }} />
+              {a.nombre}
+            </span>
+          ))}
         </div>
       </div>
 
-      <div className="h-[600px] rounded-xl overflow-hidden">
+      <div className="h-[600px] rounded-xl overflow-hidden relative z-0">
         {statsQuery.isLoading && groups.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-slate-500">Cargando mapa...</p>
           </div>
         ) : (
-          <ExecutionMap groups={visibleGroups} />
+          <ExecutionMap groups={visibleGroups} aliadosMap={aliadosMap} />
         )}
       </div>
     </div>

@@ -9,6 +9,7 @@ export interface EventMapGroup {
     numeroEvento: string
     responsable: string
     estado: string
+    aliadoId?: string
     total: number
     lat?: number
     lng?: number

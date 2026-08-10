@@ -2,12 +2,15 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { EventMapGroup } from '../types'
-import { MAP_CENTER, MAP_ZOOM, MAP_MIN_ZOOM, MAP_MAX_ZOOM, STATE_MARKER_COLORS } from '../utils/mapConfig'
+import { MAP_CENTER, MAP_ZOOM, MAP_MIN_ZOOM, MAP_MAX_ZOOM } from '../utils/mapConfig'
 import { formatCurrencyCO } from '../../../utils/formatters'
 
 interface ExecutionMapProps {
   groups: EventMapGroup[]
+  aliadosMap: Record<string, { nombre: string; color: string }>
 }
+
+const DEFAULT_MARKER_COLOR = '#64748B'
 
 const stateBadge: Record<string, string> = {
   Abierto: 'bg-yellow-500',
@@ -34,7 +37,7 @@ function buildEventIcon(color: string): L.DivIcon {
   })
 }
 
-export function ExecutionMap({ groups }: ExecutionMapProps) {
+export function ExecutionMap({ groups, aliadosMap }: ExecutionMapProps) {
   const mapRef = useRef<L.Map | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const markersRef = useRef<L.Marker[]>([])
@@ -83,7 +86,8 @@ export function ExecutionMap({ groups }: ExecutionMapProps) {
         const lat = ev.lat
         const lng = ev.lng
 
-        const color = STATE_MARKER_COLORS[ev.estado] || '#64748B'
+        const ally = ev.aliadoId ? aliadosMap[ev.aliadoId] : undefined
+        const color = ally?.color || DEFAULT_MARKER_COLOR
         const icon = buildEventIcon(color)
         const marker = L.marker([lat, lng], { icon }).addTo(map)
 
@@ -100,6 +104,13 @@ export function ExecutionMap({ groups }: ExecutionMapProps) {
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
               <tbody>
+                <tr>
+                  <td style="padding: 4px 6px; color: #475569;">Aliado</td>
+                  <td style="padding: 4px 6px; text-align: right;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${ally?.color || DEFAULT_MARKER_COLOR}; vertical-align: middle; margin-right: 4px;"></span>
+                    <span style="font-weight: 600; color: #1e293b;">${ally?.nombre || 'Sin aliado'}</span>
+                  </td>
+                </tr>
                 <tr>
                   <td style="padding: 4px 6px; color: #475569;">Responsable</td>
                   <td style="padding: 4px 6px; font-weight: 600; color: #1e293b; text-align: right;">${ev.responsable}</td>
