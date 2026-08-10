@@ -21,6 +21,7 @@ import { useToast } from '../../../components/ToastProvider'
 import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
+import { SOPORTES_MODIFICABLES } from '../../../types'
 import type { Event, EventState, TipoSoporte, Attachment, Item, ItemInput } from '../../../types'
 
 const ESTADO_COLORS: Record<string, string> = {
@@ -349,7 +350,14 @@ export function EventViewPage() {
   const canEditSoportes =
     userCan('functional_admin', 'operator', 'supervisor') ||
     (isDevuelto && userCan('analista')) ||
-    (devueltoPermiteSoportes && userCan('solicitante'))
+    ((devueltoPermiteSoportes || displayEstado === 'En ejecución') &&
+      userCan('solicitante'))
+
+  const canEditFolder = (tipo: TipoSoporte): boolean => {
+    if (!canEditSoportes) return false
+    if (userCan('solicitante') && !SOPORTES_MODIFICABLES.includes(tipo)) return false
+    return true
+  }
 
   const canManageOffers = userCan('functional_admin', 'operator')
   const quotationApproved = !!event.cotizacionSeleccionadaId
@@ -546,6 +554,7 @@ export function EventViewPage() {
           soportes={event.soportes || []}
           attachments={event.attachments ?? []}
           readOnly={soportesReadOnly}
+          canEditFolder={canEditFolder}
           eventStatus={displayEstado}
           devolucionLegalizacion={esDevolucionLegalizacion}
           devueltoDesde={localEvent?.devueltoDesde ?? event.devueltoDesde ?? null}

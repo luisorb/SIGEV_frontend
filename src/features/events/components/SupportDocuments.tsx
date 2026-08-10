@@ -22,6 +22,7 @@ interface SupportDocumentsProps {
   soportes: Soporte[]
   attachments?: Attachment[]
   readOnly?: boolean
+  canEditFolder?: (tipo: TipoSoporte) => boolean
   eventStatus?: EventState
   devolucionLegalizacion?: boolean
   devueltoDesde?: string | null
@@ -35,6 +36,7 @@ export function SupportDocuments({
   soportes,
   attachments = [],
   readOnly = false,
+  canEditFolder,
   eventStatus = 'Abierto',
   devolucionLegalizacion = false,
   devueltoDesde = null,
@@ -80,6 +82,7 @@ export function SupportDocuments({
 
   function isFolderEditable(tipo: TipoSoporte): boolean {
     if (readOnly) return false
+    if (canEditFolder && !canEditFolder(tipo)) return false
     if (tipo === 'Formato de requerimiento' && quotationApproved) return false
     if (isEstatico(tipo)) {
       return (
@@ -144,9 +147,6 @@ export function SupportDocuments({
           <div>
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
               Soportes Documentales
-              {devueltoPermiteSoportes() && (
-                <span className="ml-2 text-amber-600 font-normal">(carpetas 5-7 editables)</span>
-              )}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Carpetas obligatorias para el cierre del evento
