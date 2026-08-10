@@ -4,7 +4,6 @@ import {
   esquemaLabel,
   taxRateLabel,
   aliadoName,
-  clienteOferta,
   resolveMunicipio,
   splitNumeroEvento,
   displayItemsForExport,
@@ -41,7 +40,7 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
   const desembolso = offer.desembolso ?? ''
   const esquema = esquemaLabel(event?.esquema ?? offer.esquema)
 
-  const { items, totals } = displayItemsForExport(offer, options)
+  const { items, totals } = displayItemsForExport(offer)
 
   const wb = XLSX.utils.book_new()
 
@@ -49,29 +48,30 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
   const idRows = [
     ['OFERTA ECONÓMICA - SIGEV'],
     [],
-    ['Identificación del Evento'],
+    ['Identificación de la oferta'],
+    ['Código', offer.codigo],
     ['Número de evento', numSufijo.numero],
     ['Sufijo', numSufijo.sufijo],
-    [],
-    ['Responsables'],
-    ['Funcionario responsable', responsable],
-    ['Dependencia', dependencia],
+    ['Cliente (responsable)', responsable],
+    ['Estado', offer.eventoEstado || offer.estado],
+    ['Fecha', offer.fechaEjecucion ?? ''],
+    ['Ítems', String(offer.items.length)],
+    ['Total', offer.total],
     [],
     ['Ubicación territorial (DIVIPOLA)'],
     ['Departamento', municipio?.departamento ?? ''],
     ['Municipio', municipio?.nombre ?? offer.municipio ?? ''],
     ['Vereda', event?.vereda ?? ''],
     [],
+    ['Información del evento'],
+    ['Dependencia', dependencia],
+    ['Esquema de presentación', esquema],
+    ['Asistentes', event ? String(event.asistentes) : ''],
+    ['Días', event ? String(event.dias) : ''],
+    [],
     ['Asignaciones maestras'],
     ['Aliado (operador logístico general)', aliadoGeneral],
     ['Desembolso (bolsa presupuestal)', desembolso],
-    ['Esquema de presentación', esquema],
-    [],
-    ['Información de la oferta'],
-    ['Código', offer.codigo],
-    ['Nombre', offer.nombre],
-    ['Cliente', clienteOferta(offer, aliados)],
-    ['Estado', offer.estado],
     [],
     ['Parámetros de exportación'],
     ['Fecha de corte', formatFechaCorte(fechaCorte)],

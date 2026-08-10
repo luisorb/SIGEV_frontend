@@ -1,4 +1,4 @@
-import type { Offer, OfferItem, OfferExportOptions } from '../types'
+import type { Offer, OfferItem } from '../types'
 import type { Ally, CalculationParams, Municipality } from '../../../types'
 
 export function esquemaLabel(scheme?: string): string {
@@ -25,14 +25,6 @@ export function aliadoName(offer: Offer, aliadoId: string | undefined, aliados?:
   return offer.aliado || 'General'
 }
 
-export function clienteOferta(offer: Offer, aliados?: Ally[]): string {
-  if (offer.aliadoId) {
-    const a = aliados?.find((x) => x.id === offer.aliadoId)
-    if (a?.contacto) return a.contacto
-  }
-  return offer.cliente
-}
-
 export function resolveMunicipio(municipioId: string | undefined, municipios?: Municipality[]) {
   if (!municipioId) return undefined
   return municipios?.find((m) => m.id === municipioId)
@@ -44,8 +36,8 @@ export function splitNumeroEvento(value: string): { numero: string; sufijo: stri
   return { numero: value.slice(0, idx), sufijo: value.slice(idx + 1) }
 }
 
-export function displayItemsForExport(offer: Offer, options: OfferExportOptions) {
-  const items = options.event?.items?.length ? options.event.items : offer.items
+export function displayItemsForExport(offer: Offer) {
+  const items = offer.items
   const totals = items.reduce(
     (acc, item) => ({
       base: acc.base + item.base,
