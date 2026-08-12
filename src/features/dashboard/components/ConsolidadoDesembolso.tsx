@@ -21,7 +21,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
       <p className="font-semibold text-slate-900">{d.nombre}</p>
       <p className="text-slate-600">Valor: {formatCurrencyCO(d.valorTotal)}</p>
       <p className="text-slate-600">Eventos: {d.cantidadEventos}</p>
-      <p className="text-slate-600">Fee: {formatCurrencyCO(d.feeTotal)}</p>
+      <p className="text-slate-600">FEE: {formatCurrencyCO(d.feeTotal)}</p>
       <p className="text-slate-600">Participación: {formatPercentage(d.porcentaje)}</p>
     </div>
   )

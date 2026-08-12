@@ -143,9 +143,9 @@ export function ParameterHistoryTable({ versions, currentVersionId, onLoadVersio
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Vigencia</th>
                   {sortHeader('ivaRate', 'IVA')}
                   {sortHeader('impuestoConsumoRate', 'Consumo')}
-                  {sortHeader('feeTarifadoRate', 'Fee Tarif.')}
-                  {sortHeader('feeTercerosRate', 'Fee 3ros')}
-                  {sortHeader('ivaFeeRate', 'IVA Fee')}
+                  {sortHeader('feeTarifadoRate', 'FEE Tarif.')}
+                  {sortHeader('feeTercerosRate', 'FEE 3ros')}
+                  {sortHeader('ivaFeeRate', 'IVA FEE')}
                   <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acción</th>
                 </tr>
               </thead>

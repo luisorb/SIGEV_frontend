@@ -148,9 +148,9 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
               <SortHeader column="base" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Base</SortHeader>
               <SortHeader column="iva" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">IVA</SortHeader>
               <SortHeader column="impuestoConsumo" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Consumo</SortHeader>
-              <SortHeader column="feeTarifado" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Fee Tarif</SortHeader>
-              <SortHeader column="feeTerceros" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Fee 3ros</SortHeader>
-              <SortHeader column="ivaFee" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">IVA Fee</SortHeader>
+              <SortHeader column="feeTarifado" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">FEE Tarif</SortHeader>
+              <SortHeader column="feeTerceros" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">FEE 3ros</SortHeader>
+              <SortHeader column="ivaFee" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">IVA FEE</SortHeader>
               <th className="sticky top-0 z-10 px-3 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider min-w-[110px] border-l-2 border-slate-300 bg-slate-100 cursor-pointer hover:text-slate-900 select-none" onClick={() => handleSort('total')}>
                 <div className="flex items-center justify-end gap-1">
                   Total
@@ -440,7 +440,7 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
                             {cell.cantidadEventos} evento{cell.cantidadEventos !== 1 ? 's' : ''}
                           </p>
                           <p className="text-[10px] text-slate-400">
-                            Fee {formatCurrencyCO(cell.feeTotal)}
+                            FEE {formatCurrencyCO(cell.feeTotal)}
                           </p>
                         </div>
                       ) : (
@@ -458,7 +458,7 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
                       {row.totalEventos} evento{row.totalEventos !== 1 ? 's' : ''}
                     </p>
                     <p className="text-[10px] text-slate-400 font-medium">
-                      Fee {formatCurrencyCO(row.totalFee)}
+                      FEE {formatCurrencyCO(row.totalFee)}
                     </p>
                   </div>
                 </td>
@@ -496,7 +496,7 @@ function GlobalTable({ rows, totals, aliadoIds, aliadosMap, isFullscreen, onExit
                     {totals.totalEventos} eventos
                   </p>
                   <p className="text-[10px] text-slate-500 font-medium">
-                    Fee {formatCurrencyCO(totals.totalFee)}
+                    FEE {formatCurrencyCO(totals.totalFee)}
                   </p>
                 </div>
               </td>

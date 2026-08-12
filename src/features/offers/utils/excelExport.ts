@@ -93,8 +93,8 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
     'Base',
     'IVA',
     'Imp. Consumo',
-    'Fee Téc. Adm.',
-    'IVA Fee',
+    'FEE Téc. Adm.',
+    'IVA FEE',
     'Total',
   ]
   const itemRows = items.map((item) => [
@@ -136,8 +136,8 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
     ['IVA (19%)', totals.iva],
     ['Impuesto al Consumo (8%)', totals.consumo],
     ['Total Impuestos', totals.iva + totals.consumo],
-    ['Fee Técnico Administrativo Total', totals.fee],
-    ['IVA sobre el Fee (19%)', totals.ivaFee],
+    ['FEE Técnico Administrativo Total', totals.fee],
+    ['IVA sobre el FEE (19%)', totals.ivaFee],
     ['Gran Total del Evento', totals.total],
     [],
     [`Número de ítems: ${items.length}`],

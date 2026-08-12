@@ -23,7 +23,7 @@ export function MetricGrid({ metrics }: MetricGridProps) {
       />
       <MetricCard
         icon={Percent}
-        label="Fee Técnico Administrativo"
+        label="FEE Técnico Administrativo"
         value={metrics.feeAcumulado}
         accent="purple"
       />

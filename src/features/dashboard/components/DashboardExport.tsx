@@ -308,7 +308,7 @@ export function DashboardExport({
         rows: [
           ['Valor Total Ejecución', metrics.valorTotalEjecucion],
           ['Base + Impuestos', metrics.baseMasImpuestos],
-          ['Fee Técnico Administrativo', metrics.feeAcumulado],
+          ['FEE Técnico Administrativo', metrics.feeAcumulado],
           ['Impuestos Acumulados', metrics.impuestosAcumulados],
         ],
         filters: filterRows,
@@ -326,7 +326,7 @@ export function DashboardExport({
             { header: 'Recurso disponible', wch: 30 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
             { header: 'Valor Total', wch: 20, fmt: 'currency' },
-            { header: 'Fee Total', wch: 18, fmt: 'currency' },
+            { header: 'FEE Total', wch: 18, fmt: 'currency' },
             { header: 'Participación', wch: 14, fmt: 'percent' },
           ],
           rows: consolidadoDesembolso.map((row) => [
@@ -359,7 +359,7 @@ export function DashboardExport({
             { header: 'Aliado', wch: 30 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
             { header: 'Valor Total', wch: 20, fmt: 'currency' },
-            { header: 'Fee Total', wch: 18, fmt: 'currency' },
+            { header: 'FEE Total', wch: 18, fmt: 'currency' },
             { header: 'Participación', wch: 14, fmt: 'percent' },
           ],
           rows: consolidadoAliado.map((row) => [
@@ -507,7 +507,7 @@ export function DashboardExport({
     const kpis = [
       { label: 'Valor total ejecución', value: formatCurrencyCO(metrics.valorTotalEjecucion) },
       { label: 'Base + impuestos', value: formatCurrencyCO(metrics.baseMasImpuestos) },
-      { label: 'Fee técnico administrativo', value: formatCurrencyCO(metrics.feeAcumulado) },
+      { label: 'FEE técnico administrativo', value: formatCurrencyCO(metrics.feeAcumulado) },
       { label: 'Impuestos acumulados', value: formatCurrencyCO(metrics.impuestosAcumulados) },
     ]
 
@@ -560,7 +560,7 @@ export function DashboardExport({
       y = drawSectionTitle(doc, '1. Ejecución por recurso disponible', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
-        head: ['Recurso disponible', 'Eventos', 'Valor Total', 'Fee Total', 'Participación'],
+        head: ['Recurso disponible', 'Eventos', 'Valor Total', 'FEE Total', 'Participación'],
         body: consolidadoDesembolso.map((row) => [
           row.nombre,
           row.cantidadEventos,
@@ -577,7 +577,7 @@ export function DashboardExport({
       y = drawSectionTitle(doc, '2. Ejecución por Aliado', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
-        head: ['Aliado', 'Eventos', 'Valor Total', 'Fee Total', 'Participación'],
+        head: ['Aliado', 'Eventos', 'Valor Total', 'FEE Total', 'Participación'],
         body: consolidadoAliado.map((row) => [
           row.nombre,
           row.cantidadEventos,

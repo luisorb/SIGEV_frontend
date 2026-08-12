@@ -5,7 +5,7 @@
 | Rol | `name` en API | Qué puede hacer en el frontend |
 |---|---|---|
 | Administrador Técnico | `technical_admin` | Módulo Usuarios completo (CRUD + asignación de roles). Monitoreo. **No** gestiona aliados/recursos disponibles/tasas. |
-| Administrador Funcional | `functional_admin` | Aliados, Recursos disponibles, Parámetros (Tasas/Fee), creación/edición de Eventos e Ítems, Auditoría (consulta). **No** ve usuarios. |
+| Administrador Funcional | `functional_admin` | Aliados, Recursos disponibles, Parámetros (Tasas/FEE), creación/edición de Eventos e Ítems, Auditoría (consulta). **No** ve usuarios. |
 | Aprobador | `approver` | Aprobar/rechazar eventos, aprobar ejecución, cerrar y legalizar, autorizar excepciones (<4 cotizaciones). Auditoría (consulta). |
 | Operador | `operator` | Crear/editar eventos e ítems, preparar ofertas, avanzar el flujo hasta "Ejecutado". |
 | Solicitante | `solicitante` | Postular eventos **sin valores económicos**. Solo editar un evento devuelto (datos generales, no ítems). |

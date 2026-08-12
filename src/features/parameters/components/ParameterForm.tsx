@@ -80,12 +80,12 @@ export function ParameterForm({
   const impuestos: { key: ParamFieldKey; label: string; description: string; icon: React.ReactNode }[] = [
     { key: 'ivaRate', label: 'IVA', description: 'Impuesto al Valor Agregado', icon: <Receipt className="w-3.5 h-3.5" /> },
     { key: 'impuestoConsumoRate', label: 'Impuesto al Consumo', description: 'Impuesto al consumo (ICA)', icon: <Percent className="w-3.5 h-3.5" /> },
-    { key: 'ivaFeeRate', label: 'IVA sobre Fee', description: 'IVA aplicado sobre el fee calculado', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+    { key: 'ivaFeeRate', label: 'IVA sobre FEE', description: 'IVA aplicado sobre el FEE calculado', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
   ]
 
   const comisiones: { key: ParamFieldKey; label: string; description: string; icon: React.ReactNode }[] = [
-    { key: 'feeTarifadoRate', label: 'Fee Tarifado', description: 'Porcentaje de fee sobre la base tarifada', icon: <Banknote className="w-3.5 h-3.5" /> },
-    { key: 'feeTercerosRate', label: 'Fee Terceros', description: 'Porcentaje de fee para terceros', icon: <Users className="w-3.5 h-3.5" /> },
+    { key: 'feeTarifadoRate', label: 'FEE Tarifado', description: 'Porcentaje de FEE sobre la base tarifada', icon: <Banknote className="w-3.5 h-3.5" /> },
+    { key: 'feeTercerosRate', label: 'FEE Terceros', description: 'Porcentaje de FEE para terceros', icon: <Users className="w-3.5 h-3.5" /> },
   ]
 
   return (
@@ -171,7 +171,7 @@ export function ParameterForm({
                   <ShieldCheck className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <label className="block text-sm font-medium text-slate-700">Aplicar Fee sobre Base</label>
+                  <label className="block text-sm font-medium text-slate-700">Aplicar FEE sobre Base</label>
                   <p className="text-xs text-slate-400">El fee se calcula sobre el valor base en lugar del total con impuestos</p>
                 </div>
               </div>

@@ -20,7 +20,7 @@
 ### Criterio de Interpretación
 Los archivos HTML se consideran *dummies* funcionales. Su contenido permite identificar módulos, campos, flujos, cálculos y comportamientos esperados. No constituyen una arquitectura productiva ni una especificación cerrada. El presente documento diferencia los requisitos observados en los prototipos de las condiciones propuestas para llevar la solución a un ambiente institucional, multiusuario, seguro y auditable.
 
-> **Advertencia Funcional:** Existe una diferencia interna en los prototipos respecto de la base utilizada para calcular el Fee Técnico Administrativo de los ítems tarifados. Algunas descripciones indican que se aplica sobre el total sin retenciones y el código operativo lo calcula sobre la base sin impuestos. Esta definición deberá ser validada y aprobada antes de cerrar el motor de cálculo.
+> **Advertencia Funcional:** Existe una diferencia interna en los prototipos respecto de la base utilizada para calcular el FEE Técnico Administrativo de los ítems tarifados. Algunas descripciones indican que se aplica sobre el total sin retenciones y el código operativo lo calcula sobre la base sin impuestos. Esta definición deberá ser validada y aprobada antes de cerrar el motor de cálculo.
 
 ---
 
@@ -189,9 +189,9 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | Código | Requisito | Origen | Prioridad | Criterio de Aceptación |
 | :--- | :--- | :--- | :--- | :--- |
 | **RF-PAN-001** | Mostrar el valor total de ejecución y el número total de eventos. | Observado | Alta | Los valores coinciden con la suma de todos los eventos activos. |
-| **RF-PAN-002** | Mostrar base más impuestos, Fee Técnico Administrativo e impuestos acumulados. | Observado | Alta | Cada indicador coincide con el motor de cálculo central. |
+| **RF-PAN-002** | Mostrar base más impuestos, FEE Técnico Administrativo e impuestos acumulados. | Observado | Alta | Cada indicador coincide con el motor de cálculo central. |
 | **RF-PAN-003** | Consolidar la ejecución por recurso disponible y mostrar valor, participación y número de eventos. | Observado | Alta | Los datos pueden validarse contra la matriz global. |
-| **RF-PAN-004** | Consolidar la ejecución por aliado y mostrar valor, porcentaje, número de eventos y Fee. | Observado | Alta | La participación suma 100% salvo redondeos. |
+| **RF-PAN-004** | Consolidar la ejecución por aliado y mostrar valor, porcentaje, número de eventos y FEE. | Observado | Alta | La participación suma 100% salvo redondeos. |
 | **RF-PAN-005** | Mostrar las órdenes recientes con acceso directo al detalle. | Observado | Media | El usuario abre el evento seleccionado desde el panel. |
 | **RF-PAN-006** | Aplicar filtros globales por periodo, recurso disponible, aliado, estado, dependencia y territorio. | Producción | Alta | Todos los indicadores responden al mismo conjunto de filtros. |
 | **RF-PAN-007** | Permitir exportar el resumen del panel. | Producción | Media | El reporte conserva filtros, fecha de corte y usuario generador. |
@@ -222,7 +222,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | **RF-DET-006** | Seleccionar esquema de presentación entre cotización y detalle. | Observado | Alta | La exportación refleja el esquema seleccionado sin alterar los valores calculados. |
 | **RF-DET-007** | Registrar latitud, longitud y observaciones. | Observado | Media | Las coordenadas ubican el evento y las observaciones quedan auditadas. |
 | **RF-DET-008** | Agregar, editar y eliminar ítems. | Observado | Alta | Los totales se recalculan después de cada cambio. |
-| **RF-DET-009** | Registrar descripción, cantidad, valor unitario y carga tributaria por ítem. | Observado | Alta | Cada fila muestra base, impuesto, Fee y total. |
+| **RF-DET-009** | Registrar descripción, cantidad, valor unitario y carga tributaria por ítem. | Observado | Alta | Cada fila muestra base, impuesto, FEE y total. |
 | **RF-DET-010** | Permitir asignar un aliado específico por ítem cuando sea necesario. | Observado parcial | Media | El consolidado usa el aliado del ítem y, en ausencia, el del evento. |
 | **RF-DET-011** | Permitir adjuntar soportes y clasificarlos. | Producción | Alta | Los archivos se relacionan con el evento, conservan versión y control de acceso. |
 
@@ -233,8 +233,8 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | **RF-CAL-001** | Calcular base como cantidad multiplicada por valor unitario. | Observado | Alta | La operación se realiza con precisión definida y sin errores de redondeo acumulado. |
 | **RF-CAL-002** | Clasificar ítems como IVA, impuesto al consumo, pago a terceros o reembolso. | Observado | Alta | Cada clasificación aplica la tasa y el tratamiento autorizado. |
 | **RF-CAL-003** | Calcular IVA e impuesto al consumo. | Observado | Alta | Los impuestos coinciden con la tasa vigente para el ítem. |
-| **RF-CAL-004** | Calcular Fee de ítems tarifados y Fee de terceros / reembolsos. | Observado | Alta | La base y la tasa utilizadas corresponden a la regla aprobada. |
-| **RF-CAL-005** | Calcular IVA sobre el Fee Técnico Administrativo. | Observado | Alta | El impuesto se aplica sobre el Fee calculado. |
+| **RF-CAL-004** | Calcular FEE de ítems tarifados y FEE de terceros / reembolsos. | Observado | Alta | La base y la tasa utilizadas corresponden a la regla aprobada. |
+| **RF-CAL-005** | Calcular IVA sobre el FEE Técnico Administrativo. | Observado | Alta | El impuesto se aplica sobre el FEE calculado. |
 | **RF-CAL-006** | Calcular total por ítem y total por evento. | Observado | Alta | El total del evento coincide con la suma de sus ítems. |
 | **RF-CAL-007** | Parametrizar tasas y vigencias. | Producción | Alta | Cada cálculo utiliza la tasa vigente según fecha y contexto. |
 | **RF-CAL-008** | Conservar la versión de reglas y parámetros utilizada en cada cálculo. | Producción | Alta | Un cálculo histórico puede reproducirse con su configuración original. |
@@ -244,9 +244,9 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 
 | Código | Requisito | Origen | Prioridad | Criterio de Aceptación |
 | :--- | :--- | :--- | :--- | :--- |
-| **RF-REP-001** | Mostrar ofertas económicas por evento con base, impuestos, Fee, IVA del Fee y total. | Observado | Alta | Los valores coinciden con el detalle de la orden. |
+| **RF-REP-001** | Mostrar ofertas económicas por evento con base, impuestos, FEE, IVA del FEE y total. | Observado | Alta | Los valores coinciden con el detalle de la orden. |
 | **RF-REP-002** | Exportar la oferta económica de un evento a Excel. | Observado | Alta | El archivo contiene identificación, esquema, aliado, recurso disponible, ítems y totales. |
-| **RF-REP-003** | Construir matriz detallada por evento e ítem. | Observado | Alta | La matriz incluye cantidad, valor unitario, carga tributaria, base, impuestos, Fee, total, aliado y recurso disponible. |
+| **RF-REP-003** | Construir matriz detallada por evento e ítem. | Observado | Alta | La matriz incluye cantidad, valor unitario, carga tributaria, base, impuestos, FEE, total, aliado y recurso disponible. |
 | **RF-REP-004** | Construir matriz global por recurso disponible y aliado. | Observado | Alta | Los totales coinciden con la suma de la matriz detallada. |
 | **RF-REP-005** | Exportar matriz detallada y consolidados a Excel. | Observado | Alta | El libro contiene hojas separadas y encabezados definidos. |
 | **RF-REP-006** | Permitir filtros, columnas configurables y descarga de resultados. | Producción | Alta | La exportación conserva los criterios aplicados por el usuario. |
@@ -280,7 +280,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 
 | Código | Requisito | Origen | Prioridad | Criterio de Aceptación |
 | :--- | :--- | :--- | :--- | :--- |
-| **RF-ADM-001** | Configurar tasas de Fee e IVA sobre Fee. | Observado | Alta | Los cambios se aplican conforme a vigencia y permisos. |
+| **RF-ADM-001** | Configurar tasas de FEE e IVA sobre FEE. | Observado | Alta | Los cambios se aplican conforme a vigencia y permisos. |
 | **RF-ADM-002** | Administrar aliados y colores identificadores. | Observado | Alta | Los aliados pueden crearse, editarse e inactivarse. |
 | **RF-ADM-003** | Evitar la eliminación física de catálogos utilizados. | Producción | Alta | Los registros usados se inactivan y conservan historial. |
 | **RF-ADM-004** | Exportar e importar respaldo. | Observado local | Media | En producción el respaldo se ejecuta por procedimientos administrados. |
@@ -295,23 +295,23 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 
 | Código Funcional | Tratamiento | Referencia del Prototipo | Efecto |
 | :--- | :--- | :--- | :--- |
-| **IVA** | Ítem gravado | Tasa de referencia 19% | Genera IVA y Fee de tarifado. |
-| **Consumo** | Ítem sujeto a impuesto al consumo | Tasa de referencia 8% | Genera impuesto al consumo y Fee de tarifado. |
-| **Tercero** | Pago a terceros no gravado | Tasa tributaria 0% | Genera Fee de terceros. |
-| **Reembolso** | Reembolso no gravado | Tasa tributaria 0% | Genera Fee de terceros o reembolsos. |
+| **IVA** | Ítem gravado | Tasa de referencia 19% | Genera IVA y FEE de tarifado. |
+| **Consumo** | Ítem sujeto a impuesto al consumo | Tasa de referencia 8% | Genera impuesto al consumo y FEE de tarifado. |
+| **Tercero** | Pago a terceros no gravado | Tasa tributaria 0% | Genera FEE de terceros. |
+| **Reembolso** | Reembolso no gravado | Tasa tributaria 0% | Genera FEE de terceros o reembolsos. |
 
 ### 7.2 Fórmulas Observadas
 
 * **Base:** $Base = Cantidad 	imes Valor Unitario$
 * **Impuesto:** $Impuesto = IVA + Impuesto al Consumo$
 * **Total sin retenciones:** $Total sin retenciones = Base + Impuesto$
-* **Fee tarifado:** $Fee tarifado = Base 	imes Tasa de Fee tarifado$ *(según el código operativo del prototipo)*
-* **Fee de terceros:** $Fee de terceros = Base 	imes Tasa de Fee de terceros o reembolsos$
-* **Fee total:** $Fee total = Fee tarifado + Fee de terceros$
-* **IVA del Fee:** $IVA del Fee = Fee total 	imes Tasa de IVA del Fee$
-* **Total del ítem:** $Total del ítem = Total sin retenciones + Fee total + IVA del Fee$
+* **FEE tarifado:** $FEE tarifado = Base 	imes Tasa de FEE tarifado$ *(según el código operativo del prototipo)*
+* **FEE de terceros:** $FEE de terceros = Base 	imes Tasa de FEE de terceros o reembolsos$
+* **FEE total:** $FEE total = FEE tarifado + FEE de terceros$
+* **IVA del FEE:** $IVA del FEE = FEE total 	imes Tasa de IVA del FEE$
+* **Total del ítem:** $Total del ítem = Total sin retenciones + FEE total + IVA del FEE$
 
-> **Decisión pendiente sobre el Fee tarifado:** El código del prototipo aplica el porcentaje sobre la base sin impuestos. Otros comentarios del mismo prototipo indican aplicación sobre el total sin retenciones. La decisión deberá quedar registrada en una matriz de reglas aprobada por el responsable funcional y tributario.
+> **Decisión pendiente sobre el FEE tarifado:** El código del prototipo aplica el porcentaje sobre la base sin impuestos. Otros comentarios del mismo prototipo indican aplicación sobre el total sin retenciones. La decisión deberá quedar registrada en una matriz de reglas aprobada por el responsable funcional y tributario.
 
 ### 7.3 Reglas Generales
 * Las tasas deberán administrarse con fecha de inicio, fecha de fin, estado y responsable de aprobación.
@@ -457,11 +457,11 @@ El prototipo reconoce hojas asociadas a `FOR-EV-ADMO-01` y `FOR-EC-ADMO-02`, ade
 ### Indicadores Iniciales
 * **Total de ejecución:** Suma del total de eventos incluidos en el filtro.
 * **Base más impuestos:** Suma del total sin retenciones.
-* **Fee acumulado:** Suma del Fee Técnico Administrativo.
+* **FEE acumulado:** Suma del FEE Técnico Administrativo.
 * **Impuestos:** Suma de IVA e impuesto al consumo.
 * **Eventos por estado:** Cantidad y valor total en cada estado.
 * **Ejecución por recurso disponible:** Valor, número de eventos y participación.
-* **Ejecución por aliado:** Valor, número de eventos, participación, impuestos y Fee.
+* **Ejecución por aliado:** Valor, número de eventos, participación, impuestos y FEE.
 * **Cobertura territorial:** Eventos por departamento, municipio y condición de georreferenciación.
 * **Eventos sin completar:** Registros con campos, aliado, recurso disponible, ubicación o ítems pendientes.
 * **Variaciones:** Diferencias entre versiones de cálculo o cambios relevantes.
@@ -601,7 +601,7 @@ Rango de fechas del evento y de registro, número de evento/sufijo, responsable/
 
 | Decisión | Definición Requerida | Impacto |
 | :--- | :--- | :--- |
-| **Base del Fee tarifado** | Definir si el porcentaje se aplica sobre la base sin impuestos o sobre el total sin retenciones. | Crítica |
+| **Base del FEE tarifado** | Definir si el porcentaje se aplica sobre la base sin impuestos o sobre el total sin retenciones. | Crítica |
 | **Retenciones** | Definir si la herramienta solo muestra valores sin retenciones o debe calcular retenciones adicionales. | Alta |
 | **Esquemas de presentación** | Documentar las diferencias exactas entre cotización y detalle. | Alta |
 | **Llave del evento** | Definir combinación única de número, sufijo, contrato, vigencia o dependencia. | Alta |

@@ -514,7 +514,7 @@ export function EventViewPage() {
                 <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p>
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">FEE</p>
                 <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p>
               </div>
               <div className="text-right">

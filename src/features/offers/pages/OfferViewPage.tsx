@@ -279,8 +279,8 @@ export function OfferViewPage() {
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Base</th>
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">IVA</th>
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Imp. Consumo</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Fee</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">IVA Fee</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">FEE</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">IVA FEE</th>
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Total</th>
                     </tr>
                   </thead>
@@ -335,11 +335,11 @@ export function OfferViewPage() {
                     <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.impuestoConsumo) : '—'}</p>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
-                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Fee</p>
+                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">FEE</p>
                     <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.fee) : '—'}</p>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-center">
-                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">IVA Fee</p>
+                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">IVA FEE</p>
                     <p className="text-sm font-semibold text-slate-900 mt-0.5">{hasValues ? formatCurrencyCO(orderTotals.ivaFee) : '—'}</p>
                   </div>
                   <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-2.5 text-center">

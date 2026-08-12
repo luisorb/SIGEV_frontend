@@ -119,11 +119,11 @@ export function MatrixPage() {
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-2.5 flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-teal-50 shrink-0"><BadgePercent className="w-3.5 h-3.5 text-teal-600" /></div>
-          <div className="min-w-0"><p className="text-[9px] font-medium text-slate-500 uppercase tracking-wide">Fee Total</p><p className="text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrencyCO(totals.totalFee)}</p></div>
+          <div className="min-w-0"><p className="text-[9px] font-medium text-slate-500 uppercase tracking-wide">FEE Total</p><p className="text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrencyCO(totals.totalFee)}</p></div>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-2.5 flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-rose-50 shrink-0"><FileText className="w-3.5 h-3.5 text-rose-600" /></div>
-          <div className="min-w-0"><p className="text-[9px] font-medium text-slate-500 uppercase tracking-wide">IVA Fee</p><p className="text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrencyCO(totals.totalIvaFee)}</p></div>
+          <div className="min-w-0"><p className="text-[9px] font-medium text-slate-500 uppercase tracking-wide">IVA FEE</p><p className="text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrencyCO(totals.totalIvaFee)}</p></div>
         </div>
       </div>
 
