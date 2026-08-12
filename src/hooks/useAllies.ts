@@ -5,11 +5,23 @@ import type { CreateAllyDto, UpdateAllyDto } from '../services/types'
 
 const ALLIES_KEY = ['allies']
 
-function mapAllyResponse(data: { id: string; code: string; name: string; color?: string; active?: boolean; isActive?: boolean }): Ally {
+function mapAllyResponse(data: {
+  id: string; code: string; name: string;
+  documentType?: string; document?: string; phone?: string;
+  contactEmail?: string; divipolaCode?: string; divipolaDepartment?: string;
+  contactName?: string; color?: string; active?: boolean; isActive?: boolean;
+}): Ally {
   return {
     id: data.id,
     codigo: data.code,
     nombre: data.name,
+    tipoIdentificacion: data.documentType ?? '',
+    numeroIdentificacion: data.document ?? '',
+    telefono: data.phone ?? '',
+    correo: data.contactEmail ?? '',
+    divipolaCode: data.divipolaCode ?? '',
+    divipolaDepartment: data.divipolaDepartment ?? '',
+    contacto: data.contactName ?? '',
     color: data.color ?? '#6366F1',
     activo: data.isActive ?? data.active ?? true,
   }

@@ -5,6 +5,13 @@ export interface AllyResponse {
   id: string
   code: string
   name: string
+  documentType?: string
+  document?: string
+  phone?: string
+  contactEmail?: string
+  divipolaCode?: string
+  divipolaDepartment?: string
+  contactName?: string
   color?: string
   active?: boolean
   isActive?: boolean

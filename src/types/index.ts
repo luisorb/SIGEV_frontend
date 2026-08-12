@@ -64,6 +64,13 @@ export interface Ally {
   id: string
   codigo: string
   nombre: string
+  tipoIdentificacion: string
+  numeroIdentificacion: string
+  telefono: string
+  correo: string
+  divipolaCode: string
+  divipolaDepartment: string
+  contacto: string
   color: string
   activo: boolean
 }

@@ -124,8 +124,15 @@ export interface UpdateItemDto {
 }
 
 export interface CreateAllyDto {
-  code: string
+  code?: string
   name: string
+  documentType: string
+  document: string
+  phone: string
+  contactEmail: string
+  divipolaCode: string
+  divipolaDepartment: string
+  contactName: string
   color?: string
   isActive?: boolean
 }
@@ -133,6 +140,13 @@ export interface CreateAllyDto {
 export interface UpdateAllyDto {
   code?: string
   name?: string
+  documentType?: string
+  document?: string
+  phone?: string
+  contactEmail?: string
+  divipolaCode?: string
+  divipolaDepartment?: string
+  contactName?: string
   color?: string
   isActive?: boolean
 }
