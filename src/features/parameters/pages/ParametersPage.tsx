@@ -16,7 +16,7 @@ const EMPTY_ALLY: AllyForm = { codigo: '', nombre: '', color: '#3B82F6', activo:
 const PRESET_COLORS = ['#3B82F6', '#6366F1', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#64748B']
 
 type DesForm = Omit<Disbursement, 'id'>
-const EMPTY_DES: DesForm = { nombre: '', codigo: '', porcentajeParticipacion: 0, vigencia: '', vigenciaInicio: '', vigenciaFin: '', valorReferencia: 0, activo: true }
+const EMPTY_DES: DesForm = { nombre: '', codigo: '', vigencia: '', vigenciaInicio: '', vigenciaFin: '', valorReferencia: 0, activo: true }
 
 function SortIcon({ active, direction }: { active: boolean; direction: 'asc' | 'desc' | null }) {
   if (active && direction === 'asc') return <ArrowUp className="w-3 h-3 ml-1 shrink-0" />
@@ -429,7 +429,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
   const createDesembolso = useCreateDisbursement()
   const updateDesembolso = useUpdateDisbursement()
   const [search, setSearch] = useState('')
-  const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'vigencia' | 'porcentajeParticipacion' | 'valorReferencia' | 'estado'>('codigo')
+  const [sortColumn, setSortColumn] = useState<'codigo' | 'nombre' | 'vigencia' | 'valorReferencia' | 'estado'>('codigo')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [pageSize, setPageSize] = useState(8)
   const [page, setPage] = useState(0)
@@ -441,12 +441,19 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
 
   function openCreate() { setEditing(null); setForm(EMPTY_DES); setErrors({}); setModalOpen(true) }
 
-  function openEdit(d: Disbursement) { setEditing(d); setForm({ nombre: d.nombre, codigo: d.codigo, porcentajeParticipacion: d.porcentajeParticipacion, vigencia: d.vigencia, vigenciaInicio: d.vigenciaInicio ?? '', vigenciaFin: d.vigenciaFin ?? '', valorReferencia: d.valorReferencia, activo: d.activo }); setErrors({}); setModalOpen(true) }
+  function openEdit(d: Disbursement) { setEditing(d); setForm({ nombre: d.nombre, codigo: d.codigo, vigencia: d.vigencia, vigenciaInicio: d.vigenciaInicio ?? '', vigenciaFin: d.vigenciaFin ?? '', valorReferencia: d.valorReferencia, activo: d.activo }); setErrors({}); setModalOpen(true) }
 
   async function handleSave() {
     const newErrors: Partial<Record<keyof DesForm, string>> = {}
     if (!form.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
+    if (form.nombre.trim().length > 50) newErrors.nombre = 'El nombre no puede superar los 50 caracteres'
     if (!form.codigo.trim()) newErrors.codigo = 'El código es obligatorio'
+    if (form.codigo.trim().length > 50) newErrors.codigo = 'El código no puede superar los 50 caracteres'
+    if (
+      desembolsos.some(
+        (d) => d.codigo.trim().toLowerCase() === form.codigo.trim().toLowerCase() && d.id !== editing?.id,
+      )
+    ) newErrors.codigo = 'Ya existe un desembolso con este código'
     if (!form.vigenciaInicio) newErrors.vigenciaInicio = 'La fecha de inicio es obligatoria'
     if (form.vigenciaInicio && form.vigenciaFin && form.vigenciaFin < form.vigenciaInicio) newErrors.vigenciaFin = 'La fecha fin no puede ser anterior al inicio'
     if (form.valorReferencia <= 0) newErrors.valorReferencia = 'El valor de referencia debe ser mayor a 0'
@@ -458,7 +465,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
         name: form.nombre,
         amount: form.valorReferencia,
         year: Number(String(inicio).slice(0, 4)),
-        percentageParticipation: form.porcentajeParticipacion,
+        isActive: form.activo,
         disbursementDate: inicio,
         fechaInicio: inicio,
         fechaFin: form.vigenciaFin || undefined,
@@ -510,7 +517,6 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
         || d.nombre.toLowerCase().includes(q)
         || d.codigo.toLowerCase().includes(q)
         || (d.vigencia ?? '').toLowerCase().includes(q)
-        || String(d.porcentajeParticipacion).includes(q)
         || String(d.valorReferencia).includes(q)
     ).sort((a, b) => {
       const cmp = sortColumn === 'codigo'
@@ -519,11 +525,9 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
           ? a.nombre.localeCompare(b.nombre)
           : sortColumn === 'vigencia'
             ? (a.vigencia ?? '').localeCompare(b.vigencia ?? '')
-            : sortColumn === 'porcentajeParticipacion'
-              ? a.porcentajeParticipacion - b.porcentajeParticipacion
-              : sortColumn === 'valorReferencia'
-                ? a.valorReferencia - b.valorReferencia
-                : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
+            : sortColumn === 'valorReferencia'
+              ? a.valorReferencia - b.valorReferencia
+              : (a.activo === b.activo ? 0 : a.activo ? -1 : 1)
       return sortDir === 'asc' ? cmp : -cmp
     })
   }, [desembolsos, search, sortColumn, sortDir])
@@ -575,7 +579,6 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 {sortHeader('codigo', 'Código')}
                 {sortHeader('nombre', 'Nombre')}
                 {sortHeader('vigencia', 'Vigencia')}
-                {sortHeader('porcentajeParticipacion', '% Participación', 'text-center')}
                 {sortHeader('valorReferencia', 'Valor Ref.', 'text-center')}
                 {sortHeader('estado', 'Estado', 'text-center')}
                 <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
@@ -583,14 +586,13 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No hay desembolsos registrados</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No hay desembolsos registrados</td></tr>
               ) : (
                 paged.map((d) => (
                   <tr key={d.id} className={`hover:bg-slate-50 transition-colors ${!d.activo ? 'opacity-50' : ''}`}>
                     <td className="px-3 sm:px-4 py-3 font-medium text-slate-900 text-sm">{d.codigo}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.nombre}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.vigencia || '-'}</td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center text-slate-600">{d.porcentajeParticipacion}%</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center font-medium text-slate-900 tabular-nums">{formatCurrencyCO(d.valorReferencia)}</td>
                     <td className="px-3 sm:px-4 py-3 text-center">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${d.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{d.activo ? 'Activo' : 'Inactivo'}</span>
@@ -678,46 +680,67 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Código {requiredMark}</label>
-                  <input type="text" value={form.codigo} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: DES-001" className={inp('codigo')} />
-                  {errors.codigo && <p className="text-xs text-red-500">{errors.codigo}</p>}
+            <div className="p-5 sm:p-6 space-y-6 overflow-y-auto">
+              {/* Información general */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-primary/70" />
+                  <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Información general</h4>
                 </div>
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Nombre {requiredMark}</label>
-                  <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Desembolso Tipo A" className={inp('nombre')} />
-                  {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Vigencia inicio {requiredMark}</label>
-                  <input type="date" value={form.vigenciaInicio} onChange={(e) => { setForm({ ...form, vigenciaInicio: e.target.value }); if (errors.vigenciaInicio) setErrors((prev) => ({ ...prev, vigenciaInicio: '' })) }} className={inp('vigenciaInicio')} />
-                  {errors.vigenciaInicio && <p className="text-xs text-red-500">{errors.vigenciaInicio}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <label className={labelBase}>Vigencia fin</label>
-                  <input type="date" value={form.vigenciaFin} onChange={(e) => { setForm({ ...form, vigenciaFin: e.target.value }); if (errors.vigenciaFin) setErrors((prev) => ({ ...prev, vigenciaFin: '' })) }} className={inp('vigenciaFin')} />
-                  {errors.vigenciaFin && <p className="text-xs text-red-500">{errors.vigenciaFin}</p>}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className={labelBase}>Código {requiredMark}</label>
+                    <input type="text" value={form.codigo} maxLength={50} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: DES-001" className={inp('codigo')} />
+                    {errors.codigo && <p className="text-xs text-red-500 mt-1">{errors.codigo}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className={labelBase}>Nombre {requiredMark}</label>
+                    <input type="text" value={form.nombre} maxLength={50} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Desembolso Tipo A" className={inp('nombre')} />
+                    {errors.nombre && <p className="text-xs text-red-500 mt-1">{errors.nombre}</p>}
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className={labelBase}>% Participación</label>
-                  <input type="number" min={0} max={100} value={form.porcentajeParticipacion} onChange={(e) => setForm({ ...form, porcentajeParticipacion: Number(e.target.value) })} className={inputBase} />
+
+              <div className="border-t border-slate-200" />
+
+              {/* Vigencia */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-primary/70" />
+                  <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vigencia</h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className={labelBase}>Fecha inicio {requiredMark}</label>
+                    <input type="date" value={form.vigenciaInicio} onChange={(e) => { setForm({ ...form, vigenciaInicio: e.target.value }); if (errors.vigenciaInicio) setErrors((prev) => ({ ...prev, vigenciaInicio: '' })) }} className={inp('vigenciaInicio')} />
+                    {errors.vigenciaInicio && <p className="text-xs text-red-500 mt-1">{errors.vigenciaInicio}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className={labelBase}>Fecha fin</label>
+                    <input type="date" value={form.vigenciaFin} onChange={(e) => { setForm({ ...form, vigenciaFin: e.target.value }); if (errors.vigenciaFin) setErrors((prev) => ({ ...prev, vigenciaFin: '' })) }} className={inp('vigenciaFin')} />
+                    {errors.vigenciaFin && <p className="text-xs text-red-500 mt-1">{errors.vigenciaFin}</p>}
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className={labelBase}>Valor de Referencia {requiredMark}</label>
-                <input type="number" min={0} step={1000} value={form.valorReferencia} onChange={(e) => { setForm({ ...form, valorReferencia: Number(e.target.value) }); if (errors.valorReferencia) setErrors((prev) => ({ ...prev, valorReferencia: '' })) }} placeholder="Ej: 1000000" className={inp('valorReferencia')} />
-                {errors.valorReferencia && <p className="text-xs text-red-500">{errors.valorReferencia}</p>}
+
+              <div className="border-t border-slate-200" />
+
+              {/* Valor de referencia */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-primary/70" />
+                  <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Valor de referencia</h4>
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelBase}>Valor {requiredMark}</label>
+                  <input type="number" min={0} step={1000} value={form.valorReferencia} onChange={(e) => { setForm({ ...form, valorReferencia: Number(e.target.value) }); if (errors.valorReferencia) setErrors((prev) => ({ ...prev, valorReferencia: '' })) }} placeholder="Ej: 1000000" className={inp('valorReferencia')} />
+                  {errors.valorReferencia && <p className="text-xs text-red-500 mt-1">{errors.valorReferencia}</p>}
+                </div>
               </div>
             </div>
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl shrink-0">
-              <button onClick={() => setModalOpen(false)} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150">{editing ? 'Guardar Cambios' : 'Crear Desembolso'}</button>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-5 sm:px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
+              <button onClick={() => setModalOpen(false)} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all">Cancelar</button>
+              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"><Save className="w-4 h-4" />{editing ? 'Guardar Cambios' : 'Crear Desembolso'}</button>
             </div>
           </div>
         </div>

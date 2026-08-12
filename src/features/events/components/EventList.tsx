@@ -78,7 +78,7 @@ export function EventList({
   const [showFilters, setShowFilters] = useState(false)
   const { can: userCan } = useRolePermissions()
   const { data: aliados = [] } = useAllies({ all: true })
-  const { data: desembolsos = [] } = useDisbursements()
+  const { data: desembolsos = [] } = useDisbursements({ all: true })
   const { data: municipios = [] } = useMunicipalities()
 
   const canCreate = userCan('functional_admin', 'operator', 'solicitante')

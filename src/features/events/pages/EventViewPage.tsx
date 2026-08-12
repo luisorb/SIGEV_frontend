@@ -66,7 +66,7 @@ export function EventViewPage() {
   })
 
   const { data: aliados = [] } = useAllies({ all: true })
-  const { data: desembolsos = [] } = useDisbursements()
+  const { data: desembolsos = [] } = useDisbursements({ all: true })
   const { data: municipios = [] } = useMunicipalities()
 
   const [localOverrides] = useState<Partial<Event>>({})

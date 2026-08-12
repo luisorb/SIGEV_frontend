@@ -72,7 +72,6 @@ export interface Disbursement {
   id: string
   nombre: string
   codigo: string
-  porcentajeParticipacion: number
   vigencia: string
   vigenciaInicio?: string
   vigenciaFin?: string
