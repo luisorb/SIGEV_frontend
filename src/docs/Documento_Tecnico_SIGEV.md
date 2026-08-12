@@ -231,8 +231,8 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | Código | Requisito | Origen | Prioridad | Criterio de Aceptación |
 | :--- | :--- | :--- | :--- | :--- |
 | **RF-CAL-001** | Calcular base como cantidad multiplicada por valor unitario. | Observado | Alta | La operación se realiza con precisión definida y sin errores de redondeo acumulado. |
-| **RF-CAL-002** | Clasificar ítems como IVA, impuesto al consumo, pago a terceros o reembolso. | Observado | Alta | Cada clasificación aplica la tasa y el tratamiento autorizado. |
-| **RF-CAL-003** | Calcular IVA e impuesto al consumo. | Observado | Alta | Los impuestos coinciden con la tasa vigente para el ítem. |
+| **RF-CAL-002** | Clasificar ítems como IVA, impuesto a consumo (INC), pago a terceros o reembolso. | Observado | Alta | Cada clasificación aplica la tasa y el tratamiento autorizado. |
+| **RF-CAL-003** | Calcular IVA e impuesto a consumo (INC). | Observado | Alta | Los impuestos coinciden con la tasa vigente para el ítem. |
 | **RF-CAL-004** | Calcular FEE de ítems tarifados y FEE de terceros / reembolsos. | Observado | Alta | La base y la tasa utilizadas corresponden a la regla aprobada. |
 | **RF-CAL-005** | Calcular IVA sobre el FEE Técnico Administrativo. | Observado | Alta | El impuesto se aplica sobre el FEE calculado. |
 | **RF-CAL-006** | Calcular total por ítem y total por evento. | Observado | Alta | El total del evento coincide con la suma de sus ítems. |
@@ -296,14 +296,14 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | Código Funcional | Tratamiento | Referencia del Prototipo | Efecto |
 | :--- | :--- | :--- | :--- |
 | **IVA** | Ítem gravado | Tasa de referencia 19% | Genera IVA y FEE de tarifado. |
-| **Consumo** | Ítem sujeto a impuesto al consumo | Tasa de referencia 8% | Genera impuesto al consumo y FEE de tarifado. |
+| **Consumo** | Ítem sujeto a impuesto a consumo (INC) | Tasa de referencia 8% | Genera impuesto a consumo (INC) y FEE de tarifado. |
 | **Tercero** | Pago a terceros no gravado | Tasa tributaria 0% | Genera FEE de terceros. |
 | **Reembolso** | Reembolso no gravado | Tasa tributaria 0% | Genera FEE de terceros o reembolsos. |
 
 ### 7.2 Fórmulas Observadas
 
 * **Base:** $Base = Cantidad 	imes Valor Unitario$
-* **Impuesto:** $Impuesto = IVA + Impuesto al Consumo$
+* **Impuesto:** $Impuesto = IVA + Impuesto a consumo (INC)$
 * **Total sin retenciones:** $Total sin retenciones = Base + Impuesto$
 * **FEE tarifado:** $FEE tarifado = Base 	imes Tasa de FEE tarifado$ *(según el código operativo del prototipo)*
 * **FEE de terceros:** $FEE de terceros = Base 	imes Tasa de FEE de terceros o reembolsos$
@@ -458,7 +458,7 @@ El prototipo reconoce hojas asociadas a `FOR-EV-ADMO-01` y `FOR-EC-ADMO-02`, ade
 * **Total de ejecución:** Suma del total de eventos incluidos en el filtro.
 * **Base más impuestos:** Suma del total sin retenciones.
 * **FEE acumulado:** Suma del FEE Técnico Administrativo.
-* **Impuestos:** Suma de IVA e impuesto al consumo.
+* **Impuestos:** Suma de IVA e impuesto a consumo (INC).
 * **Eventos por estado:** Cantidad y valor total en cada estado.
 * **Ejecución por recurso disponible:** Valor, número de eventos y participación.
 * **Ejecución por aliado:** Valor, número de eventos, participación, impuestos y FEE.
@@ -654,7 +654,7 @@ Rango de fechas del evento y de registro, número de evento/sufijo, responsable/
 | Clasificación | Definición Inicial |
 | :--- | :--- |
 | **IVA** | Ítem gravado con IVA. |
-| **Consumo** | Ítem sujeto a impuesto al consumo. |
+| **Consumo** | Ítem sujeto a impuesto a consumo (INC). |
 | **Tercero** | Pago a tercero no gravado dentro del prototipo. |
 | **Reembolso** | Reembolso no gravado dentro del prototipo. |
 

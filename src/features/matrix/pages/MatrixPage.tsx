@@ -115,7 +115,7 @@ export function MatrixPage() {
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-2.5 flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-orange-50 shrink-0"><Receipt className="w-3.5 h-3.5 text-orange-600" /></div>
-          <div className="min-w-0"><p className="text-[9px] font-medium text-slate-500 uppercase tracking-wide">Consumo</p><p className="text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrencyCO(totals.totalConsumo)}</p></div>
+          <div className="min-w-0"><p className="text-[9px] font-medium text-slate-500 uppercase tracking-wide">INC</p><p className="text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrencyCO(totals.totalConsumo)}</p></div>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-2.5 flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-teal-50 shrink-0"><BadgePercent className="w-3.5 h-3.5 text-teal-600" /></div>

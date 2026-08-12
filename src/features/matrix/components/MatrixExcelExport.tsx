@@ -18,7 +18,7 @@ export function MatrixExcelExport({ detailedRows, globalRows, totals, aliadoIds,
     const detHeaders = [
       'Evento', 'Fecha', 'Territorio', 'Estado',
       'Descripción', 'Cantidad', 'Valor Unitario', 'Carga Tributaria',
-      'Base', 'IVA', 'Consumo', 'FEE Tarifado', 'FEE Terceros', 'IVA FEE',
+      'Base', 'IVA', 'INC', 'FEE Tarifado', 'FEE Terceros', 'IVA FEE',
       'Total', 'Aliado', 'Recurso disponible',
     ]
     const detData: (string | number)[][] = [detHeaders]

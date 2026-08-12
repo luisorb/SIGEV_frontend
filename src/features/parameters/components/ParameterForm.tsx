@@ -79,7 +79,7 @@ export function ParameterForm({
 }: ParameterFormProps) {
   const impuestos: { key: ParamFieldKey; label: string; description: string; icon: React.ReactNode }[] = [
     { key: 'ivaRate', label: 'IVA', description: 'Impuesto al Valor Agregado', icon: <Receipt className="w-3.5 h-3.5" /> },
-    { key: 'impuestoConsumoRate', label: 'Impuesto al Consumo', description: 'Impuesto al consumo (ICA)', icon: <Percent className="w-3.5 h-3.5" /> },
+    { key: 'impuestoConsumoRate', label: 'Impuesto a consumo (INC)', description: 'Impuesto a consumo (INC)', icon: <Percent className="w-3.5 h-3.5" /> },
     { key: 'ivaFeeRate', label: 'IVA sobre FEE', description: 'IVA aplicado sobre el FEE calculado', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
   ]
 

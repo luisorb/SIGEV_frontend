@@ -34,7 +34,7 @@ describe('calculateItemPreview', () => {
     expect(result.total).toBe(1_249_500)
   })
 
-  it('calcula un item con Impuesto al Consumo correctamente', () => {
+  it('calcula un item con Impuesto a consumo (INC) correctamente', () => {
     const item: ItemInput = {
       descripcion: 'Producto consumo',
       cantidad: 5,
