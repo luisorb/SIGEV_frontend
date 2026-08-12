@@ -89,7 +89,7 @@ export function EventDetailPage() {
   }
 
   const canEdit =
-    userCan('functional_admin', 'operator', 'supervisor') ||
+    userCan('functional_admin', 'supervisor') ||
     (event.estado === 'Devuelto' && userCan('analista', 'solicitante')) ||
     (event.estado === 'Abierto' &&
       !event.cotizacionSeleccionadaId &&

@@ -1,13 +1,14 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardList, FileSpreadsheet, FolderOpen, Package } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardList, FileSpreadsheet, FolderOpen, Package, Wallet } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
+import { PaymentsSection } from '../components/PaymentsSection'
 import { useItems, type ManagedItem } from '../hooks/useItems'
 import { useQuotations } from '../../offers/hooks/useQuotations'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { getEventApi, updateEventApi } from '../../../services/events.service'
+import { getEventApi, updateEventApi, updateEventItemsApi } from '../../../services/events.service'
 import { getOfertaEconomicaByEventApi, mapOfertaEconomicaToOffer } from '../../../services/offers.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
@@ -16,6 +17,7 @@ import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { getStateHistory } from '../../../lib/stateHistoryStore'
+import { getAuditByEntityApi } from '../../../services/audit.service'
 import { useToast } from '../../../components/ToastProvider'
 import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
@@ -44,14 +46,17 @@ const DETAIL_TABS = [
   { key: 'cotizaciones', label: 'Listado de cotizaciones', icon: FileSpreadsheet },
   { key: 'soportes', label: 'Soportes Documentales', icon: FolderOpen },
   { key: 'items', label: 'Ítems del Evento', icon: Package },
+  { key: 'pagos', label: 'Pagos', icon: Wallet },
 ] as const
+
+type DetailTab = (typeof DETAIL_TABS)[number]['key']
 
 export function EventViewPage() {
   const { id } = useParams()
   const toast = useToast()
   const queryClient = useQueryClient()
   const { can: userCan } = useRolePermissions()
-  const { allQuotations: offers, selectQuotation } = useQuotations()
+  const { allQuotations: offers, selectQuotation, validateQuotation } = useQuotations()
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
@@ -65,6 +70,13 @@ export function EventViewPage() {
     enabled: !!id,
   })
 
+  const { data: auditLogs = [] } = useQuery({
+    queryKey: ['audit-event', id],
+    queryFn: () => getAuditByEntityApi('Event', id!),
+    enabled: !!id,
+    retry: false,
+  })
+
   const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements({ all: true })
   const { data: municipios = [] } = useMunicipalities()
@@ -72,7 +84,7 @@ export function EventViewPage() {
   const [localOverrides] = useState<Partial<Event>>({})
 
   const [showHistory, setShowHistory] = useState(false)
-  const [activeTab, setActiveTab] = useState<'detalles' | 'cotizaciones' | 'soportes' | 'items'>('detalles')
+  const [activeTab, setActiveTab] = useState<DetailTab>('detalles')
 
   const {
     items,
@@ -86,7 +98,7 @@ export function EventViewPage() {
       descripcion: i.descripcion,
       unidadMedida: i.unidadMedida,
       cantidad: i.cantidad,
-      valorUnitario: 0,
+      valorUnitario: i.valorUnitario,
       categoriaTributaria: i.categoriaTributaria,
       aliadoId: i.aliadoId,
       tariffId: i.tariffId,
@@ -119,7 +131,52 @@ export function EventViewPage() {
     }
   }, [event, localOverrides, items])
 
-  const stateHistory = event ? getStateHistory(event.id) : []
+  const stateHistory = useMemo(() => {
+    if (!event) return []
+    const statusChanges = auditLogs
+      .filter((entry) => entry.detalle?.includes('/status'))
+      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+
+    if (statusChanges.length > 0) {
+      const parseStatus = (raw?: string): EventState | null => {
+        if (!raw) return null
+        try {
+          const parsed = JSON.parse(raw) as Record<string, unknown>
+          return typeof parsed?.status === 'string' ? (parsed.status as EventState) : null
+        } catch {
+          return null
+        }
+      }
+      return statusChanges
+        .map((entry, index) => {
+          const estadoNuevo = parseStatus(entry.valorNuevo) ?? 'Abierto'
+          const prev = index > 0 ? statusChanges[index - 1] : null
+          const estadoAnterior = prev ? parseStatus(prev.valorNuevo) ?? 'Abierto' : 'Abierto'
+          let motivo = ''
+          if (entry.valorNuevo) {
+            try {
+              const parsed = JSON.parse(entry.valorNuevo) as Record<string, unknown>
+              if (typeof parsed?.observation === 'string') motivo = parsed.observation
+            } catch {
+              // JSON no parseable; se ignora el motivo
+            }
+          }
+          return {
+            id: `aud-${entry.id}`,
+            eventoId: event.id,
+            estadoAnterior,
+            estadoNuevo,
+            usuario: entry.usuario,
+            fecha: entry.fecha,
+            motivo,
+          }
+        })
+        .reverse()
+    }
+
+    return getStateHistory(event.id)
+  }, [auditLogs, event])
+
   const displayEstado = (localEvent?.estado ?? event?.estado ?? 'Abierto') as EventState
 
   const dateStatus = useMemo(() => {
@@ -162,7 +219,7 @@ export function EventViewPage() {
       descripcion: i.descripcion,
       unidadMedida: i.unidadMedida,
       cantidad: i.cantidad,
-      valorUnitario: 0,
+      valorUnitario: i.valorUnitario,
       categoriaTributaria: i.categoriaTributaria,
       aliadoId: i.aliadoId,
       tariffId: i.tariffId,
@@ -180,12 +237,17 @@ export function EventViewPage() {
   function persistItems(nextItems: ManagedItem[]): Promise<void> {
     if (!event) return Promise.resolve()
     const task = persistChainRef.current.then(async () => {
-      await updateEventApi(event.id, {
-        ...event,
-        ...localOverrides,
-        updatedAt: localOverrides.updatedAt ?? event.updatedAt,
-        items: buildItemsPayload(nextItems),
-      })
+      const payload = buildItemsPayload(nextItems)
+      if (userCan('solicitante')) {
+        await updateEventItemsApi(event.id, payload)
+      } else {
+        await updateEventApi(event.id, {
+          ...event,
+          ...localOverrides,
+          updatedAt: localOverrides.updatedAt ?? event.updatedAt,
+          items: payload,
+        })
+      }
       await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       await queryClient.invalidateQueries({ queryKey: ['events'] })
     })
@@ -223,13 +285,32 @@ export function EventViewPage() {
     }
   }
 
-  async function handleSelectOffer(offerId: string, file?: File) {
+  async function handleValidateOffer(offerId: string) {
+    if (!event) return
+    try {
+      await validateQuotation(offerId)
+      await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
+      addAuditEntry({
+        accion: 'Validación de cotización ganadora',
+        entidad: 'Quotation',
+        entidadId: offerId,
+        usuario: getCurrentUser(),
+        fecha: new Date().toISOString(),
+        detalle: `Cotización validada en el evento ${event.numeroEvento}; pendiente de aprobación definitiva por un segundo Aprobador`,
+      })
+      toast.showToast('Cotización validada; un segundo Aprobador debe ejecutar la aprobación definitiva')
+    } catch (error) {
+      toast.showToast(getApiErrorMessage(error, 'No se pudo validar la cotización'), 'error')
+    }
+  }
+
+  async function handleSelectOffer(offerId: string, file?: File, itemIds?: string[]) {
     if (!event) return
     try {
       if (file) {
         await uploadAttachmentApi(event.id, 'Comunicado de aprobación', file)
       }
-      const quotation = await selectQuotation(offerId)
+      const quotation = await selectQuotation(offerId, itemIds)
       await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       addAuditEntry({
         accion: 'Selección de cotización ganadora',
@@ -237,7 +318,7 @@ export function EventViewPage() {
         entidadId: event.id,
         usuario: getCurrentUser(),
         fecha: new Date().toISOString(),
-        detalle: `Cotización ${quotation.codigo} seleccionada; se generó la oferta económica definitiva`,
+        detalle: `Cotización ${quotation.codigo} seleccionada; se generó la oferta económica definitiva${itemIds?.length ? ' con composición por ítem' : ''}`,
       })
       toast.showToast('Oferta económica definitiva generada')
     } catch (error) {
@@ -328,15 +409,18 @@ export function EventViewPage() {
   const esDevolucionLegalizacion = isDevuelto && localEvent?.devolucionLegalizacion === true
 
   const canEdit =
-    userCan('functional_admin', 'operator', 'supervisor') ||
+    userCan('functional_admin', 'supervisor') ||
     (isDevuelto && userCan('analista', 'solicitante')) ||
     (displayEstado === 'Abierto' &&
       !event.cotizacionSeleccionadaId &&
       userCan('analista', 'solicitante'))
 
   const canModifyItems =
-    userCan('functional_admin', 'operator') ||
-    (isDevuelto && userCan('analista'))
+    userCan('functional_admin') ||
+    (isDevuelto && userCan('analista')) ||
+    (userCan('solicitante') &&
+      (isDevuelto ||
+        (displayEstado === 'Abierto' && !event.cotizacionSeleccionadaId)))
 
   const devueltoPermiteSoportes =
     isDevuelto &&
@@ -411,7 +495,7 @@ export function EventViewPage() {
               </p>
             ) : (
               <p className="text-xs text-amber-600 mt-0.5">
-                Pueden corregir: {canEdit ? 'su rol puede editar el evento en este estado.' : 'solo operador, analista o solicitante.'}
+                Pueden corregir el encabezado: {canEdit ? 'su rol puede editar la orden en este estado.' : 'solo analista o solicitante.'} El Operador gestiona ítems y cotizaciones.
               </p>
             )}
           </div>
@@ -541,6 +625,7 @@ export function EventViewPage() {
         offers={offers}
         selectedOfferId={event.cotizacionSeleccionadaId}
         onSelectOffer={handleSelectOffer}
+        onValidateOffer={handleValidateOffer}
         oferta={ofertaEconomica ?? null}
         readOnly={offersReadOnly}
         canSelectQuotation={canSelectQuotation}
@@ -572,7 +657,17 @@ export function EventViewPage() {
         onRemoveItem={handleRemoveItem}
         readOnly={itemsReadOnly}
         eventAliadoId={event.aliadoId}
+        schemaType={event.esquema}
       />
+      </div>
+
+      <div className={activeTab === 'pagos' ? '' : 'hidden'}>
+        <PaymentsSection
+          eventId={event.id}
+          ofertaTotal={ofertaTotals?.total ?? 0}
+          defaultDisbursementId={event.desembolsoId}
+          readOnly={TERMINAL_STATES.includes(displayEstado)}
+        />
       </div>
 
       {showHistory && (

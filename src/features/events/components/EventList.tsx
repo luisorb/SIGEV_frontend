@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2 } from 'lucide-react'
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, RotateCcw } from 'lucide-react'
 import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -56,11 +56,14 @@ interface EventListProps {
   filters: EventListFilters
   sort: EventListSort
   meta: EventListMeta
+  showDeleted?: boolean
+  onToggleDeleted?: () => void
   onFilterChange: (key: keyof EventListFilters, value: string) => void
   onSort: (column: string) => void
   onPageChange: (page: number) => void
   onPageSizeChange: (size: PageSize) => void
   onDeleteRequest: (id: string) => void
+  onRestoreRequest?: (id: string) => void
 }
 
 export function EventList({
@@ -68,11 +71,14 @@ export function EventList({
   filters,
   sort,
   meta,
+  showDeleted = false,
+  onToggleDeleted,
   onFilterChange,
   onSort,
   onPageChange,
   onPageSizeChange,
   onDeleteRequest,
+  onRestoreRequest,
 }: EventListProps) {
   const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
@@ -81,9 +87,9 @@ export function EventList({
   const { data: desembolsos = [] } = useDisbursements({ all: true })
   const { data: municipios = [] } = useMunicipalities()
 
-  const canCreate = userCan('functional_admin', 'operator', 'solicitante')
+  const canCreate = userCan('functional_admin', 'solicitante')
   const canEditEvent = (event: Event) =>
-    userCan('functional_admin', 'operator', 'supervisor') ||
+    userCan('functional_admin', 'supervisor') ||
     (event.estado === 'Devuelto' && userCan('analista', 'solicitante')) ||
     (event.estado === 'Abierto' &&
       !event.cotizacionSeleccionadaId &&
@@ -106,6 +112,20 @@ export function EventList({
           >
             <Plus className="w-4 h-4" />
             Nueva Orden
+          </button>
+        )}
+        {canDelete && onToggleDeleted && (
+          <button
+            onClick={onToggleDeleted}
+            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+              showDeleted
+                ? 'bg-slate-800 text-white border-slate-800'
+                : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+            }`}
+            title="Ver órdenes anuladas"
+          >
+            <RotateCcw className="w-4 h-4" />
+            {showDeleted ? 'Ver activas' : 'Ver anuladas'}
           </button>
         )}
       </div>
@@ -195,7 +215,9 @@ export function EventList({
               {_events.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
-                    No hay órdenes registradas. Crea la primera orden.
+                    {showDeleted
+                      ? 'No hay órdenes anuladas.'
+                      : 'No hay órdenes registradas. Crea la primera orden.'}
                   </td>
                 </tr>
               ) : (
@@ -234,23 +256,37 @@ export function EventList({
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {canEditEvent(event) && (
-                            <button
-                              onClick={() => navigate(`/ordenes/${event.id}/editar`)}
-                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
-                              title="Editar"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                          )}
-                          {canDelete && (
-                            <button
-                              onClick={() => onDeleteRequest(event.id)}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
-                              title="Anular"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                          {showDeleted ? (
+                            canDelete && onRestoreRequest && (
+                              <button
+                                onClick={() => onRestoreRequest(event.id)}
+                                className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 transition-colors"
+                                title="Restaurar"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
+                            )
+                          ) : (
+                            <>
+                              {canEditEvent(event) && (
+                                <button
+                                  onClick={() => navigate(`/ordenes/${event.id}/editar`)}
+                                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  onClick={() => onDeleteRequest(event.id)}
+                                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
+                                  title="Anular"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>

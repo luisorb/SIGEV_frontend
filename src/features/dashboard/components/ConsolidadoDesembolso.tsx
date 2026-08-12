@@ -1,11 +1,13 @@
 import { Banknote } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { ConsolidadoRow } from '../types'
+import type { PaymentSummaryRow } from '../../../services/payments.service'
 import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
 const COLORS = ['#f43340', '#EAB308', '#22C55E', '#6366F1', '#F97316', '#EC4899']
 
 interface ConsolidadoDesembolsoProps {
   rows: ConsolidadoRow[]
+  paymentSummary?: PaymentSummaryRow[]
 }
 
 interface TooltipPayloadItem {
@@ -27,7 +29,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   )
 }
 
-export function ConsolidadoDesembolso({ rows }: ConsolidadoDesembolsoProps) {
+export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: ConsolidadoDesembolsoProps) {
   return (
     <div className="bg-white rounded-xl border border-slate-200">
       <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-200">
@@ -72,6 +74,36 @@ export function ConsolidadoDesembolso({ rows }: ConsolidadoDesembolsoProps) {
               </div>
             ))}
           </div>
+
+          {paymentSummary.length > 0 && (
+            <div className="mt-5 border-t border-slate-100 pt-4 space-y-3">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Pagos vs. recurso disponible
+              </p>
+              {paymentSummary.map((row) => (
+                <div key={row.disbursementId}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-slate-600 font-medium">{row.name}</span>
+                    <span className="text-slate-500">
+                      {formatCurrencyCO(row.paid)} de {formatCurrencyCO(row.amount)}
+                      <span className="ml-2 font-semibold text-slate-900">
+                        {formatPercentage(row.percentage)}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, row.percentage * 100))}%`,
+                        backgroundColor: row.percentage >= 0.9 ? '#22C55E' : row.percentage >= 0.5 ? '#EAB308' : '#f43340',
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -29,10 +29,10 @@ export const ROLES_CAN_READ_AUDIT = ['technical_admin', 'functional_admin', 'sup
 export const ROLES_CAN_SEE_REPORTS = ['functional_admin', 'supervisor', 'operator', 'analista', 'consulta', 'auditor', 'approver'] as const
 
 export const ROLES_CAN_CREATE_EVENT = ['functional_admin', 'operator', 'solicitante'] as const
-export const ROLES_CAN_EDIT_EVENT = ['functional_admin', 'operator', 'supervisor', 'analista', 'solicitante'] as const
+export const ROLES_CAN_EDIT_EVENT = ['functional_admin', 'supervisor', 'analista', 'solicitante'] as const
 export const ROLES_CAN_DELETE_EVENT = ['functional_admin'] as const
 export const ROLES_CAN_CHANGE_STATUS = ['approver'] as const
-export const ROLES_CAN_MANAGE_ITEMS = ['functional_admin', 'operator'] as const
+export const ROLES_CAN_MANAGE_ITEMS = ['functional_admin', 'solicitante'] as const
 export const ROLES_CAN_MANAGE_OFFERS = ['functional_admin', 'operator'] as const
 export const ROLES_CAN_MANAGE_ALLIES = ['functional_admin'] as const
 export const ROLES_CAN_MANAGE_DISBURSEMENTS = ['functional_admin'] as const

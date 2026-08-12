@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Menu, LogOut } from 'lucide-react'
 import { useAuth } from '../features/auth/useAuth'
 import { Breadcrumbs } from './Breadcrumbs'
+import { NotificationBell } from './NotificationBell'
 import { ROLE_LABELS } from '../lib/permissions'
 
 interface NavbarProps {
@@ -48,7 +49,9 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
         <Breadcrumbs />
       </div>
 
-      <div className="relative" ref={menuRef}>
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <div className="relative" ref={menuRef}>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
@@ -77,6 +80,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
             </button>
           </div>
         )}
+        </div>
       </div>
     </header>
   )

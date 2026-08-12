@@ -43,6 +43,24 @@ export {
 } from './disbursements.service'
 export type { DisbursementResponse } from './disbursements.service'
 
+export {
+  getNotificationsApi,
+  getUnreadCountApi,
+  markNotificationReadApi,
+  markAllNotificationsReadApi,
+  deleteNotificationApi,
+} from './notifications.service'
+export type { NotificationItem } from './notifications.service'
+
+export {
+  getPaymentsApi,
+  getPaymentsSummaryApi,
+  createPaymentApi,
+  updatePaymentApi,
+  deletePaymentApi,
+} from './payments.service'
+export type { PaymentResponse, PaymentSummaryRow } from './payments.service'
+
 export { generateReportApi } from './reports.service'
 
 export {

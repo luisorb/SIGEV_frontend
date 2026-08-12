@@ -35,7 +35,7 @@ export const router = createBrowserRouter([
           {
             path: 'ordenes/nueva',
             element: (
-              <RoleRoute roles={['functional_admin', 'operator', 'solicitante']}>
+              <RoleRoute roles={['functional_admin', 'solicitante']}>
                 <EventCreatePage />
               </RoleRoute>
             ),
@@ -44,7 +44,7 @@ export const router = createBrowserRouter([
           {
             path: 'ordenes/:id/editar',
             element: (
-              <RoleRoute roles={['functional_admin', 'operator', 'supervisor', 'analista', 'solicitante']}>
+              <RoleRoute roles={['functional_admin', 'supervisor', 'analista', 'solicitante']}>
                 <EventDetailPage />
               </RoleRoute>
             ),

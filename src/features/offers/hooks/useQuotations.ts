@@ -5,6 +5,7 @@ import {
   getQuotationsApi,
   changeQuotationStatusApi,
   selectQuotationApi,
+  validateQuotationApi,
   deleteQuotationApi,
   mapQuotationResponse,
 } from '../../../services/quotations.service'
@@ -60,7 +61,7 @@ export function useQuotations() {
   }
 
   const selectMutation = useMutation({
-    mutationFn: (id: string) => selectQuotationApi(id),
+    mutationFn: ({ id, itemIds }: { id: string; itemIds?: string[] }) => selectQuotationApi(id, itemIds),
     onSuccess: async (data) => {
       const quotation = mapQuotationResponse(data)
       queryClient.setQueryData<Offer[]>(QUOTATIONS_KEY, (prev) =>
@@ -100,6 +101,25 @@ export function useQuotations() {
     },
   })
 
+  const validateMutation = useMutation({
+    mutationFn: (id: string) => validateQuotationApi(id),
+    onSuccess: async (data) => {
+      const quotation = mapQuotationResponse(data)
+      queryClient.setQueryData<Offer[]>(QUOTATIONS_KEY, (prev) =>
+        (prev ?? []).map((o) => (o.id === quotation.id ? quotation : o))
+      )
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
+      addAuditEntry({
+        accion: 'Validación de cotización',
+        entidad: 'Quotation',
+        entidadId: quotation.id,
+        usuario: getCurrentUser(),
+        fecha: new Date().toISOString(),
+        detalle: `Cotización ${quotation.codigo} validada por el 1er Aprobador; pendiente de aprobación definitiva por un segundo Aprobador`,
+      })
+    },
+  })
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteQuotationApi(id),
     onSuccess: async (_data, id) => {
@@ -110,8 +130,13 @@ export function useQuotations() {
     },
   })
 
-  async function selectQuotation(id: string): Promise<Offer> {
-    const data = await selectMutation.mutateAsync(id)
+  async function selectQuotation(id: string, itemIds?: string[]): Promise<Offer> {
+    const data = await selectMutation.mutateAsync({ id, itemIds })
+    return mapQuotationResponse(data)
+  }
+
+  async function validateQuotation(id: string): Promise<Offer> {
+    const data = await validateMutation.mutateAsync(id)
     return mapQuotationResponse(data)
   }
 
@@ -132,6 +157,7 @@ export function useQuotations() {
     setSearch,
     getQuotation,
     selectQuotation,
+    validateQuotation,
     changeState,
     removeQuotation,
   }

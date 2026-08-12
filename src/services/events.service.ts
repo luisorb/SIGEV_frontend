@@ -1,5 +1,5 @@
 import api from '../lib/api'
-import type { CreateEventDto, ChangeStatusDto } from './types'
+import type { CreateEventDto, ChangeStatusDto, CreateItemDto } from './types'
 import type { Event, Item, EventState, SchemaType, Attachment, TaxCategory } from '../types'
 
 function mapBackendItem(data: Record<string, unknown>): Item {
@@ -128,6 +128,19 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
   }
 }
 
+function mapItemsToDto(items: Item[]): CreateItemDto[] {
+  return items.map((i) => ({
+    name: i.nombre ?? i.descripcion,
+    description: i.descripcion,
+    quantity: i.cantidad,
+    ...(i.valorUnitario !== undefined ? { unitPrice: i.valorUnitario } : {}),
+    ...(i.unidadMedida ? { unitMeasure: i.unidadMedida } : {}),
+    ...(i.aliadoId ? { allyId: i.aliadoId } : {}),
+    ...(i.tariffId ? { tariffId: i.tariffId } : {}),
+    ...(i.isTariffed !== undefined ? { isTariffed: i.isTariffed } : {}),
+  }))
+}
+
 function mapToCreateDto(event: Partial<Event>): CreateEventDto {
   return {
     code: event.numeroEvento || '',
@@ -147,21 +160,17 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
     generalAllyId: event.aliadoId,
     disbursementId: event.desembolsoId,
     startDate: event.fechaEvento || undefined,
-    items: event.items?.length ? event.items.map((i) => ({
-      name: i.nombre ?? i.descripcion,
-      description: i.descripcion,
-      quantity: i.cantidad,
-      ...(i.valorUnitario ? { unitPrice: i.valorUnitario } : {}),
-      ...(i.unidadMedida ? { unitMeasure: i.unidadMedida } : {}),
-      ...(i.aliadoId ? { allyId: i.aliadoId } : {}),
-      ...(i.tariffId ? { tariffId: i.tariffId } : {}),
-      ...(i.isTariffed !== undefined ? { isTariffed: i.isTariffed } : {}),
-    })) : undefined,
+    items: event.items?.length ? mapItemsToDto(event.items) : undefined,
   }
 }
 
 export async function getEventsApi(): Promise<Event[]> {
   const response = await api.get<unknown[]>('/api/v1/events')
+  return (response.data as Record<string, unknown>[]).map(mapBackendEvent)
+}
+
+export async function getDeletedEventsApi(): Promise<Event[]> {
+  const response = await api.get<unknown[]>('/api/v1/events', { params: { includeDeleted: 'true' } })
   return (response.data as Record<string, unknown>[]).map(mapBackendEvent)
 }
 
@@ -181,8 +190,18 @@ export async function updateEventApi(id: string, event: Partial<Event>): Promise
   return mapBackendEvent(response.data)
 }
 
+export async function updateEventItemsApi(id: string, items: Item[]): Promise<Event | null> {
+  const response = await api.patch<Record<string, unknown>>(`/api/v1/events/${id}`, { items: mapItemsToDto(items) })
+  return mapBackendEvent(response.data)
+}
+
 export async function deleteEventApi(id: string): Promise<void> {
   await api.delete(`/api/v1/events/${id}`)
+}
+
+export async function restoreEventApi(id: string): Promise<Event | null> {
+  const response = await api.patch<Record<string, unknown>>(`/api/v1/events/${id}/restore`)
+  return mapBackendEvent(response.data)
 }
 
 export async function changeEventStatusApi(

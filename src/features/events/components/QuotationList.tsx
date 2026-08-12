@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react'
-import { FileSpreadsheet, Plus, BadgeCheck, Download, FileUp, X, Eye } from 'lucide-react'
+import { FileSpreadsheet, Plus, BadgeCheck, ClipboardCheck, Download, FileUp, X, Eye } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -31,7 +31,8 @@ interface QuotationListProps {
   event: Event
   offers: Offer[]
   selectedOfferId?: string
-  onSelectOffer?: (offerId: string, file?: File) => void
+  onSelectOffer?: (offerId: string, file?: File, itemIds?: string[]) => void
+  onValidateOffer?: (offerId: string) => void
   readOnly?: boolean
   canSelectQuotation?: boolean
   oferta?: Offer | null
@@ -43,6 +44,7 @@ export function QuotationList({
   offers,
   selectedOfferId,
   onSelectOffer,
+  onValidateOffer,
   readOnly = false,
   canSelectQuotation = false,
   oferta,
@@ -52,8 +54,10 @@ export function QuotationList({
   const [showModal, setShowModal] = useState(false)
   const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
   const [confirmOffer, setConfirmOffer] = useState<Offer | null>(null)
+  const [validateOffer, setValidateOffer] = useState<Offer | null>(null)
   const [approvalFile, setApprovalFile] = useState<File | null>(null)
   const [approvalFileError, setApprovalFileError] = useState<string | null>(null)
+  const [selectedItemIds, setSelectedItemIds] = useState<Record<string, boolean>>({})
   const approvalInputRef = useRef<HTMLInputElement | null>(null)
 
   const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
@@ -179,7 +183,9 @@ export function QuotationList({
               {eventOffers.map((offer) => {
                 const isSelected = offer.id === selectedOfferId
                 const displayEstado: Offer['estado'] = isSelected ? 'Aprobada' : offer.estado
-                const canApprove = canSelect && !isSelected && offer.estado !== 'Rechazada'
+                const canValidate =
+                  canSelect && !isSelected && (offer.estado === 'Borrador' || offer.estado === 'Enviada')
+                const canApprove = canSelect && !isSelected && offer.estado === 'Validada'
 
                 return (
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
@@ -188,6 +194,9 @@ export function QuotationList({
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${OFFER_STATE_COLORS[displayEstado]}`}>
                         {displayEstado}
                       </span>
+                      {offer.estado === 'Validada' && offer.validador && (
+                        <p className="text-[11px] text-slate-400 mt-1">Validada por {offer.validador}</p>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500">{formatDateCO(offer.createdAt)}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-right text-slate-900">
@@ -206,15 +215,25 @@ export function QuotationList({
                         >
                           <Eye className="w-4 h-4" />
                         </button>
+                        {!oferta && canValidate && (
+                          <button
+                            onClick={() => setValidateOffer(offer)}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                            title="Validar cotización (1er Aprobador)"
+                          >
+                            <ClipboardCheck className="w-4 h-4" />
+                          </button>
+                        )}
                         {!oferta && canApprove && (
                           <button
                             onClick={() => {
                               setApprovalFile(null)
                               setApprovalFileError(null)
                               setConfirmOffer(offer)
+                              setSelectedItemIds(Object.fromEntries(offer.items.map((i) => [i.id, true])))
                             }}
                             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition-colors"
-                            title="Aprobar cotización"
+                            title="Aprobar cotización definitiva (2do Aprobador)"
                           >
                             <BadgeCheck className="w-4 h-4" />
                           </button>
@@ -232,7 +251,7 @@ export function QuotationList({
       {eventOffers.length > 0 && eventOffers.length < 3 && !readOnly && (
         <div className="px-6 py-3 bg-amber-50 border-t border-amber-100">
           <p className="text-xs text-amber-700">
-            Actualmente hay {eventOffers.length}. El Aprobador puede aprobar una cotización, pero se requieren al menos 3 para cerrar el evento.
+            Actualmente hay {eventOffers.length}. El 1er Aprobador valida la cotización ganadora y un 2do Aprobador distinto ejecuta la aprobación definitiva; se requieren al menos 3 cotizaciones para cerrar el evento.
           </p>
         </div>
       )}
@@ -261,8 +280,9 @@ export function QuotationList({
                 <h3 className="text-lg font-semibold text-slate-900">Aprobar Cotización Definitiva</h3>
                 <p className="text-sm text-slate-500 mt-1">
                   La cotización <strong>{confirmOffer.codigo}</strong> por{' '}
-                  <strong>{formatCurrencyCO(confirmOffer.total)}</strong> será aprobada como definitiva. Esta acción la
-                  marcará como ganadora, generará el presupuesto final y no podrá cambiarse después.
+                  <strong>{formatCurrencyCO(confirmOffer.total)}</strong> será aprobada como definitiva por un segundo
+                  Aprobador. Esta acción la marcará como ganadora, generará el presupuesto final con los ítems
+                  seleccionados y no podrá cambiarse después.
                 </p>
               </div>
               <button
@@ -270,12 +290,75 @@ export function QuotationList({
                   setConfirmOffer(null)
                   setApprovalFile(null)
                   setApprovalFileError(null)
+                  setSelectedItemIds({})
                 }}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
                 aria-label="Cerrar"
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+
+            <div className="mt-5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-slate-700">
+                  Ítems que conformarán el presupuesto final
+                </p>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedItemIds(Object.fromEntries(confirmOffer.items.map((i) => [i.id, true])))
+                    }
+                    className="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors"
+                  >
+                    Todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedItemIds({})}
+                    className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    Ninguno
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Seleccione los ítems de esta cotización que pasarán al presupuesto definitivo.
+              </p>
+              <div className="mt-2 max-h-48 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
+                {confirmOffer.items.map((item) => {
+                  const checked = !!selectedItemIds[item.id]
+                  return (
+                    <label
+                      key={item.id}
+                      className="flex items-start gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) =>
+                          setSelectedItemIds((prev) => ({ ...prev, [item.id]: e.target.checked }))
+                        }
+                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                      />
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm text-slate-900 truncate">{item.descripcion}</span>
+                        <span className="block text-xs text-slate-400">
+                          {item.cantidad} und · {formatCurrencyCO(item.valorUnitario)} c/u
+                        </span>
+                      </span>
+                      <span className="text-sm font-semibold text-slate-900 shrink-0">
+                        {formatCurrencyCO(item.total)}
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                {Object.values(selectedItemIds).filter(Boolean).length} de {confirmOffer.items.length} ítems
+                seleccionados
+              </p>
             </div>
 
             <div className="mt-5">
@@ -322,6 +405,7 @@ export function QuotationList({
                   setConfirmOffer(null)
                   setApprovalFile(null)
                   setApprovalFileError(null)
+                  setSelectedItemIds({})
                 }}
                 className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
@@ -331,15 +415,66 @@ export function QuotationList({
                 onClick={() => {
                   if (approvalFileError || !approvalFile) return
                   const file = approvalFile ?? undefined
-                  onSelectOffer?.(confirmOffer.id, file)
+                  const itemIds = Object.keys(selectedItemIds).filter((k) => selectedItemIds[k])
+                  onSelectOffer?.(confirmOffer.id, file, itemIds.length ? itemIds : undefined)
                   setConfirmOffer(null)
                   setApprovalFile(null)
                   setApprovalFileError(null)
+                  setSelectedItemIds({})
                 }}
-                disabled={!approvalFile || !!approvalFileError}
+                disabled={
+                  !approvalFile ||
+                  !!approvalFileError ||
+                  Object.values(selectedItemIds).filter(Boolean).length === 0
+                }
                 className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Aprobar cotización definitiva
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {validateOffer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-xl shrink-0 bg-blue-100 text-blue-600">
+                <ClipboardCheck className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-slate-900">Validar Cotización</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  La cotización <strong>{validateOffer.codigo}</strong> por{' '}
+                  <strong>{formatCurrencyCO(validateOffer.total)}</strong> quedará marcada como{' '}
+                  <strong>Validada</strong>. Un segundo Aprobador, distinto de usted, deberá ejecutar la aprobación
+                  definitiva con el comunicado de aprobación.
+                </p>
+              </div>
+              <button
+                onClick={() => setValidateOffer(null)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
+                aria-label="Cerrar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setValidateOffer(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  onValidateOffer?.(validateOffer.id)
+                  setValidateOffer(null)
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Validar cotización
               </button>
             </div>
           </div>

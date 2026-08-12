@@ -42,6 +42,12 @@ export interface QuotationResponse {
   quotationDate?: string | null
   validityDays?: number | null
   observations?: string | null
+  validadaPorId?: string | null
+  validadaEn?: string | null
+  aprobadaPorId?: string | null
+  aprobadaEn?: string | null
+  validadaPor?: { id: string; fullName: string } | null
+  aprobadaPor?: { id: string; fullName: string } | null
   eventId?: string | null
   allyId?: string | null
   createdAt: string
@@ -129,6 +135,12 @@ export function mapQuotationResponse(data: QuotationResponse): Offer {
     observations: data.observations ?? null,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
+    validadaPorId: data.validadaPorId ?? undefined,
+    validadaEn: data.validadaEn ?? undefined,
+    aprobadaPorId: data.aprobadaPorId ?? undefined,
+    aprobadaEn: data.aprobadaEn ?? undefined,
+    validador: data.validadaPor?.fullName ?? undefined,
+    aprobador: data.aprobadaPor?.fullName ?? undefined,
   }
 }
 
@@ -201,8 +213,16 @@ export async function changeQuotationStatusApi(
   return response.data
 }
 
-export async function selectQuotationApi(id: string): Promise<QuotationResponse> {
-  const response = await api.patch<QuotationResponse>(`/api/v1/quotations/${id}/select`)
+export async function validateQuotationApi(id: string): Promise<QuotationResponse> {
+  const response = await api.patch<QuotationResponse>(`/api/v1/quotations/${id}/validate`)
+  return response.data
+}
+
+export async function selectQuotationApi(id: string, itemIds?: string[]): Promise<QuotationResponse> {
+  const response = await api.patch<QuotationResponse>(
+    `/api/v1/quotations/${id}/select`,
+    itemIds?.length ? { items: itemIds.map((quotationItemId) => ({ quotationItemId })) } : undefined
+  )
   return response.data
 }
 

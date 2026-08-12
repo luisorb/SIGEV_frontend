@@ -1,7 +1,6 @@
 import { Pencil, Trash2, Lock } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { Ally } from '../../../types'
-import { formatCurrencyCO } from '../../../utils/formatters'
 
 interface ItemRowProps {
   item: ManagedItem
@@ -10,13 +9,6 @@ interface ItemRowProps {
   onRemove?: (id: string) => void
   readOnly?: boolean
   index?: number
-}
-
-const categoryBadges: Record<string, string> = {
-  IVA: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-  Consumo: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
-  Tercero: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200',
-  Reembolso: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
 }
 
 export function ItemRow({ item, onEdit, onRemove, readOnly = false, index = 0 }: ItemRowProps) {
@@ -47,16 +39,6 @@ export function ItemRow({ item, onEdit, onRemove, readOnly = false, index = 0 }:
       </td>
       <td className="px-5 py-3">
         <span className="text-sm text-slate-900 block text-right tabular-nums">{item.cantidad}</span>
-      </td>
-      <td className="px-5 py-3">
-        <span className={`text-sm block text-right tabular-nums ${item.isTariffed ? 'text-green-700 font-medium' : 'text-slate-900'}`}>
-          {formatCurrencyCO(item.valorUnitario)}
-        </span>
-      </td>
-      <td className="px-5 py-3">
-        <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md ${categoryBadges[item.categoriaTributaria] || 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'}`}>
-          {item.categoriaTributaria}
-        </span>
       </td>
       {!readOnly && (
         <td className="px-5 py-3 text-right">

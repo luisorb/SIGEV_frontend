@@ -93,6 +93,11 @@ interface BackendPaginatedAudit {
   totalPages: number
 }
 
+export async function getAuditByEntityApi(entityType: string, entityId: string): Promise<AuditEntry[]> {
+  const response = await api.get<BackendAuditLog[]>(`/api/v1/audit/${entityType}/${entityId}`)
+  return (response.data ?? []).map(mapBackendAudit)
+}
+
 export async function getAuditApi(params: GetAuditParams = {}): Promise<PaginatedAudit> {
   const empty: PaginatedAudit = {
     data: [],
