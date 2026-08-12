@@ -80,7 +80,7 @@ export function ParameterForm({
   const impuestos: { key: ParamFieldKey; label: string; description: string; icon: React.ReactNode }[] = [
     { key: 'ivaRate', label: 'IVA', description: 'Impuesto al Valor Agregado', icon: <Receipt className="w-3.5 h-3.5" /> },
     { key: 'impuestoConsumoRate', label: 'Impuesto a consumo (INC)', description: 'Impuesto a consumo (INC)', icon: <Percent className="w-3.5 h-3.5" /> },
-    { key: 'ivaFeeRate', label: 'IVA sobre FEE', description: 'IVA aplicado sobre el FEE calculado', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+    { key: 'ivaFeeRate', label: 'IVA sobre FEE', description: 'IVA aplicado sobre el FEE asociado', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
   ]
 
   const comisiones: { key: ParamFieldKey; label: string; description: string; icon: React.ReactNode }[] = [
@@ -172,7 +172,7 @@ export function ParameterForm({
                 </div>
                 <div className="min-w-0">
                   <label className="block text-sm font-medium text-slate-700">Aplicar FEE sobre Base</label>
-                  <p className="text-xs text-slate-400">El fee se calcula sobre el valor base en lugar del total con impuestos</p>
+                  <p className="text-xs text-slate-400">El FEE se calcula sobre el valor base en lugar del total con impuestos</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer shrink-0 self-end sm:self-auto">

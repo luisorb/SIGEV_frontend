@@ -133,7 +133,7 @@ export function QuotationDetailModal({ offer, event, onClose }: QuotationDetailM
                       <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-24">IVA</th>
                       <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-24">Imp. consumo</th>
                       <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-24">FEE</th>
-                      <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-24">IVA fee</th>
+                      <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-24">IVA FEE</th>
                       <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-28">Total</th>
                     </tr>
                   </thead>
