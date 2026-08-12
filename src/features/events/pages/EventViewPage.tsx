@@ -43,9 +43,9 @@ const SOPORTES_LOCKED_STATES: EventState[] = ['Ejecutado', 'Cerrado', 'Legalizad
 
 const DETAIL_TABS = [
   { key: 'detalles', label: 'Detalles de la Orden', icon: ClipboardList },
+  { key: 'items', label: 'Ítems del Evento', icon: Package },
   { key: 'cotizaciones', label: 'Listado de cotizaciones', icon: FileSpreadsheet },
   { key: 'soportes', label: 'Soportes Documentales', icon: FolderOpen },
-  { key: 'items', label: 'Ítems del Evento', icon: Package },
   { key: 'pagos', label: 'Pagos', icon: Wallet },
 ] as const
 
