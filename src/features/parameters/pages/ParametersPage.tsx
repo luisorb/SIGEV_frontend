@@ -690,7 +690,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className={labelBase}>Código {requiredMark}</label>
-                    <input type="text" value={form.codigo} maxLength={50} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: DES-001" className={inp('codigo')} />
+                    <input type="text" value={form.codigo} maxLength={50} onChange={(e) => { setForm({ ...form, codigo: e.target.value }); if (errors.codigo) setErrors((prev) => ({ ...prev, codigo: '' })) }} placeholder="Ej: R-001" className={inp('codigo')} />
                     {errors.codigo && <p className="text-xs text-red-500 mt-1">{errors.codigo}</p>}
                   </div>
                   <div className="space-y-1.5">
