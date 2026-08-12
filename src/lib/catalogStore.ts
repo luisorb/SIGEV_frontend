@@ -108,12 +108,12 @@ export function useDesembolsos() {
     persistDesembolsos(updated)
     setDesembolsos(updated)
     addAuditEntry({
-      accion: 'Creación de desembolso',
+      accion: 'Creación de recurso disponible',
       entidad: 'Disbursement',
       entidadId: nuevo.id,
       usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
-      detalle: `Desembolso "${nuevo.nombre}" creado`,
+      detalle: `Recurso disponible "${nuevo.nombre}" creado`,
     })
     return nuevo
   }, [])
@@ -124,12 +124,12 @@ export function useDesembolsos() {
     persistDesembolsos(updated)
     setDesembolsos(updated)
     addAuditEntry({
-      accion: 'Edición de desembolso',
+      accion: 'Edición de recurso disponible',
       entidad: 'Disbursement',
       entidadId: id,
       usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
-      detalle: 'Desembolso actualizado',
+      detalle: 'Recurso disponible actualizado',
     })
   }, [])
 
@@ -143,12 +143,12 @@ export function useDesembolsos() {
     persistDesembolsos(updated)
     setDesembolsos(updated)
     addAuditEntry({
-      accion: des.activo ? 'Inactivación de desembolso' : 'Activación de desembolso',
+      accion: des.activo ? 'Inactivación de recurso disponible' : 'Activación de recurso disponible',
       entidad: 'Disbursement',
       entidadId: id,
       usuario: getCurrentUser(),
       fecha: new Date().toISOString(),
-      detalle: `Desembolso "${des.nombre}" ${des.activo ? 'inactivado' : 'activado'}`,
+      detalle: `Recurso disponible "${des.nombre}" ${des.activo ? 'inactivado' : 'activado'}`,
     })
   }, [])
 

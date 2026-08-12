@@ -54,7 +54,7 @@ Los archivos HTML se consideran *dummies* funcionales. Su contenido permite iden
 Este documento establece la especificación técnica y funcional inicial para desarrollar **SIGEV** como una aplicación web destinada a registrar, valorar, controlar y hacer seguimiento a eventos. La solución deberá integrar la gestión de solicitudes, la construcción de ofertas económicas, el seguimiento de la ejecución, la consolidación presupuestal, la visualización territorial y la generación de reportes.
 
 ### 1.2 Antecedentes
-Los prototipos suministrados implementan una aplicación de una sola página (SPA) con almacenamiento local (*localStorage*). En conjunto muestran panel de control, órdenes, ofertas económicas, matriz de ejecución, tablero por estados, mapa de Colombia, parámetros configurables, carga desde Excel, exportación de matrices y respaldo de datos. El prototipo más completo contiene información precargada asociada a un desembolso y permite simular el comportamiento esperado con eventos reales o de prueba.
+Los prototipos suministrados implementan una aplicación de una sola página (SPA) con almacenamiento local (*localStorage*). En conjunto muestran panel de control, órdenes, ofertas económicas, matriz de ejecución, tablero por estados, mapa de Colombia, parámetros configurables, carga desde Excel, exportación de matrices y respaldo de datos. El prototipo más completo contiene información precargada asociada a un recurso disponible y permite simular el comportamiento esperado con eventos reales o de prueba.
 
 ### 1.3 Objetivo General
 Desarrollar una herramienta web centralizada, modular, segura y escalable que permita administrar el ciclo de vida de los eventos y consolidar en tiempo real la información operativa, económica, presupuestal y territorial.
@@ -62,7 +62,7 @@ Desarrollar una herramienta web centralizada, modular, segura y escalable que pe
 ### 1.4 Objetivos Específicos
 * Centralizar la información de eventos y sus requerimientos.
 * Automatizar los cálculos económicos y tributarios conforme a parámetros autorizados.
-* Consolidar la ejecución por evento, desembolso, aliado, estado, territorio y periodo.
+* Consolidar la ejecución por evento, recurso disponible, aliado, estado, territorio y periodo.
 * Facilitar el seguimiento operativo mediante estados y trazabilidad de cambios.
 * Generar ofertas, matrices y reportes exportables.
 * Garantizar control de acceso, auditoría, integridad y respaldo de la información.
@@ -75,7 +75,7 @@ La especificación cubre la experiencia funcional, los requisitos del sistema, e
 ## 2. Visión de la Solución
 
 ### 2.1 Descripción General
-SIGEV se concibe como una plataforma web multiusuario que concentra la información de los eventos desde su registro o importación hasta su legalización. Cada evento contiene datos administrativos, ubicación, responsable, aliado, desembolso, estado, esquema de presentación, observaciones e ítems económicos. Los cálculos se actualizan automáticamente y alimentan los paneles, matrices, reportes y consolidados.
+SIGEV se concibe como una plataforma web multiusuario que concentra la información de los eventos desde su registro o importación hasta su legalización. Cada evento contiene datos administrativos, ubicación, responsable, aliado, recurso disponible, estado, esquema de presentación, observaciones e ítems económicos. Los cálculos se actualizan automáticamente y alimentan los paneles, matrices, reportes y consolidados.
 
 ### 2.2 Principios de Diseño
 
@@ -98,11 +98,11 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 
 | Módulo | Alcance | Clasificación |
 | :--- | :--- | :--- |
-| **Panel de control** | Indicadores globales, ejecución por desembolso, distribución por aliado y órdenes recientes. | Observado |
+| **Panel de control** | Indicadores globales, ejecución por recurso disponible, distribución por aliado y órdenes recientes. | Observado |
 | **Órdenes** | Creación manual, importación desde Excel, consulta, edición y eliminación controlada. | Observado |
 | **Detalle del evento** | Datos administrativos, ubicación, estado, esquema, observaciones e ítems. | Observado |
 | **Ofertas económicas** | Cálculo por evento, resumen económico y exportación de oferta. | Observado |
-| **Matriz de ejecución** | Detalle por ítem y consolidados por desembolso y aliado. | Observado |
+| **Matriz de ejecución** | Detalle por ítem y consolidados por recurso disponible y aliado. | Observado |
 | **Tablero de seguimiento** | Visualización tipo Kanban y cambio de estado mediante arrastre. | Observado |
 | **Mapa de ejecución** | Ubicación de eventos por municipio o coordenadas sobre mapa de Colombia. | Observado |
 | **Parámetros** | Tasas, aliados, colores identificadores y respaldo local. | Observado |
@@ -135,7 +135,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 
 | Perfil | Responsabilidad | Alcance de Acceso |
 | :--- | :--- | :--- |
-| **Administrador funcional** | Gestiona catálogos, tasas, aliados, desembolsos, estados y reglas autorizadas. Consulta auditoría funcional. | Crear, editar, activar e inactivar parámetros. |
+| **Administrador funcional** | Gestiona catálogos, tasas, aliados, recursos disponibles, estados y reglas autorizadas. Consulta auditoría funcional. | Crear, editar, activar e inactivar parámetros. |
 | **Administrador técnico** | Administra usuarios, roles, configuración técnica, respaldos y monitoreo. | Acceso técnico controlado sin alterar reglas funcionales no autorizadas. |
 | **Operador** | Registra e importa eventos, completa datos, administra ítems y prepara ofertas. | Crear y editar eventos asignados. |
 | **Supervisor** | Revisa consistencia, consulta ejecución y cambia estados conforme al flujo aprobado. | Aprobar, observar y devolver registros. |
@@ -190,10 +190,10 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | :--- | :--- | :--- | :--- | :--- |
 | **RF-PAN-001** | Mostrar el valor total de ejecución y el número total de eventos. | Observado | Alta | Los valores coinciden con la suma de todos los eventos activos. |
 | **RF-PAN-002** | Mostrar base más impuestos, Fee Técnico Administrativo e impuestos acumulados. | Observado | Alta | Cada indicador coincide con el motor de cálculo central. |
-| **RF-PAN-003** | Consolidar la ejecución por desembolso y mostrar valor, participación y número de eventos. | Observado | Alta | Los datos pueden validarse contra la matriz global. |
+| **RF-PAN-003** | Consolidar la ejecución por recurso disponible y mostrar valor, participación y número de eventos. | Observado | Alta | Los datos pueden validarse contra la matriz global. |
 | **RF-PAN-004** | Consolidar la ejecución por aliado y mostrar valor, porcentaje, número de eventos y Fee. | Observado | Alta | La participación suma 100% salvo redondeos. |
 | **RF-PAN-005** | Mostrar las órdenes recientes con acceso directo al detalle. | Observado | Media | El usuario abre el evento seleccionado desde el panel. |
-| **RF-PAN-006** | Aplicar filtros globales por periodo, desembolso, aliado, estado, dependencia y territorio. | Producción | Alta | Todos los indicadores responden al mismo conjunto de filtros. |
+| **RF-PAN-006** | Aplicar filtros globales por periodo, recurso disponible, aliado, estado, dependencia y territorio. | Producción | Alta | Todos los indicadores responden al mismo conjunto de filtros. |
 | **RF-PAN-007** | Permitir exportar el resumen del panel. | Producción | Media | El reporte conserva filtros, fecha de corte y usuario generador. |
 
 ### 6.2 Gestión de Órdenes
@@ -203,8 +203,8 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | **RF-ORD-001** | Crear una orden de manera manual. | Observado | Alta | La orden se guarda y queda disponible para edición. |
 | **RF-ORD-002** | Importar órdenes desde archivos `.xlsx` o `.xls`. | Observado | Alta | El sistema procesa archivos válidos y rechaza extensiones no permitidas. |
 | **RF-ORD-003** | Reconocer los formatos FOR-EV-ADMO-01 y FOR-EC-ADMO-02. | Observado | Alta | Se extraen metadatos e ítems conforme a la estructura aprobada. |
-| **RF-ORD-004** | Presentar una revisión previa de la importación. | Observado | Alta | El usuario revisa evento, responsable, municipio, aliado, desembolso, esquema e ítems antes de confirmar. |
-| **RF-ORD-005** | Listar órdenes con evento, responsable, municipio, fecha, aliado, desembolso, esquema, número de ítems y total. | Observado | Alta | La información mostrada coincide con el detalle del evento. |
+| **RF-ORD-004** | Presentar una revisión previa de la importación. | Observado | Alta | El usuario revisa evento, responsable, municipio, aliado, recurso disponible, esquema e ítems antes de confirmar. |
+| **RF-ORD-005** | Listar órdenes con evento, responsable, municipio, fecha, aliado, recurso disponible, esquema, número de ítems y total. | Observado | Alta | La información mostrada coincide con el detalle del evento. |
 | **RF-ORD-006** | Permitir buscar, filtrar y ordenar órdenes. | Producción | Alta | La consulta responde en tiempos aceptables y conserva filtros. |
 | **RF-ORD-007** | Permitir eliminar una orden mediante confirmación. | Observado | Media | La eliminación respeta permisos y deja registro de auditoría. |
 | **RF-ORD-008** | Evitar duplicados mediante una llave funcional configurable. | Producción | Alta | El sistema alerta coincidencias de evento, sufijo y contexto contractual. |
@@ -217,7 +217,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | **RF-DET-001** | Registrar número de evento, sufijo, asistentes y días. | Observado | Alta | Los campos se guardan y se muestran al volver a abrir la orden. |
 | **RF-DET-002** | Registrar responsable, dependencia y fecha del evento. | Observado | Alta | Los datos quedan disponibles en consultas y reportes. |
 | **RF-DET-003** | Registrar departamento, municipio y vereda. | Observado | Alta | La ubicación alimenta el módulo de mapa y los filtros territoriales. |
-| **RF-DET-004** | Asignar aliado y desembolso. | Observado | Alta | Los consolidados se actualizan de forma inmediata. |
+| **RF-DET-004** | Asignar aliado y recurso disponible. | Observado | Alta | Los consolidados se actualizan de forma inmediata. |
 | **RF-DET-005** | Asignar estado de seguimiento. | Observado | Alta | El evento aparece en la columna correspondiente del tablero. |
 | **RF-DET-006** | Seleccionar esquema de presentación entre cotización y detalle. | Observado | Alta | La exportación refleja el esquema seleccionado sin alterar los valores calculados. |
 | **RF-DET-007** | Registrar latitud, longitud y observaciones. | Observado | Media | Las coordenadas ubican el evento y las observaciones quedan auditadas. |
@@ -245,9 +245,9 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | Código | Requisito | Origen | Prioridad | Criterio de Aceptación |
 | :--- | :--- | :--- | :--- | :--- |
 | **RF-REP-001** | Mostrar ofertas económicas por evento con base, impuestos, Fee, IVA del Fee y total. | Observado | Alta | Los valores coinciden con el detalle de la orden. |
-| **RF-REP-002** | Exportar la oferta económica de un evento a Excel. | Observado | Alta | El archivo contiene identificación, esquema, aliado, desembolso, ítems y totales. |
-| **RF-REP-003** | Construir matriz detallada por evento e ítem. | Observado | Alta | La matriz incluye cantidad, valor unitario, carga tributaria, base, impuestos, Fee, total, aliado y desembolso. |
-| **RF-REP-004** | Construir matriz global por desembolso y aliado. | Observado | Alta | Los totales coinciden con la suma de la matriz detallada. |
+| **RF-REP-002** | Exportar la oferta económica de un evento a Excel. | Observado | Alta | El archivo contiene identificación, esquema, aliado, recurso disponible, ítems y totales. |
+| **RF-REP-003** | Construir matriz detallada por evento e ítem. | Observado | Alta | La matriz incluye cantidad, valor unitario, carga tributaria, base, impuestos, Fee, total, aliado y recurso disponible. |
+| **RF-REP-004** | Construir matriz global por recurso disponible y aliado. | Observado | Alta | Los totales coinciden con la suma de la matriz detallada. |
 | **RF-REP-005** | Exportar matriz detallada y consolidados a Excel. | Observado | Alta | El libro contiene hojas separadas y encabezados definidos. |
 | **RF-REP-006** | Permitir filtros, columnas configurables y descarga de resultados. | Producción | Alta | La exportación conserva los criterios aplicados por el usuario. |
 | **RF-REP-007** | Registrar cada exportación en auditoría. | Producción | Media | Se identifica usuario, fecha, reporte y filtros. |
@@ -285,7 +285,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | **RF-ADM-003** | Evitar la eliminación física de catálogos utilizados. | Producción | Alta | Los registros usados se inactivan y conservan historial. |
 | **RF-ADM-004** | Exportar e importar respaldo. | Observado local | Media | En producción el respaldo se ejecuta por procedimientos administrados. |
 | **RF-ADM-005** | Administrar usuarios, roles y permisos. | Producción | Alta | Las acciones disponibles corresponden al perfil. |
-| **RF-ADM-006** | Administrar desembolsos, dependencias, estados y catálogos territoriales. | Producción | Alta | Los catálogos se mantienen con vigencia y auditoría. |
+| **RF-ADM-006** | Administrar recursos disponibles, dependencias, estados y catálogos territoriales. | Producción | Alta | Los catálogos se mantienen con vigencia y auditoría. |
 
 ---
 
@@ -332,7 +332,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | **Sufijo** | Opcional. Deberá participar en la llave funcional cuando exista. |
 | **Responsable** | Obligatorio para eventos en validación o estados posteriores. |
 | **Ubicación** | Municipio obligatorio cuando el evento tenga ejecución territorial. |
-| **Desembolso** | Obligatorio antes de aprobar la oferta o consolidar ejecución. |
+| **Recurso disponible** | Obligatorio antes de aprobar la oferta o consolidar ejecución. |
 | **Aliado** | Obligatorio antes de pasar a ejecución, salvo regla expresa. |
 | **Ítems** | Al menos un ítem para generar oferta. |
 | **Cantidad** | Número mayor que cero. |
@@ -350,10 +350,10 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | :--- | :--- | :--- |
 | **Usuario** | Identidad que accede a la solución. | Identificador, nombre, correo, estado, último acceso. |
 | **Rol** | Conjunto de permisos. | Identificador, nombre, descripción, estado. |
-| **Evento u orden** | Registro central del proceso. | Número, sufijo, responsable, dependencia, ubicación, fecha, asistentes, días, aliado, desembolso, estado, esquema, observaciones. |
+| **Evento u orden** | Registro central del proceso. | Número, sufijo, responsable, dependencia, ubicación, fecha, asistentes, días, aliado, recurso disponible, estado, esquema, observaciones. |
 | **Ítem** | Requerimiento económico asociado al evento. | Descripción, cantidad, valor unitario, categoría tributaria, tasa, aliado, valores calculados. |
 | **Aliado** | Operador o tercero asignable. | Nombre, código, color, estado, vigencia. |
-| **Desembolso** | Agrupador presupuestal o contractual. | Código, nombre, vigencia, valor de referencia, estado. |
+| **Recurso disponible** | Agrupador presupuestal o contractual. | Código, nombre, vigencia, valor de referencia, estado. |
 | **Parámetro de cálculo** | Tasa o regla vigente. | Tipo, valor, vigencia, versión, aprobación. |
 | **Historial de estado** | Trazabilidad del avance. | Estado anterior, estado nuevo, fecha, usuario, motivo. |
 | **Importación** | Control de archivos procesados. | Archivo, usuario, fecha, resultado, errores, registros creados. |
@@ -366,7 +366,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 * **Evento $ightarrow$ Ítem:** Uno a muchos.
 * **Evento $ightarrow$ Aliado:** Muchos a uno.
 * **Ítem $ightarrow$ Aliado:** Muchos a uno y opcional.
-* **Evento $ightarrow$ Desembolso:** Muchos a uno.
+* **Evento $ightarrow$ Recurso disponible:** Muchos a uno.
 * **Evento $ightarrow$ Historial de estado:** Uno a muchos.
 * **Evento $ightarrow$ Adjunto:** Uno a muchos.
 * **Evento $ightarrow$ Importación:** Muchos a uno cuando se crea mediante archivo.
@@ -387,7 +387,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 
 ### 9.1 Creación Manual de un Evento
 1. El usuario selecciona **Nueva orden**.
-2. Registra número de evento, sufijo, responsable, municipio, fecha, aliado, desembolso y esquema.
+2. Registra número de evento, sufijo, responsable, municipio, fecha, aliado, recurso disponible y esquema.
 3. El sistema valida campos mínimos y posibles duplicados.
 4. El sistema crea el evento en estado de captura y abre el detalle.
 5. El usuario completa datos e incorpora ítems.
@@ -438,7 +438,7 @@ El prototipo reconoce hojas asociadas a `FOR-EV-ADMO-01` y `FOR-EC-ADMO-02`, ade
 | :--- | :--- | :--- |
 | **Oferta económica** | Un evento | Excel y, cuando se apruebe, PDF |
 | **Matriz detallada** | Eventos e ítems | Excel |
-| **Global por desembolso** | Desembolsos y aliados | Excel |
+| **Global por recurso disponible** | Recursos disponibles y aliados | Excel |
 | **Global por aliado** | Aliados y eventos | Excel |
 | **Panel ejecutivo** | Indicadores y filtros | Excel o PDF |
 | **Auditoría** | Acciones y cambios | Excel o CSV con permisos restringidos |
@@ -460,14 +460,14 @@ El prototipo reconoce hojas asociadas a `FOR-EV-ADMO-01` y `FOR-EC-ADMO-02`, ade
 * **Fee acumulado:** Suma del Fee Técnico Administrativo.
 * **Impuestos:** Suma de IVA e impuesto al consumo.
 * **Eventos por estado:** Cantidad y valor total en cada estado.
-* **Ejecución por desembolso:** Valor, número de eventos y participación.
+* **Ejecución por recurso disponible:** Valor, número de eventos y participación.
 * **Ejecución por aliado:** Valor, número de eventos, participación, impuestos y Fee.
 * **Cobertura territorial:** Eventos por departamento, municipio y condición de georreferenciación.
-* **Eventos sin completar:** Registros con campos, aliado, desembolso, ubicación o ítems pendientes.
+* **Eventos sin completar:** Registros con campos, aliado, recurso disponible, ubicación o ítems pendientes.
 * **Variaciones:** Diferencias entre versiones de cálculo o cambios relevantes.
 
 ### 11.1 Filtros Comunes
-Rango de fechas del evento y de registro, número de evento/sufijo, responsable/dependencia, ubicación (departamento, municipio, vereda), aliado, desembolso, estado, esquema de presentación y clasificación tributaria.
+Rango de fechas del evento y de registro, número de evento/sufijo, responsable/dependencia, ubicación (departamento, municipio, vereda), aliado, recurso disponible, estado, esquema de presentación y clasificación tributaria.
 
 ### 11.2 Reglas de Reporte
 * Cada reporte deberá mostrar fecha de corte, filtros aplicados y usuario generador.
@@ -498,7 +498,7 @@ Rango de fechas del evento y de registro, número de evento/sufijo, responsable/
 * Creación, edición, anulación y restauración de eventos.
 * Creación, edición y eliminación de ítems.
 * Cambios de clasificación tributaria, tasas y parámetros.
-* Cambios de aliado, desembolso, ubicación y estado.
+* Cambios de aliado, recurso disponible, ubicación y estado.
 * Importaciones, reprocesamientos y resultados.
 * Exportaciones y descargas.
 * Administración de usuarios, roles y permisos.
@@ -606,7 +606,7 @@ Rango de fechas del evento y de registro, número de evento/sufijo, responsable/
 | **Esquemas de presentación** | Documentar las diferencias exactas entre cotización y detalle. | Alta |
 | **Llave del evento** | Definir combinación única de número, sufijo, contrato, vigencia o dependencia. | Alta |
 | **Flujo de estados** | Confirmar transiciones permitidas, responsables, devoluciones y requisitos por estado. | Alta |
-| **Desembolsos** | Definir catálogo, vigencia, topes, valores contratados y reglas de agotamiento. | Alta |
+| **Recursos disponibles** | Definir catálogo, vigencia, topes, valores contratados y reglas de agotamiento. | Alta |
 | **Aliados** | Definir si la asignación puede hacerse por evento, por ítem o mediante distribución porcentual. | Alta |
 | **Importación** | Suministrar plantillas oficiales y versiones vigentes de los formatos. | Alta |
 | **Documentos** | Definir tipos de soporte, obligatoriedad, tamaño, retención y permisos. | Media |
@@ -627,7 +627,7 @@ Rango de fechas del evento y de registro, número de evento/sufijo, responsable/
 | **Evento** | Sí | Sí | Sí | No | Entidad central |
 | **Ítem** | Sí | Sí | Sí | No | Depende del evento |
 | **Aliado** | Sí | Sí | No | Sí | Catálogo con vigencia |
-| **Desembolso** | Sí | Sí | No | Sí | Catálogo contractual |
+| **Recurso disponible** | Sí | Sí | No | Sí | Catálogo contractual |
 | **Parámetro** | Sí | Sí | No | Sí | Versionado y aprobado |
 | **Historial de estado** | Automática | No | Sí | No | Inmutable |
 | **Importación** | Automática | No | Sí | No | Resultado y errores |

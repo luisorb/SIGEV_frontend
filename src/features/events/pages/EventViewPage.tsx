@@ -495,7 +495,7 @@ export function EventViewPage() {
             <div className="bg-white px-4 py-3.5">{label('Vereda')}{value(event.vereda || '-')}</div>
             <div className="bg-white px-4 py-3.5">{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
             <div className="bg-white px-4 py-3.5">{label('Aliado')}{value(aliado?.nombre ?? event.aliadoId)}</div>
-            <div className="bg-white px-4 py-3.5">{label('Desembolso')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
+            <div className="bg-white px-4 py-3.5">{label('Recurso disponible')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
             <div className="bg-white px-4 py-3.5" aria-hidden="true" />
             <div className="bg-white px-4 py-3.5" aria-hidden="true" />
           </dl>

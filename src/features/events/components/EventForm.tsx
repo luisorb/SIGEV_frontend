@@ -232,7 +232,7 @@ export function EventForm({
             {errors.aliadoId && <p className="text-xs text-red-500">{errors.aliadoId.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <label className={labelBase}>Desembolso {requiredMark}</label>
+            <label className={labelBase}>Recurso disponible {requiredMark}</label>
             <select {...register('desembolsoId')} className={field('desembolsoId')}>
               <option value="">Seleccionar desembolso</option>
               {desembolsos.map((d) => (

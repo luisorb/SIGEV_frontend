@@ -167,7 +167,7 @@ export function EventList({
               options={desembolsos.map((d) => ({ value: d.id, label: d.nombre }))}
               value={filters.desembolsoId}
               onChange={(v) => onFilterChange('desembolsoId', v)}
-              placeholder="Todos los desembolsos"
+              placeholder="Todos los recursos disponibles"
             />
           </>
         )}
@@ -185,7 +185,7 @@ export function EventList({
                 <SortHeader column="fechaEvento" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Fecha</SortHeader>
                 <SortHeader column="estado" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Estado</SortHeader>
                 <SortHeader column="aliadoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Aliado</SortHeader>
-                <SortHeader column="desembolsoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Desembolso</SortHeader>
+                <SortHeader column="desembolsoId" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Recurso disponible</SortHeader>
                 <SortHeader column="esquema" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Esquema</SortHeader>
                 <SortHeader column="totalCalculado" sortColumn={sort.column} sortDirection={sort.direction} onSort={onSort}>Total</SortHeader>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>

@@ -79,7 +79,7 @@ export function DashboardFilters({
 
         <div className="space-y-1">
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
-            Desembolso
+            Recurso disponible
           </label>
           <SearchableSelect
             size="sm"

@@ -263,7 +263,7 @@ function buildFilterRows(
   const rows: ExportFilterRow[] = []
   if (filters.periodoInicio) rows.push({ label: 'Periodo inicial', value: formatDateCO(filters.periodoInicio) })
   if (filters.periodoFin) rows.push({ label: 'Periodo final', value: formatDateCO(filters.periodoFin) })
-  if (filters.desembolsoId) rows.push({ label: 'Desembolso', value: maps.desembolsos[filters.desembolsoId] || filters.desembolsoId })
+  if (filters.desembolsoId) rows.push({ label: 'Recurso disponible', value: maps.desembolsos[filters.desembolsoId] || filters.desembolsoId })
   if (filters.aliadoId) rows.push({ label: 'Aliado', value: maps.aliados[filters.aliadoId] || filters.aliadoId })
   if (filters.estado) rows.push({ label: 'Estado', value: filters.estado })
   if (filters.municipioId) rows.push({ label: 'Municipio', value: maps.municipios[filters.municipioId] || filters.municipioId })
@@ -320,10 +320,10 @@ export function DashboardExport({
       utils.book_append_sheet(
         wb,
         buildSheet(utils, {
-          name: 'Por Desembolso',
-          title: '1. Ejecución por Desembolso',
+          name: 'Por recurso disponible',
+          title: '1. Ejecución por recurso disponible',
           columns: [
-            { header: 'Desembolso', wch: 30 },
+            { header: 'Recurso disponible', wch: 30 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
             { header: 'Valor Total', wch: 20, fmt: 'currency' },
             { header: 'Fee Total', wch: 18, fmt: 'currency' },
@@ -345,7 +345,7 @@ export function DashboardExport({
           ],
           autofilter: true,
         }),
-        'Por Desembolso',
+        'Por recurso disponible',
       )
     }
 
@@ -442,7 +442,7 @@ export function DashboardExport({
           { header: 'Responsable', wch: 20 },
           { header: 'Estado', wch: 14 },
           { header: 'Aliado', wch: 22 },
-          { header: 'Desembolso', wch: 22 },
+          { header: 'Recurso disponible', wch: 22 },
           { header: 'Municipio', wch: 18 },
           { header: 'Ítems', wch: 8, fmt: 'number' },
           { header: 'Total', wch: 18, fmt: 'currency' },
@@ -557,10 +557,10 @@ export function DashboardExport({
 
     if (consolidadoDesembolso.length > 0) {
       y = ensureSpace(doc, y, pageHeight, consolidadoDesembolso.length)
-      y = drawSectionTitle(doc, '1. Ejecución por Desembolso', y, pageWidth)
+      y = drawSectionTitle(doc, '1. Ejecución por recurso disponible', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
-        head: ['Desembolso', 'Eventos', 'Valor Total', 'Fee Total', 'Participación'],
+        head: ['Recurso disponible', 'Eventos', 'Valor Total', 'Fee Total', 'Participación'],
         body: consolidadoDesembolso.map((row) => [
           row.nombre,
           row.cantidadEventos,
@@ -634,7 +634,7 @@ export function DashboardExport({
 
       renderTable(doc, {
         startY: y,
-        head: ['Evento', 'Responsable', 'Estado', 'Aliado', 'Desembolso', 'Municipio', 'Ítems', 'Total'],
+        head: ['Evento', 'Responsable', 'Estado', 'Aliado', 'Recurso disponible', 'Municipio', 'Ítems', 'Total'],
         body: detailBody,
         foot: [
           [

@@ -199,7 +199,7 @@ export function useDashboard(
       if (!event.aliadoId || !event.desembolsoId || event.items.length === 0) {
         const missing: string[] = []
         if (!event.aliadoId) missing.push('sin aliado')
-        if (!event.desembolsoId) missing.push('sin desembolso')
+        if (!event.desembolsoId) missing.push('sin recurso disponible')
         if (event.items.length === 0) missing.push('sin ítems')
         result.push({
           id: event.id,

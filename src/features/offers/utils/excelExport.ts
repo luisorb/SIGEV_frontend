@@ -71,7 +71,7 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
     [],
     ['Asignaciones maestras'],
     ['Aliado (operador logístico general)', aliadoGeneral],
-    ['Desembolso (bolsa presupuestal)', desembolso],
+    ['Recurso disponible (bolsa presupuestal)', desembolso],
     [],
     ['Parámetros de exportación'],
     ['Fecha de corte', formatFechaCorte(fechaCorte)],

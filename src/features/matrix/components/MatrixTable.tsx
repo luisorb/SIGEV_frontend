@@ -164,7 +164,7 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
                 </div>
               </th>
               <SortHeader column="aliadoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Aliado</SortHeader>
-              <SortHeader column="desembolsoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Desembolso</SortHeader>
+              <SortHeader column="desembolsoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Recurso disponible</SortHeader>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

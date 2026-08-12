@@ -55,7 +55,7 @@ export const eventSchema = z.object({
     .min(1, 'El aliado es obligatorio'),
   desembolsoId: z
     .string()
-    .min(1, 'El desembolso es obligatorio'),
+    .min(1, 'El recurso disponible es obligatorio'),
   esquema: z
     .enum(EVENT_SCHEMAS, {
       errorMap: () => ({ message: 'Seleccione un esquema válido' }),

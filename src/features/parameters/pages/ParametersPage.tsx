@@ -453,7 +453,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
       desembolsos.some(
         (d) => d.codigo.trim().toLowerCase() === form.codigo.trim().toLowerCase() && d.id !== editing?.id,
       )
-    ) newErrors.codigo = 'Ya existe un desembolso con este código'
+    ) newErrors.codigo = 'Ya existe un recurso disponible con este código'
     if (!form.vigenciaInicio) newErrors.vigenciaInicio = 'La fecha de inicio es obligatoria'
     if (form.vigenciaInicio && form.vigenciaFin && form.vigenciaFin < form.vigenciaInicio) newErrors.vigenciaFin = 'La fecha fin no puede ser anterior al inicio'
     if (form.valorReferencia <= 0) newErrors.valorReferencia = 'El valor de referencia debe ser mayor a 0'
@@ -475,24 +475,24 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
           id: editing.id,
           data: payload,
         })
-        showToast(`Desembolso "${form.codigo}" actualizado correctamente`)
+        showToast(`Recurso disponible "${form.codigo}" actualizado correctamente`)
       } else {
         await createDesembolso.mutateAsync(payload)
-        showToast(`Desembolso "${form.codigo}" creado correctamente`)
+        showToast(`Recurso disponible "${form.codigo}" creado correctamente`)
       }
       setModalOpen(false)
     } catch {
-      showToast('Error al guardar el desembolso. Intenta nuevamente.', 'error')
+      showToast('Error al guardar el recurso disponible. Intenta nuevamente.', 'error')
     }
   }
 
   async function handleToggleActivo(d: Disbursement) {
     try {
       await updateDesembolso.mutateAsync({ id: d.id, data: { isActive: !d.activo } })
-      showToast(`Desembolso "${d.nombre}" ${d.activo ? 'inactivado' : 'activado'} correctamente`)
+      showToast(`Recurso disponible "${d.nombre}" ${d.activo ? 'inactivado' : 'activado'} correctamente`)
       setConfirmToggle(null)
     } catch {
-      showToast('Error al cambiar el estado del desembolso.', 'error')
+      showToast('Error al cambiar el estado del recurso disponible.', 'error')
     }
   }
 
@@ -554,21 +554,21 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
   if (error) {
     return (
       <div className="flex items-center justify-center p-12">
-        <p className="text-sm text-red-500">Error al cargar desembolsos desde el servidor.</p>
+        <p className="text-sm text-red-500">Error al cargar recursos disponibles desde el servidor.</p>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col min-h-0 gap-2 sm:gap-0.5 relative">
-      <LoadingOverlay show={isLoading} message="Cargando desembolsos..." />
+      <LoadingOverlay show={isLoading} message="Cargando recursos disponibles..." />
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input type="text" placeholder="Buscar por código, nombre, vigencia..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} className="w-full pl-10 pr-4 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
         </div>
         <button onClick={openCreate} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150">
-          <Plus className="w-4 h-4" /> Nuevo Desembolso
+          <Plus className="w-4 h-4" /> Nuevo Recurso disponible
         </button>
       </div>
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
@@ -586,7 +586,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No hay desembolsos registrados</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No hay recursos disponibles registrados</td></tr>
               ) : (
                 paged.map((d) => (
                   <tr key={d.id} className={`hover:bg-slate-50 transition-colors ${!d.activo ? 'opacity-50' : ''}`}>
@@ -674,7 +674,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
                   <Banknote className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 truncate">{editing ? 'Editar Desembolso' : 'Nuevo Desembolso'}</h3>
+                <h3 className="text-base font-bold text-slate-900 truncate">{editing ? 'Editar Recurso disponible' : 'Nuevo Recurso disponible'}</h3>
               </div>
               <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0">
                 <X className="w-4 h-4" />
@@ -695,7 +695,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                   </div>
                   <div className="space-y-1.5">
                     <label className={labelBase}>Nombre {requiredMark}</label>
-                    <input type="text" value={form.nombre} maxLength={50} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Desembolso Tipo A" className={inp('nombre')} />
+                    <input type="text" value={form.nombre} maxLength={50} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Recurso disponible Tipo A" className={inp('nombre')} />
                     {errors.nombre && <p className="text-xs text-red-500 mt-1">{errors.nombre}</p>}
                   </div>
                 </div>
@@ -740,7 +740,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
             </div>
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 px-5 sm:px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
               <button onClick={() => setModalOpen(false)} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all">Cancelar</button>
-              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"><Save className="w-4 h-4" />{editing ? 'Guardar Cambios' : 'Crear Desembolso'}</button>
+              <button onClick={handleSave} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"><Save className="w-4 h-4" />{editing ? 'Guardar Cambios' : 'Crear Recurso disponible'}</button>
             </div>
           </div>
         </div>
@@ -753,8 +753,8 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 {confirmToggle.activo ? <PowerOff className="w-5 h-5 text-red-600" /> : <Power className="w-5 h-5 text-green-600" />}
               </div>
               <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">{confirmToggle.activo ? 'Inactivar Desembolso' : 'Activar Desembolso'}</h3>
-                <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del desembolso.</p>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">{confirmToggle.activo ? 'Inactivar Recurso disponible' : 'Activar Recurso disponible'}</h3>
+                <p className="text-xs sm:text-sm text-slate-500">Esta acción cambiará el estado del recurso disponible.</p>
               </div>
             </div>
             <p className="text-sm sm:text-base text-slate-700 mb-4">
@@ -784,7 +784,7 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
 const TABS: { key: Tab; label: string; icon: typeof Calculator }[] = [
   { key: 'tasas', label: 'Tasas de Cálculo', icon: Calculator },
   { key: 'aliados', label: 'Aliados', icon: Handshake },
-  { key: 'desembolsos', label: 'Desembolsos', icon: Banknote },
+  { key: 'desembolsos', label: 'Recursos disponibles', icon: Banknote },
 ]
 
 export function ParametersPage() {
@@ -828,7 +828,7 @@ export function ParametersPage() {
           <h1 className="text-2xl font-bold text-slate-900">Parámetros del Sistema</h1>
         </div>
         <p className="text-sm text-slate-500">
-          Gestión de tasas, aliados, desembolsos y catálogos maestros del sistema.
+          Gestión de tasas, aliados, recursos disponibles y catálogos maestros del sistema.
         </p>
       </div>
 

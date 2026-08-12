@@ -19,7 +19,7 @@ export function MatrixExcelExport({ detailedRows, globalRows, totals, aliadoIds,
       'Evento', 'Fecha', 'Territorio', 'Estado',
       'Descripción', 'Cantidad', 'Valor Unitario', 'Carga Tributaria',
       'Base', 'IVA', 'Consumo', 'Fee Tarifado', 'Fee Terceros', 'IVA Fee',
-      'Total', 'Aliado', 'Desembolso',
+      'Total', 'Aliado', 'Recurso disponible',
     ]
     const detData: (string | number)[][] = [detHeaders]
 
@@ -55,7 +55,7 @@ export function MatrixExcelExport({ detailedRows, globalRows, totals, aliadoIds,
     utils.book_append_sheet(wb, detWs, 'Matriz Detallada')
 
     const allAliados = Object.values(aliadosMap)
-    const globHeaders = ['Desembolso', ...allAliados, 'Total General']
+    const globHeaders = ['Recurso disponible', ...allAliados, 'Total General']
     const globData: (string | number)[][] = [globHeaders]
 
     for (const row of globalRows) {

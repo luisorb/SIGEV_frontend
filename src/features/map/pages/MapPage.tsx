@@ -83,7 +83,7 @@ export function MapPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Mapa de Ejecución</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Visualiza en el mapa la ejecución de los eventos por municipio, con filtros por desembolso, aliado y estado, y consulta sus valores económicos.
+          Visualiza en el mapa la ejecución de los eventos por municipio, con filtros por recurso disponible, aliado y estado, y consulta sus valores económicos.
         </p>
       </div>
 
@@ -144,7 +144,7 @@ export function MapPage() {
             options={desembolsos.map((d) => ({ value: d.id, label: d.nombre }))}
             value={selectedDesembolso}
             onChange={setSelectedDesembolso}
-            placeholder="Todos los desembolsos"
+            placeholder="Todos los recursos disponibles"
           />
           <SearchableSelect
             size="sm"
