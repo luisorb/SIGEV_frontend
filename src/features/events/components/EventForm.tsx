@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { AlertTriangle, MapPin, FileText, Download, Upload, Lock, Plus } from 'lucide-react'
+import { DEPENDENCIAS } from '../../../config/constants'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event, Attachment } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
@@ -174,7 +175,15 @@ export function EventForm({
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Dependencia</label>
-            <input {...register('dependencia')} maxLength={100} className={inputBase} placeholder="Ej: Secretaría de Cultura" />
+            <select {...register('dependencia')} className={field('dependencia')}>
+              <option value="">Seleccionar dependencia</option>
+              {DEPENDENCIAS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+              {event && event.dependencia && !(DEPENDENCIAS as readonly string[]).includes(event.dependencia) && (
+                <option value={event.dependencia}>{event.dependencia}</option>
+              )}
+            </select>
           </div>
           <div className="space-y-1.5">
             <label className={labelBase}>Fecha del Evento {requiredMark}</label>

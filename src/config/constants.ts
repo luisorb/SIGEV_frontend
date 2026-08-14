@@ -24,6 +24,8 @@ export const EVENT_STATES = [
 
 export const EVENT_SCHEMAS = ['cotizacion', 'detalle'] as const
 
+export const DEPENDENCIAS = ['Territorial', 'Gerencia', 'Coordinación'] as const
+
 export const USER_ROLES = [
   'technical_admin',
   'functional_admin',
