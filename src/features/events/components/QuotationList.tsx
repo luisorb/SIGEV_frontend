@@ -60,7 +60,10 @@ export function QuotationList({
   const [selectedItemIds, setSelectedItemIds] = useState<Record<string, boolean>>({})
   const approvalInputRef = useRef<HTMLInputElement | null>(null)
 
-  const eventOffers = useMemo(() => offers.filter((o) => o.eventoId === eventoId), [offers, eventoId])
+  const eventOffers = useMemo(
+    () => offers.filter((o) => o.eventoId === eventoId).sort((a, b) => a.total - b.total),
+    [offers, eventoId],
+  )
   const quotationsCount = event.quotations?.length ?? eventOffers.length
 
   const canSelect = canSelectQuotation && eventOffers.length >= 1
