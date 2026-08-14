@@ -42,14 +42,14 @@ Los `GET` de lectura están abiertos a **cualquier usuario autenticado** (evento
 
 ## 4. Flujo de estados del evento
 
-Estados guía: `Abierto` → `En ejecución` → `Ejecutado` → `Cerrado` → `Legalizado` (transversales: `Devuelto`, `Rechazado`).
+Estados guía: `Abierto` → `En ejecución` → `Ejecutado` → `Cerrado` → `Legalizado` (transversales: `Devuelto`, `Cancelado`).
 
 Botones que el frontend debe mostrar según estado + rol:
 
 | Transición | Roles que pueden ejecutarla |
 |---|---|
 | Abierto → En ejecución | `operator`, `functional_admin` |
-| Abierto → Devuelto / Rechazado | Devuelto: `approver`, `supervisor` · Rechazado: `approver` |
+| Abierto → Devuelto / Cancelado | Devuelto: `approver`, `supervisor` · Cancelado: `approver` |
 | En ejecución → Ejecutado | `operator`, `functional_admin` (**requiere ≥1 ítem**) |
 | En ejecución → Devuelto | `approver`, `supervisor` |
 | Ejecutado → Cerrado | `approver` (**requiere 4 cotizaciones** salvo excepción) |

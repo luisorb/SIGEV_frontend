@@ -24,7 +24,7 @@ export type EventState =
   | 'Cerrado'
   | 'Legalizado'
   | 'Devuelto'
-  | 'Rechazado'
+  | 'Cancelado'
 
 export type SchemaType = 'cotizacion' | 'detalle'
 

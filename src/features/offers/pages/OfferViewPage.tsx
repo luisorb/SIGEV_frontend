@@ -29,7 +29,7 @@ const eventStateColors: Record<string, string> = {
   Cerrado: 'bg-slate-100 text-slate-800',
   Legalizado: 'bg-purple-100 text-purple-800',
   Devuelto: 'bg-amber-100 text-amber-800',
-  Rechazado: 'bg-rose-100 text-rose-800',
+  Cancelado: 'bg-rose-100 text-rose-800',
 }
 
 export function OfferViewPage() {

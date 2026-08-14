@@ -78,7 +78,7 @@ export function useKanban({ events }: UseKanbanOptions) {
     const isDevolucionInicial = event.estado === 'Abierto' && targetState === 'Devuelto'
     const retornoDevueltoAbierto = event.estado === 'Devuelto' && targetState === 'Abierto'
 
-    if (targetState !== 'Rechazado') {
+    if (targetState !== 'Cancelado') {
       if (isDevolucionInicial) {
         if ((event.quotations?.length ?? 0) < 1) {
           toast.showToast('La orden debe contar con al menos una cotización para devolverla a ajustes', 'error')

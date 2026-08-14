@@ -19,7 +19,7 @@ const stateBadge: Record<string, string> = {
   Cerrado: 'bg-slate-500',
   Legalizado: 'bg-purple-500',
   Devuelto: 'bg-amber-500',
-  Rechazado: 'bg-rose-500',
+  Cancelado: 'bg-rose-500',
 }
 
 function buildEventIcon(color: string): L.DivIcon {

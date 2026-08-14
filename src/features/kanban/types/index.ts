@@ -7,7 +7,7 @@ export const KANBAN_COLUMNS: EventState[] = [
   'Cerrado',
   'Legalizado',
   'Devuelto',
-  'Rechazado',
+  'Cancelado',
 ]
 
 export interface StateChangeRequest {

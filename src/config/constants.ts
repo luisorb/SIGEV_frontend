@@ -19,7 +19,7 @@ export const EVENT_STATES = [
   'Cerrado',
   'Legalizado',
   'Devuelto',
-  'Rechazado',
+  'Cancelado',
 ] as const
 
 export const EVENT_SCHEMAS = ['cotizacion', 'detalle'] as const

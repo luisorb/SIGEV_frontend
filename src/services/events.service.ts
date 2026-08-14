@@ -1,6 +1,22 @@
 import api from '../lib/api'
-import type { CreateEventDto, ChangeStatusDto, CreateItemDto } from './types'
+import type { CreateEventDto, ChangeStatusDto, ApiEventStatus, CreateItemDto } from './types'
 import type { Event, Item, EventState, SchemaType, Attachment, TaxCategory } from '../types'
+
+const STATUS_FROM_API: Record<string, EventState> = {
+  Rechazado: 'Cancelado',
+}
+
+const STATUS_TO_API: Partial<Record<EventState, ApiEventStatus>> = {
+  Cancelado: 'Rechazado',
+}
+
+export function mapApiStatus(status: string): EventState {
+  return STATUS_FROM_API[status] ?? (status as EventState)
+}
+
+export function mapStatusToApi(status: EventState): ApiEventStatus {
+  return STATUS_TO_API[status] ?? (status as ApiEventStatus)
+}
 
 function mapBackendItem(data: Record<string, unknown>): Item {
   const ivaRate = Number(data.ivaRate ?? 0)
@@ -76,7 +92,7 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     desembolsoId: String(data.disbursementId ?? data.desembolsoId ?? ''),
     esquema: (data.schemaType ?? data.esquema ?? 'cotizacion') as SchemaType,
     municipalityCategory: String(data.municipalityCategory ?? ''),
-    estado: (data.status ?? data.estado ?? 'Abierto') as EventState,
+    estado: mapApiStatus(String(data.status ?? data.estado ?? 'Abierto')),
     items: Array.isArray(data.items)
       ? (data.items as Record<string, unknown>[]).map(mapBackendItem)
       : [],
@@ -210,7 +226,7 @@ export async function changeEventStatusApi(
   options?: { observation?: string; authorizeException?: boolean },
 ): Promise<void> {
   const dto: ChangeStatusDto = {
-    status,
+    status: mapStatusToApi(status),
     ...(options?.observation !== undefined ? { observation: options.observation } : {}),
     ...(options?.authorizeException !== undefined ? { authorizeException: options.authorizeException } : {}),
   }

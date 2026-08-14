@@ -10,7 +10,7 @@ const stateStyles: Record<string, { dot: string; bg: string; text: string; label
   Cerrado: { dot: 'bg-slate-400', bg: 'bg-slate-100', text: 'text-slate-800', label: 'Cerrado' },
   Legalizado: { dot: 'bg-purple-500', bg: 'bg-purple-100', text: 'text-purple-800', label: 'Legalizado' },
   Devuelto: { dot: 'bg-amber-500', bg: 'bg-amber-100', text: 'text-amber-800', label: 'Devuelto' },
-  Rechazado: { dot: 'bg-rose-500', bg: 'bg-rose-100', text: 'text-rose-800', label: 'Rechazado' },
+  Cancelado: { dot: 'bg-rose-500', bg: 'bg-rose-100', text: 'text-rose-800', label: 'Cancelado' },
 }
 
 interface RecentOrdersProps {

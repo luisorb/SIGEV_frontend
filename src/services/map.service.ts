@@ -1,5 +1,6 @@
 import api from '../lib/api'
 import type { MunicipalityQuery } from './types'
+import { mapApiStatus } from './events.service'
 
 export interface MunicipalityResponse {
   id: string
@@ -68,5 +69,8 @@ export async function getMunicipalityStatsApi(
   if (query.disbursementId) params.disbursementId = query.disbursementId
   if (query.status) params.status = query.status
   const response = await api.get<MunicipalityStatsResponse[]>('/api/v1/map/municipality-stats', { params })
-  return response.data
+  return response.data.map((group) => ({
+    ...group,
+    eventos: group.eventos.map((ev) => ({ ...ev, estado: mapApiStatus(ev.estado) })),
+  }))
 }

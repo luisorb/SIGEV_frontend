@@ -9,7 +9,7 @@ const stateLabels: Record<string, string> = {
   Cerrado: 'Cerrado',
   Legalizado: 'Legalizado',
   Devuelto: 'Devuelto',
-  Rechazado: 'Rechazado',
+  Cancelado: 'Cancelado',
 }
 
 interface StateChangeModalProps {
@@ -21,13 +21,13 @@ interface StateChangeModalProps {
 export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateChangeModalProps) {
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
-  const requiresObservation = pendingChange.to === 'Devuelto' || pendingChange.to === 'Rechazado'
+  const requiresObservation = pendingChange.to === 'Devuelto' || pendingChange.to === 'Cancelado'
 
   function handleConfirm() {
     if (requiresObservation && reason.trim().length < 3) {
       setError(
-        pendingChange.to === 'Rechazado'
-          ? 'La observación o motivo del rechazo es obligatorio (mínimo 3 caracteres)'
+        pendingChange.to === 'Cancelado'
+          ? 'La observación o motivo de la cancelación es obligatorio (mínimo 3 caracteres)'
           : 'La observación es obligatoria (mínimo 3 caracteres) para devolver el evento',
       )
       return
@@ -70,7 +70,7 @@ export function StateChangeModal({ pendingChange, onConfirm, onCancel }: StateCh
                 setReason(e.target.value)
                 if (error) setError('')
               }}
-              placeholder={requiresObservation ? (pendingChange.to === 'Rechazado' ? 'Obligatorio: describe el motivo del rechazo...' : 'Obligatorio: describe el motivo de la devolución...') : 'Opcional: describe el motivo del cambio de estado...'}
+              placeholder={requiresObservation ? (pendingChange.to === 'Cancelado' ? 'Obligatorio: describe el motivo de la cancelación...' : 'Obligatorio: describe el motivo de la devolución...') : 'Opcional: describe el motivo del cambio de estado...'}
               rows={3}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
             />

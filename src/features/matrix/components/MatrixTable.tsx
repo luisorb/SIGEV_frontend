@@ -181,7 +181,7 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
                     row.estado === 'En ejecución' ? 'bg-indigo-100 text-indigo-700' :
                     row.estado === 'Ejecutado' ? 'bg-amber-100 text-amber-700' :
                     row.estado === 'Devuelto' ? 'bg-orange-100 text-orange-700' :
-                    row.estado === 'Rechazado' ? 'bg-red-100 text-red-700' :
+                    row.estado === 'Cancelado' ? 'bg-red-100 text-red-700' :
                     'bg-slate-100 text-slate-600'
                   }`}>{row.estado}</span>
                 </td>

@@ -10,7 +10,7 @@ const columnStyles: Record<string, { header: string; dot: string; bg: string }> 
   Cerrado: { header: 'bg-slate-50 border-slate-200', dot: 'bg-slate-500', bg: 'bg-slate-50/50' },
   Legalizado: { header: 'bg-purple-50 border-purple-200', dot: 'bg-purple-500', bg: 'bg-purple-50/50' },
   Devuelto: { header: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500', bg: 'bg-amber-50/50' },
-  Rechazado: { header: 'bg-rose-50 border-rose-200', dot: 'bg-rose-500', bg: 'bg-rose-50/50' },
+  Cancelado: { header: 'bg-rose-50 border-rose-200', dot: 'bg-rose-500', bg: 'bg-rose-50/50' },
 }
 
 interface KanbanColumnProps {

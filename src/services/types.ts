@@ -91,8 +91,17 @@ export interface UpdateEventDto {
   items?: CreateItemDto[]
 }
 
+export type ApiEventStatus =
+  | 'Abierto'
+  | 'En ejecución'
+  | 'Ejecutado'
+  | 'Cerrado'
+  | 'Legalizado'
+  | 'Devuelto'
+  | 'Rechazado'
+
 export interface ChangeStatusDto {
-  status: 'Abierto' | 'En ejecución' | 'Ejecutado' | 'Cerrado' | 'Legalizado' | 'Devuelto' | 'Rechazado'
+  status: ApiEventStatus
   observation?: string
   authorizeException?: boolean
 }

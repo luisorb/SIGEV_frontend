@@ -32,7 +32,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       validate: () => null,
     },
     {
-      to: 'Rechazado',
+      to: 'Cancelado',
       roles: ['approver', 'supervisor'],
       isRechazo: true,
       validate: () => null,
@@ -54,7 +54,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
       validate: () => null,
     },
     {
-      to: 'Rechazado',
+      to: 'Cancelado',
       roles: ['approver', 'supervisor'],
       isRechazo: true,
       validate: () => null,
@@ -119,7 +119,7 @@ const TRANSITIONS: Record<EventState, TransitionRule[]> = {
     },
   ],
   Legalizado: [],
-  Rechazado: [],
+  Cancelado: [],
 }
 
 export function useStateMachine() {

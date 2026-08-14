@@ -32,10 +32,10 @@ const ESTADO_COLORS: Record<string, string> = {
   Cerrado: 'bg-slate-100 text-slate-800',
   Legalizado: 'bg-purple-100 text-purple-800',
   Devuelto: 'bg-amber-100 text-amber-800',
-  Rechazado: 'bg-rose-100 text-rose-800',
+  Cancelado: 'bg-rose-100 text-rose-800',
 }
 
-const TERMINAL_STATES: EventState[] = ['Rechazado']
+const TERMINAL_STATES: EventState[] = ['Cancelado']
 
 const DATE_NOTICE_STATES: EventState[] = ['Abierto', 'En ejecución', 'Ejecutado', 'Cerrado', 'Devuelto']
 
@@ -502,11 +502,11 @@ export function EventViewPage() {
         </div>
       )}
 
-      {displayEstado === 'Rechazado' && (
+      {displayEstado === 'Cancelado' && (
         <div className="bg-red-50 border border-red-200 rounded-xl px-6 py-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-red-800">Evento rechazado</p>
+            <p className="text-sm font-semibold text-red-800">Evento cancelado</p>
             {event.observation && <p className="text-xs text-red-700 mt-0.5">Motivo: {event.observation}</p>}
           </div>
         </div>
