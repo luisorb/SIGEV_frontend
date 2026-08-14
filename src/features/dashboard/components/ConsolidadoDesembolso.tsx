@@ -78,30 +78,58 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
           {paymentSummary.length > 0 && (
             <div className="mt-5 border-t border-slate-100 pt-4 space-y-3">
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Pagos vs. recurso disponible
+                Indicadores por recurso disponible (≤100%)
               </p>
-              {paymentSummary.map((row) => (
-                <div key={row.disbursementId}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-600 font-medium">{row.name}</span>
-                    <span className="text-slate-500">
-                      {formatCurrencyCO(row.paid)} de {formatCurrencyCO(row.amount)}
-                      <span className="ml-2 font-semibold text-slate-900">
-                        {formatPercentage(row.percentage)}
+              {paymentSummary.map((row) => {
+                const pctEjecucion = row.porcentajeEjecucion ?? row.percentage * 100
+                const pctParticipacion = row.porcentajeParticipacion ?? 0
+                return (
+                  <div key={row.disbursementId} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600 font-medium">
+                        {row.name}
                       </span>
-                    </span>
+                      <span className="text-slate-500">
+                        {formatCurrencyCO(row.paid)} de {formatCurrencyCO(row.amount)}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] mb-0.5">
+                        <span className="text-slate-400">% Ejecución financiera</span>
+                        <span className="font-semibold text-slate-700">
+                          {formatPercentage(Math.min(1, pctEjecucion / 100))}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.min(100, Math.max(0, pctEjecucion))}%`,
+                            backgroundColor: pctEjecucion > 100 ? '#f43340' : '#22C55E',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] mb-0.5">
+                        <span className="text-slate-400">% Participación de eventos</span>
+                        <span className="font-semibold text-slate-700">
+                          {formatPercentage(Math.min(1, pctParticipacion / 100))}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.min(100, Math.max(0, pctParticipacion))}%`,
+                            backgroundColor: pctParticipacion > 100 ? '#f43340' : '#6366F1',
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, row.percentage * 100))}%`,
-                        backgroundColor: row.percentage >= 0.9 ? '#22C55E' : row.percentage >= 0.5 ? '#EAB308' : '#f43340',
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

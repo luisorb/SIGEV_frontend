@@ -35,6 +35,20 @@ export async function deleteAttachmentApi(id: string): Promise<void> {
   await api.delete(`/api/v1/attachments/${id}`)
 }
 
+export async function uploadPaymentSupportApi(
+  eventId: string,
+  file: File,
+): Promise<Attachment> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post<Attachment>(
+    `/api/v1/attachments/payment-support/${eventId}`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return response.data
+}
+
 export function saveBlobAsFile(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')

@@ -6,8 +6,9 @@ import { ParameterForm } from '../components/ParameterForm'
 import { ParameterHistoryTable } from '../components/ParameterHistoryTable'
 import { useAllies, useCreateAlly, useUpdateAlly } from '../../../hooks/useAllies'
 import { useDisbursements, useCreateDisbursement, useUpdateDisbursement } from '../../../hooks/useDisbursements'
+import { usePaymentsSummary } from '../../../hooks/usePayments'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
-import { formatCurrencyCO } from '../../../utils/formatters'
+import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
 import type { Ally, Disbursement } from '../../../types'
 
@@ -538,6 +539,7 @@ function AliadosTab({ showToast }: { showToast: (message: string, type?: 'succes
 
 function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'success' | 'error') => void }) {
   const { data: desembolsos = [], isLoading, error } = useDisbursements({ all: true })
+  const { data: paymentSummary = [] } = usePaymentsSummary()
   const createDesembolso = useCreateDisbursement()
   const updateDesembolso = useUpdateDisbursement()
   const [search, setSearch] = useState('')
@@ -692,20 +694,40 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 {sortHeader('nombre', 'Nombre')}
                 {sortHeader('vigencia', 'Vigencia')}
                 {sortHeader('valorReferencia', 'Valor Ref.', 'text-center')}
+                <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">% Ejecución</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">% Participación</th>
                 {sortHeader('estado', 'Estado', 'text-center')}
                 <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No hay recursos disponibles registrados</td></tr>
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-500">No hay recursos disponibles registrados</td></tr>
               ) : (
-                paged.map((d) => (
+                paged.map((d) => {
+                  const row = paymentSummary.find((r) => r.disbursementId === d.id)
+                  return (
                   <tr key={d.id} className={`hover:bg-slate-50 transition-colors ${!d.activo ? 'opacity-50' : ''}`}>
                     <td className="px-3 sm:px-4 py-3 font-medium text-slate-900 text-sm">{d.codigo}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.nombre}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">{d.vigencia || '-'}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center font-medium text-slate-900 tabular-nums">{formatCurrencyCO(d.valorReferencia)}</td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center font-medium tabular-nums">
+                      {row ? (
+                        <span className={row.porcentajeEjecucion > 100 ? 'text-red-600' : 'text-emerald-600'}>
+                          {formatPercentage(Math.min(1, row.porcentajeEjecucion / 100))}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">0.00%</span>
+                      )}
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center font-medium tabular-nums">
+                      {row ? (
+                        <span className="text-indigo-600">{formatPercentage(Math.min(1, row.porcentajeParticipacion / 100))}</span>
+                      ) : (
+                        <span className="text-slate-400">0.00%</span>
+                      )}
+                    </td>
                     <td className="px-3 sm:px-4 py-3 text-center">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${d.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{d.activo ? 'Activo' : 'Inactivo'}</span>
                     </td>
@@ -716,7 +738,8 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                       </div>
                     </td>
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>

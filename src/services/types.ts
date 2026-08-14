@@ -234,24 +234,31 @@ export interface MunicipalityQuery {
   department?: string
 }
 
-export type PaymentType = 'Anticipo' | 'Parcial' | 'Final'
-
 export type PaymentStatus = 'Registrado' | 'Conciliado' | 'Anulado'
+
+export type PaymentMethod = 'por_item' | 'prorrateo'
+
+export interface PaymentItemInput {
+  itemId: string
+  amount: number
+}
 
 export interface CreatePaymentDto {
   eventId: string
   disbursementId?: string
   amount: number
-  type: PaymentType
-  paymentDate?: string
+  method: PaymentMethod
+  esAdicional?: boolean
+  items?: PaymentItemInput[]
+  attachmentId: string
   description?: string
 }
 
 export interface UpdatePaymentDto {
   disbursementId?: string
   amount?: number
-  type?: PaymentType
   status?: PaymentStatus
-  paymentDate?: string
+  method?: PaymentMethod
+  esAdicional?: boolean
   description?: string
 }

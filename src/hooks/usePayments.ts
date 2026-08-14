@@ -10,6 +10,7 @@ import type { CreatePaymentDto, UpdatePaymentDto } from '../services/types'
 
 const PAYMENTS_KEY = ['payments']
 const SUMMARY_KEY = ['payments', 'summary']
+const DISBURSEMENT_SUMMARY_KEY = ['disbursements', 'summary']
 
 export function usePayments(eventId?: string) {
   return useQuery({
@@ -33,6 +34,7 @@ export function useCreatePayment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: PAYMENTS_KEY })
       qc.invalidateQueries({ queryKey: SUMMARY_KEY })
+      qc.invalidateQueries({ queryKey: DISBURSEMENT_SUMMARY_KEY })
     },
   })
 }
@@ -44,6 +46,7 @@ export function useUpdatePayment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: PAYMENTS_KEY })
       qc.invalidateQueries({ queryKey: SUMMARY_KEY })
+      qc.invalidateQueries({ queryKey: DISBURSEMENT_SUMMARY_KEY })
     },
   })
 }
@@ -55,6 +58,7 @@ export function useDeletePayment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: PAYMENTS_KEY })
       qc.invalidateQueries({ queryKey: SUMMARY_KEY })
+      qc.invalidateQueries({ queryKey: DISBURSEMENT_SUMMARY_KEY })
     },
   })
 }

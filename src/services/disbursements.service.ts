@@ -16,6 +16,31 @@ export interface DisbursementResponse {
   active?: boolean
 }
 
+export interface DisbursementSummaryEventRow {
+  eventId: string
+  code: string
+  suffix: string
+  name: string
+  monto: number
+  pagado: number
+  pendiente: number
+}
+
+export interface DisbursementSummary {
+  id: string
+  code: string | null
+  name: string
+  valorRef: number
+  ejecutado: number
+  disponible: number
+  porcentajeEjecucion: number
+  porcentajeParticipacion: number
+  year: number
+  status: string | null
+  isActive: boolean
+  porEvento: DisbursementSummaryEventRow[]
+}
+
 export async function getDisbursementsApi(active?: string): Promise<DisbursementResponse[]> {
   const query = active ? `?active=${encodeURIComponent(active)}` : ''
   const response = await api.get<DisbursementResponse[]>(`/api/v1/disbursements${query}`)
@@ -24,6 +49,11 @@ export async function getDisbursementsApi(active?: string): Promise<Disbursement
 
 export async function getDisbursementApi(id: string): Promise<DisbursementResponse> {
   const response = await api.get<DisbursementResponse>(`/api/v1/disbursements/${id}`)
+  return response.data
+}
+
+export async function getDisbursementSummaryApi(id: string): Promise<DisbursementSummary> {
+  const response = await api.get<DisbursementSummary>(`/api/v1/disbursements/${id}/summary`)
   return response.data
 }
 

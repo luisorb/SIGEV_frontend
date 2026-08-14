@@ -1,19 +1,46 @@
 import api from '../lib/api'
-import type { CreatePaymentDto, UpdatePaymentDto } from './types'
+import type { CreatePaymentDto, UpdatePaymentDto, PaymentMethod } from './types'
+
+export interface PaymentItemResponse {
+  id: string
+  itemId: string
+  amount: number
+  item?: { id: string; name: string; totalValue: number }
+}
+
+export interface AttachmentResponse {
+  id: string
+  originalName: string
+  mimeType: string
+  fileSize: number
+  category?: string
+}
 
 export interface PaymentResponse {
   id: string
   eventId: string
   disbursementId?: string
   amount: number
-  type: string
+  method?: PaymentMethod
+  esAdicional?: boolean
   status: string
-  paymentDate?: string
   description?: string
   createdAt: string
   event?: { id: string; code: string; suffix: string; name: string; disbursementId?: string }
   disbursement?: { id: string; code?: string; name: string; amount: number; year: number }
   createdBy?: { id: string; fullName: string }
+  paymentItems?: PaymentItemResponse[]
+  attachments?: AttachmentResponse[]
+}
+
+export interface PaymentSummaryEventRow {
+  eventId: string
+  code: string
+  suffix: string
+  name: string
+  monto: number
+  pagado: number
+  pendiente: number
 }
 
 export interface PaymentSummaryRow {
@@ -23,6 +50,12 @@ export interface PaymentSummaryRow {
   paid: number
   available: number
   percentage: number
+  valorRef: number
+  ejecutado: number
+  disponible: number
+  porcentajeEjecucion: number
+  porcentajeParticipacion: number
+  porEvento: PaymentSummaryEventRow[]
 }
 
 export async function getPaymentsApi(eventId?: string): Promise<PaymentResponse[]> {
