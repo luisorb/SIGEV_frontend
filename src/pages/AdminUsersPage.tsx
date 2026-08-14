@@ -33,6 +33,10 @@ const roleColors: Record<string, string> = {
 
 const adminRoles = ['technical_admin', 'functional_admin']
 
+const OPERATOR_ROLE = 'operator'
+const OPERATOR_DOCUMENT = 'Pubblica'
+const PUBBLICA_LOGO = '/pubblica_logo.jpg'
+
 function mapUsers(data: { id: string; document: string; fullName: string; email: string; isActive: boolean; roles: { name: string }[] }[]): User[] {
   return data.map(u => ({
     id: u.id,
@@ -330,12 +334,15 @@ export function AdminUsersPage() {
                         </button>
                         <button
                           onClick={() => setConfirmToggle(user)}
+                          disabled={user.roles.includes(OPERATOR_ROLE)}
                           className={`p-1.5 rounded-lg transition-colors ${
-                            user.activo
-                              ? 'hover:bg-red-50 text-slate-400 hover:text-red-600'
-                              : 'hover:bg-green-50 text-slate-400 hover:text-green-600'
+                            user.roles.includes(OPERATOR_ROLE)
+                              ? 'opacity-40 cursor-not-allowed'
+                              : user.activo
+                                ? 'hover:bg-red-50 text-slate-400 hover:text-red-600'
+                                : 'hover:bg-green-50 text-slate-400 hover:text-green-600'
                           }`}
-                          title={user.activo ? 'Inactivar' : 'Activar'}
+                          title={user.roles.includes(OPERATOR_ROLE) ? 'El estado del Operador no puede modificarse' : (user.activo ? 'Inactivar' : 'Activar')}
                         >
                           {user.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                         </button>
@@ -516,38 +523,55 @@ export function AdminUsersPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-700">Roles <span className="text-red-400 ml-0.5">*</span></label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {USER_ROLES.map((r) => {
-                    const selected = newUser.roles.includes(r)
-                    return (
-                      <label
-                        key={r}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
-                          selected
-                            ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          onChange={() => {
-                            setNewUser((p) => ({
-                              ...p,
-                              roles: selected ? p.roles.filter((x) => x !== r) : [...p.roles, r],
-                            }))
-                            if (errors.roles) setErrors((prev) => ({ ...prev, roles: '' }))
-                          }}
-                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-                        />
-                        <div className="flex items-center gap-1.5">
-                          {adminRoles.includes(r) ? <ShieldCheck className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
-                          {roleLabel(r)}
-                        </div>
-                      </label>
-                    )
-                  })}
-                </div>
+                {!!editingUser && editingUser.roles.includes(OPERATOR_ROLE) ? (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${roleColors[OPERATOR_ROLE]}`}>
+                        <Shield className="w-4 h-4" />
+                        {roleLabel(OPERATOR_ROLE)}
+                      </span>
+                      <img
+                        src={PUBBLICA_LOGO}
+                        alt={`Logo ${OPERATOR_DOCUMENT}`}
+                        className="h-10 object-contain"
+                      />
+                    </div>
+                    <p className="text-sm text-slate-500 mt-1.5">El rol Operador está reservado para el usuario {OPERATOR_DOCUMENT} y no puede modificarse.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {USER_ROLES.filter((r) => r !== OPERATOR_ROLE).map((r) => {
+                      const selected = newUser.roles.includes(r)
+                      return (
+                        <label
+                          key={r}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
+                            selected
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => {
+                              setNewUser((p) => ({
+                                ...p,
+                                roles: selected ? p.roles.filter((x) => x !== r) : [...p.roles, r],
+                              }))
+                              if (errors.roles) setErrors((prev) => ({ ...prev, roles: '' }))
+                            }}
+                            className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+                          />
+                          <div className="flex items-center gap-1.5">
+                            {adminRoles.includes(r) ? <ShieldCheck className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
+                            {roleLabel(r)}
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
                 {errors.roles && <p className="text-xs text-red-500">{errors.roles}</p>}
               </div>
               {isCreating && (
