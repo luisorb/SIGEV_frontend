@@ -111,6 +111,7 @@ export function PaymentsSection({
   const [supportFile, setSupportFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [activeTab, setActiveTab] = useState<'debe' | 'pagos'>('debe')
 
   const canManage = !readOnly && userCan('functional_admin', 'operator')
   const esEventoCerrado = eventStatus === 'Cerrado'
@@ -334,10 +335,33 @@ export function PaymentsSection({
           </div>
         </div>
 
-        <div className="mb-5">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+        <div className="flex items-center gap-1 border-b border-slate-200 mb-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab('debe')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'debe'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
             Cuánto se debe por evento
-          </h3>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pagos')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'pagos'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Pagos registrados
+          </button>
+        </div>
+
+        {activeTab === 'debe' && (
+        <div className="mb-5">
           {items.length === 0 ? (
             <p className="text-sm text-slate-400">El evento no tiene ítems registrados.</p>
           ) : (
@@ -375,6 +399,7 @@ export function PaymentsSection({
             </div>
           )}
         </div>
+        )}
 
         <Modal isOpen={showForm} onClose={closeForm} title="Registrar pago" size="xl" closeOnOverlayClick={false} closeOnEscape={false}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -547,7 +572,8 @@ export function PaymentsSection({
           </form>
         </Modal>
 
-        {payments.length === 0 ? (
+        {activeTab === 'pagos' && (
+          payments.length === 0 ? (
           <div className="text-center py-8">
             <Banknote className="w-8 h-8 text-slate-200 mx-auto" />
             <p className="text-sm text-slate-400 mt-2">No hay pagos registrados para este evento.</p>
@@ -609,6 +635,7 @@ export function PaymentsSection({
               </tbody>
             </table>
           </div>
+          )
         )}
       </div>
     </div>
