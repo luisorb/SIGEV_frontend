@@ -185,11 +185,6 @@ export function PaymentsSection({
       for (const a of selected) {
         const v = Number(a.amount)
         if (!Number.isFinite(v) || v <= 0) return 'Los montos por ítem deben ser mayores a cero'
-        const item = items.find((i) => i.id === a.itemId)
-        const pending = Math.max(0, itemBudget(item) - (paidByItem.get(a.itemId) ?? 0))
-        if (v > pending + 0.009) {
-          return `El monto del ítem "${itemLabel(a.itemId)}" excede su saldo pendiente`
-        }
       }
     } else {
       if (!Number.isFinite(amountValue) || amountValue <= 0) {
