@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { AlertTriangle, MapPin, FileText, Download, Upload, Lock } from 'lucide-react'
+import { AlertTriangle, MapPin, FileText, Download, Upload, Lock, Plus } from 'lucide-react'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event, Attachment } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
 import { checkDuplicateEventNumber } from '../utils/duplicateCheck'
 import { LocationPicker } from './LocationPicker'
 import { SearchableSelect } from '../../../components/SearchableSelect'
+import { AllyFormModal } from '../../../components/AllyFormModal'
 import { downloadAttachment } from '../../../services/attachments.service'
 import { formatDateCO } from '../../../utils/formatters'
 
@@ -69,6 +70,7 @@ export function EventForm({
   const [showPicker, setShowPicker] = useState(false)
   const [requerimientoFile, setRequerimientoFile] = useState<File | null>(null)
   const [requerimientoError, setRequerimientoError] = useState<string | null>(null)
+  const [allyModalOpen, setAllyModalOpen] = useState(false)
 
   const existingRequerimiento: Attachment | undefined = event?.attachments?.find(
     (a) => a.category === 'Formato de requerimiento',
@@ -82,6 +84,10 @@ export function EventForm({
     if (!hasRequerimiento) return 'El formato de requerimiento es obligatorio'
     if (requerimientoFile) return requerimientoFileError(requerimientoFile)
     return null
+  }
+
+  function handleAllySaved(ally: Ally) {
+    setValue('aliadoId', ally.id, { shouldValidate: true })
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -222,13 +228,23 @@ export function EventForm({
             <input type="text" inputMode="decimal" autoComplete="off" {...coordinateField('longitud')} className={inputBase} placeholder="-74.0721" />
           </div>
           <div className="space-y-1.5">
-            <label className={labelBase}>Aliado {requiredMark}</label>
-            <select {...register('aliadoId')} className={field('aliadoId')}>
-              <option value="">Seleccionar aliado</option>
-              {aliados.map((a) => (
-                <option key={a.id} value={a.id}>{a.nombre}</option>
-              ))}
-            </select>
+            <label className={labelBase}>Aliado <span className="text-xs font-normal text-slate-400">(opcional)</span></label>
+            <div className="flex items-start gap-2">
+              <select {...register('aliadoId')} className={field('aliadoId')}>
+                <option value="">Seleccionar aliado</option>
+                {aliados.map((a) => (
+                  <option key={a.id} value={a.id}>{a.nombre}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setAllyModalOpen(true)}
+                title="Crear nuevo aliado"
+                className="inline-flex items-center justify-center w-11 h-[42px] shrink-0 text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
             {errors.aliadoId && <p className="text-xs text-red-500">{errors.aliadoId.message}</p>}
           </div>
           <div className="space-y-1.5">
@@ -395,6 +411,13 @@ export function EventForm({
           onClose={() => setShowPicker(false)}
         />
       )}
+
+      <AllyFormModal
+        open={allyModalOpen}
+        onClose={() => setAllyModalOpen(false)}
+        onSaved={handleAllySaved}
+        showEstado={false}
+      />
     </form>
   )
 }

@@ -52,7 +52,7 @@ export const eventSchema = z.object({
     .default(''),
   aliadoId: z
     .string()
-    .min(1, 'El aliado es obligatorio'),
+    .default(''),
   desembolsoId: z
     .string()
     .min(1, 'El recurso disponible es obligatorio'),
