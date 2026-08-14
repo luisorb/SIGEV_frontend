@@ -30,6 +30,7 @@ interface PaymentsSectionProps {
   readOnly?: boolean
   items: Item[]
   eventStatus?: EventState
+  offerItems?: { descripcion: string; total: number }[]
 }
 
 interface FormItemAllocation {
@@ -45,6 +46,7 @@ export function PaymentsSection({
   readOnly,
   items,
   eventStatus,
+  offerItems,
 }: PaymentsSectionProps) {
   const toast = useToast()
   const { can: userCan } = useRolePermissions()
@@ -96,6 +98,29 @@ export function PaymentsSection({
     return map
   }, [payments])
 
+  function normalizeBudgetKey(value: string): string {
+    return value.trim().replace(/\s+/g, ' ').toLowerCase()
+  }
+
+  const offerBudgetByKey = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const item of offerItems ?? []) {
+      const key = normalizeBudgetKey(item.descripcion)
+      map.set(key, (map.get(key) ?? 0) + Number(item.total))
+    }
+    return map
+  }, [offerItems])
+
+  function itemBudget(item: Item | undefined): number {
+    if (!item) return 0
+    for (const key of [item.nombre, item.descripcion]) {
+      if (!key) continue
+      const value = offerBudgetByKey.get(normalizeBudgetKey(key))
+      if (value !== undefined) return value
+    }
+    return item.total
+  }
+
   const itemLabel = (id: string): string => {
     const item = items.find((i) => i.id === id)
     return item?.descripcion || id
@@ -133,7 +158,7 @@ export function PaymentsSection({
       prev.map((a) => {
         if (a.itemId !== itemId) return a
         const item = items.find((i) => i.id === itemId)
-        const pending = Math.max(0, (item?.total ?? 0) - (paidByItem.get(itemId) ?? 0))
+        const pending = Math.max(0, itemBudget(item) - (paidByItem.get(itemId) ?? 0))
         return { ...a, selected: !a.selected, amount: !a.selected ? String(pending) : a.amount }
       }),
     )
@@ -151,7 +176,7 @@ export function PaymentsSection({
         const v = Number(a.amount)
         if (!Number.isFinite(v) || v <= 0) return 'Los montos por ítem deben ser mayores a cero'
         const item = items.find((i) => i.id === a.itemId)
-        const pending = Math.max(0, (item?.total ?? 0) - (paidByItem.get(a.itemId) ?? 0))
+        const pending = Math.max(0, itemBudget(item) - (paidByItem.get(a.itemId) ?? 0))
         if (v > pending + 0.009) {
           return `El monto del ítem "${itemLabel(a.itemId)}" excede su saldo pendiente`
         }
@@ -326,14 +351,15 @@ export function PaymentsSection({
                 <tbody className="divide-y divide-slate-100">
                   {items.map((item) => {
                     const paidItem = paidByItem.get(item.id) ?? 0
-                    const pending = Math.max(0, item.total - paidItem)
-                    const pct = item.total > 0 ? (paidItem / item.total) * 100 : 0
+                    const budget = itemBudget(item)
+                    const pending = Math.max(0, budget - paidItem)
+                    const pct = budget > 0 ? (paidItem / budget) * 100 : 0
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-2.5 text-sm text-slate-700 max-w-[280px] truncate">
                           {item.descripcion || item.nombre || item.id}
                         </td>
-                        <td className="px-4 py-2.5 text-sm font-semibold text-slate-900 text-right">{formatCurrencyCO(item.total)}</td>
+                        <td className="px-4 py-2.5 text-sm font-semibold text-slate-900 text-right">{formatCurrencyCO(budget)}</td>
                         <td className="px-4 py-2.5 text-sm text-emerald-600 font-medium text-right">{formatCurrencyCO(paidItem)}</td>
                         <td className="px-4 py-2.5 text-sm text-slate-600 text-right">{formatCurrencyCO(pending)}</td>
                         <td className="px-4 py-2.5 text-sm text-slate-500 text-right">{formatPercentage(pct / 100)}</td>
@@ -427,7 +453,7 @@ export function PaymentsSection({
                 {items.map((item) => {
                   const allocation = allocations.find((a) => a.itemId === item.id)
                   const paidItem = paidByItem.get(item.id) ?? 0
-                  const pending = Math.max(0, item.total - paidItem)
+                  const pending = Math.max(0, itemBudget(item) - paidItem)
                   return (
                     <div
                       key={item.id}

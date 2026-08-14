@@ -248,10 +248,10 @@ export function QuotationList({
         </div>
       )}
 
-      {eventOffers.length > 0 && eventOffers.length < 3 && !readOnly && (
+      {eventOffers.length < 1 && !readOnly && (
         <div className="px-6 py-3 bg-amber-50 border-t border-amber-100">
           <p className="text-xs text-amber-700">
-            Actualmente hay {eventOffers.length}. El 1er Aprobador valida la cotización ganadora y un 2do Aprobador distinto ejecuta la aprobación definitiva; se requieren al menos 3 cotizaciones para cerrar el evento.
+            El 1er Aprobador valida la cotización ganadora y un 2do Aprobador distinto ejecuta la aprobación definitiva; se requiere al menos una cotización para cerrar el evento.
           </p>
         </div>
       )}

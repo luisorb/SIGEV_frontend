@@ -669,6 +669,7 @@ export function EventViewPage() {
           readOnly={TERMINAL_STATES.includes(displayEstado)}
           items={event.items ?? []}
           eventStatus={displayEstado}
+          offerItems={ofertaEconomica?.items}
         />
       </div>
 
