@@ -48,6 +48,7 @@ export interface QuotationResponse {
   aprobadaEn?: string | null
   validadaPor?: { id: string; fullName: string } | null
   aprobadaPor?: { id: string; fullName: string } | null
+  createdBy?: { id: string; fullName?: string } | null
   eventId?: string | null
   allyId?: string | null
   createdAt: string
@@ -135,6 +136,7 @@ export function mapQuotationResponse(data: QuotationResponse): Offer {
     observations: data.observations ?? null,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
+    createdById: data.createdBy?.id ?? undefined,
     validadaPorId: data.validadaPorId ?? undefined,
     validadaEn: data.validadaEn ?? undefined,
     aprobadaPorId: data.aprobadaPorId ?? undefined,
@@ -187,7 +189,7 @@ export async function createQuotationApi(input: OfferInput): Promise<QuotationRe
 
 export async function updateQuotationApi(
   id: string,
-  input: Partial<OfferInput> & { items?: OfferItem[] },
+  input: Partial<OfferInput>,
 ): Promise<QuotationResponse> {
   const dto: UpdateQuotationDto = {
     ...(input.codigo !== undefined ? { code: input.codigo } : {}),

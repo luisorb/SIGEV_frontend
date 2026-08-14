@@ -64,6 +64,7 @@ export interface Offer {
   observations?: string | null
   createdAt: string
   updatedAt: string
+  createdById?: string
   validadaPorId?: string
   validador?: string
   validadaEn?: string

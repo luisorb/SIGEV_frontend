@@ -1,21 +1,32 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { X, FileUp, Save, Loader2, Receipt } from 'lucide-react'
-import type { Event, TaxCategory } from '../../../types'
+import { X, FileUp, Save, Loader2, Receipt, FileText, Download } from 'lucide-react'
+import type { Event, TaxCategory, Attachment } from '../../../types'
 import { TAX_CATEGORIES } from '../../../config/constants'
 import { formatDateCO } from '../../../utils/formatters'
 import { getTariffPriceApi } from '../../../services/tariffs.service'
-import { createQuotationApi } from '../../../services/quotations.service'
-import { uploadAttachmentApi } from '../../../services/attachments.service'
+import { createQuotationApi, updateQuotationApi } from '../../../services/quotations.service'
+import {
+  getEventAttachmentsApi,
+  uploadAttachmentApi,
+  deleteAttachmentApi,
+  downloadAttachment,
+} from '../../../services/attachments.service'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
-import type { OfferInput, OfferItemInput } from '../../offers/types'
+import type { Offer, OfferItem, OfferInput, OfferItemInput } from '../../offers/types'
 import { CLIENTE_OFERTA_DEFAULT } from '../../offers/types'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
+import { addAuditEntry } from '../../../lib/auditStore'
+import { getCurrentUser } from '../../../config/constants'
 
 const taxCategoryLabels: Record<TaxCategory, string> = {
   IVA: 'IVA',
   Consumo: 'Consumo',
   Tercero: 'Tercero',
   Reembolso: 'Reembolso',
+}
+
+function quotationItemKey(item: { descripcion: string; cantidad: number; tariffId?: string }): string {
+  return item.tariffId ? `t:${item.tariffId}|${item.cantidad}` : `d:${item.descripcion}|${item.cantidad}`
 }
 
 const MAX_SOPORTE_MB = 10
@@ -46,6 +57,7 @@ interface QuotationItemForm {
 interface QuotationRegistrationModalProps {
   event: Event
   quotationsCount: number
+  editingOffer?: Offer | null
   onClose: () => void
   onSaved?: (notice?: string) => void
 }
@@ -53,30 +65,79 @@ interface QuotationRegistrationModalProps {
 export function QuotationRegistrationModal({
   event,
   quotationsCount,
+  editingOffer,
   onClose,
   onSaved,
 }: QuotationRegistrationModalProps) {
   const params = useActiveCalculationParams()
+  const isEditing = Boolean(editingOffer)
 
-  const [items, setItems] = useState<QuotationItemForm[]>(() =>
-    event.items.map((it) => ({
-      eventItemId: it.id,
-      nombre: it.nombre ?? '',
-      descripcion: it.descripcion,
-      cantidad: it.cantidad,
-      valorUnitario: 0,
-      categoriaTributaria: it.categoriaTributaria || 'IVA',
-      isTariffed: it.isTariffed === true,
-      selected: true,
-      tariffId: it.tariffId,
-      aliadoId: it.aliadoId,
-    })),
-  )
+  const [items, setItems] = useState<QuotationItemForm[]>(() => {
+    if (!editingOffer) {
+      return event.items.map((it) => ({
+        eventItemId: it.id,
+        nombre: it.nombre ?? '',
+        descripcion: it.descripcion,
+        cantidad: it.cantidad,
+        valorUnitario: 0,
+        categoriaTributaria: it.categoriaTributaria || 'IVA',
+        isTariffed: it.isTariffed === true,
+        selected: true,
+        tariffId: it.tariffId,
+        aliadoId: it.aliadoId,
+      }))
+    }
+    const quotationItemsByKey = new Map<string, OfferItem>()
+    for (const qi of editingOffer.items) {
+      const key = quotationItemKey(qi)
+      if (!quotationItemsByKey.has(key)) quotationItemsByKey.set(key, qi)
+    }
+    return event.items.map((it) => {
+      const key = it.tariffId
+        ? `t:${it.tariffId}|${it.cantidad}`
+        : `d:${it.nombre || it.descripcion}|${it.cantidad}`
+      const quoteItem = quotationItemsByKey.get(key)
+      return {
+        eventItemId: it.id,
+        nombre: it.nombre ?? '',
+        descripcion: it.descripcion,
+        cantidad: it.cantidad,
+        valorUnitario: quoteItem?.valorUnitario ?? 0,
+        categoriaTributaria: quoteItem?.categoriaTributaria ?? it.categoriaTributaria,
+        isTariffed: it.isTariffed === true,
+        selected: Boolean(quoteItem),
+        tariffId: it.tariffId,
+        aliadoId: it.aliadoId,
+      }
+    })
+  })
   const [tariffPrices, setTariffPrices] = useState<Record<string, number>>({})
   const [file, setFile] = useState<File | null>(null)
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const docInputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (!editingOffer) return
+    let active = true
+    getEventAttachmentsApi(event.id)
+      .then((list) => {
+        if (active) {
+          setExistingAttachments(
+            list.filter(
+              (a) => a.category === 'Cotizaciones presentadas' && a.quotationId === editingOffer.id,
+            ),
+          )
+        }
+      })
+      .catch(() => {
+        if (active) setExistingAttachments([])
+      })
+    return () => {
+      active = false
+    }
+  }, [event.id, editingOffer])
 
   useEffect(() => {
     const tariffIds = Array.from(
@@ -95,11 +156,17 @@ export function QuotationRegistrationModal({
 
   const baseEventCode = event.numeroEvento + (event.sufijo ? `-${event.sufijo}` : '')
   const previewCode = useMemo(
-    () => `COT-${baseEventCode}-${quotationsCount + 1}`,
-    [baseEventCode, quotationsCount],
+    () => (editingOffer ? editingOffer.codigo : `COT-${baseEventCode}-${quotationsCount + 1}`),
+    [baseEventCode, quotationsCount, editingOffer],
   )
   const today = new Date()
   const selectedCount = items.filter((it) => it.selected).length
+  const allSelected = items.length > 0 && items.every((it) => it.selected)
+
+  function toggleAllItems(selected: boolean) {
+    setItems((prev) => prev.map((it) => ({ ...it, selected })))
+    setError(null)
+  }
 
   function updateItem(eventItemId: string, updates: Partial<QuotationItemForm>) {
     setItems((prev) => prev.map((it) => (it.eventItemId === eventItemId ? { ...it, ...updates } : it)))
@@ -107,7 +174,9 @@ export function QuotationRegistrationModal({
   }
 
   function validate(): string | null {
-    if (items.length === 0) return 'La orden no tiene ítems registrados para cotizar'
+    if (items.length === 0) {
+      return 'La orden no tiene ítems registrados para cotizar'
+    }
     const selectedItems = items.filter((it) => it.selected)
     if (selectedItems.length === 0) return 'Seleccione al menos un ítem para la cotización'
     for (const it of selectedItems) {
@@ -119,10 +188,13 @@ export function QuotationRegistrationModal({
         return `Ingrese el valor unitario negociado del ítem "${label}"`
       }
     }
-    if (!file) {
+    if (!isEditing && !file) {
       return 'El documento soporte del proveedor es obligatorio'
     }
-    return soporteFileError(file)
+    if (file) {
+      return soporteFileError(file)
+    }
+    return null
   }
 
   function buildDto(): OfferInput {
@@ -165,14 +237,31 @@ export function QuotationRegistrationModal({
     setSaving(true)
     setError(null)
     try {
-      const quotation = await createQuotationApi(buildDto())
+      const quotation = editingOffer
+        ? await updateQuotationApi(editingOffer.id, { items: buildDto().items })
+        : await createQuotationApi(buildDto())
 
       let notice: string | undefined
       if (file) {
         try {
-          await uploadAttachmentApi(event.id, 'Cotizaciones presentadas', file, quotation.id)
+          const uploaded = await uploadAttachmentApi(event.id, 'Cotizaciones presentadas', file, quotation.id)
+          if (editingOffer && existingAttachments.length > 0) {
+            for (const att of existingAttachments) {
+              if (att.id !== uploaded.id) {
+                try {
+                  await deleteAttachmentApi(att.id)
+                } catch {
+                  notice = isEditing
+                    ? 'La cotización se editó, pero el documento soporte anterior no pudo eliminarse.'
+                    : undefined
+                }
+              }
+            }
+          }
         } catch {
-          notice = 'La cotización se guardó, pero no se pudo subir el documento soporte.'
+          notice = isEditing
+            ? 'La cotización se editó, pero no se pudo adjuntar el nuevo documento soporte.'
+            : 'La cotización se guardó, pero no se pudo subir el documento soporte.'
         }
       }
       onSaved?.(notice)
@@ -197,9 +286,13 @@ export function QuotationRegistrationModal({
                 <Receipt className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-base font-semibold tracking-tight text-slate-900">Registro de cotización</h3>
+                <h3 className="text-base font-semibold tracking-tight text-slate-900">
+                  {isEditing ? 'Edición de cotización' : 'Registro de cotización'}
+                </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Valoración económica de los requerimientos de la orden {baseEventCode}
+                  {isEditing
+                    ? `Ajuste de la valoración económica de la orden ${baseEventCode}`
+                    : `Valoración económica de los requerimientos de la orden ${baseEventCode}`}
                 </p>
               </div>
             </div>
@@ -247,7 +340,18 @@ export function QuotationRegistrationModal({
                 <table className="w-full text-sm min-w-[900px]">
                   <thead>
                     <tr className="border-b-2 border-slate-300">
-                      <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-14">Aplica</th>
+                      <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-14">
+                        <label className="inline-flex items-center gap-1.5 cursor-pointer select-none" title="Marcar o desmarcar todos los ítems">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            disabled={items.length === 0}
+                            onChange={(e) => toggleAllItems(e.target.checked)}
+                            className="w-4 h-4 rounded text-primary border-slate-300 focus:ring-primary/50"
+                          />
+                          <span className="normal-case tracking-normal">Todos</span>
+                        </label>
+                      </th>
                       <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-10">N.º</th>
                       <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500">Servicio</th>
                       <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-20">Cant.</th>
@@ -337,9 +441,19 @@ export function QuotationRegistrationModal({
               </div>
             )}
             <p className="text-[11px] text-slate-400 mt-2">
-              Marque en la columna «Aplica» los ítems que harán parte de esta cotización (mínimo uno). Los ítems se
-              heredan de la orden (carpeta de requerimientos) y el valor unitario de los servicios tarifados se calcula
-              según la categoría DIVIPOLA del municipio al guardar.
+              {isEditing ? (
+                <>
+                  Marque en la columna «Aplica» los ítems que harán parte de esta cotización. Los que ya estaban
+                  incluidos vienen marcados; al guardar, solo los marcados quedan en la cotización. El valor unitario de
+                  los servicios tarifados se recalcula según la categoría DIVIPOLA del municipio.
+                </>
+              ) : (
+                <>
+                  Marque en la columna «Aplica» los ítems que harán parte de esta cotización (mínimo uno). Los ítems se
+                  heredan de la orden (carpeta de requerimientos) y el valor unitario de los servicios tarifados se calcula
+                  según la categoría DIVIPOLA del municipio al guardar.
+                </>
+              )}
             </p>
           </section>
 
@@ -347,7 +461,7 @@ export function QuotationRegistrationModal({
             <header className="flex items-center gap-2 mb-3">
               <span className="w-1 h-3.5 bg-primary rounded-sm" aria-hidden="true" />
               <h4 className="text-[11px] font-mono uppercase tracking-widest text-slate-500">
-                Documento soporte del proveedor <span className="text-red-500">*</span>
+                Documento soporte del proveedor {!isEditing && <span className="text-red-500">*</span>}
               </h4>
             </header>
             <input
@@ -362,6 +476,39 @@ export function QuotationRegistrationModal({
                 e.target.value = ''
               }}
             />
+            {isEditing && existingAttachments.length > 0 && !file && (
+              <div className="mb-3 border border-slate-200 rounded-md divide-y divide-slate-200 overflow-hidden">
+                {existingAttachments.map((att) => (
+                  <div key={att.id} className="flex items-center gap-3 px-4 py-3 bg-slate-50">
+                    <FileText className="w-5 h-5 text-slate-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{att.originalName}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {(att.fileSize / 1024).toFixed(1)} KB · {formatDateCO(att.createdAt)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        downloadAttachment(att.id, att.originalName)
+                        addAuditEntry({
+                          accion: 'Descarga de adjunto',
+                          entidad: 'Attachment',
+                          entidadId: att.id,
+                          usuario: getCurrentUser(),
+                          fecha: new Date().toISOString(),
+                          detalle: `Documento soporte "${att.originalName}" descargado al editar la cotización ${editingOffer?.codigo ?? ''}`,
+                        })
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-white border border-slate-200 rounded-md hover:bg-primary/5 transition-colors shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Descargar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               className="flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 hover:border-slate-400 transition-colors cursor-pointer"
               onClick={() => docInputRef.current?.click()}
@@ -375,7 +522,13 @@ export function QuotationRegistrationModal({
                       <span className="text-slate-400 font-mono"> ({(file.size / 1024).toFixed(1)} KB)</span>
                     </>
                   ) : (
-                    <span className="text-slate-400">Seleccione el PDF de la cotización enviada por el proveedor externo (obligatorio)...</span>
+                    <span className="text-slate-400">
+                      {isEditing && existingAttachments.length > 0
+                        ? 'Seleccione un nuevo PDF para reemplazar el documento actual...'
+                        : isEditing
+                          ? 'Seleccione un PDF soporte (opcional)...'
+                          : 'Seleccione el PDF de la cotización enviada por el proveedor externo (obligatorio)...'}
+                    </span>
                   )}
                 </span>
               </div>
@@ -390,7 +543,11 @@ export function QuotationRegistrationModal({
               )}
             </div>
             <p className="text-[11px] text-slate-400 mt-1.5">
-              El PDF (máximo {MAX_SOPORTE_MB} MB) se guarda en la carpeta de soportes «Cotizaciones presentadas» del evento.
+              {isEditing
+                ? existingAttachments.length > 0
+                  ? 'Si adjunta un nuevo PDF (máximo 10 MB), reemplazará el documento soporte actual de la cotización.'
+                  : 'Opcional: si adjunta un PDF (máximo 10 MB), se guarda en la carpeta de soportes «Cotizaciones presentadas» del evento.'
+                : 'El PDF (máximo 10 MB) se guarda en la carpeta de soportes «Cotizaciones presentadas» del evento.'}
             </p>
           </section>
 
@@ -416,7 +573,7 @@ export function QuotationRegistrationModal({
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {saving ? 'Guardando...' : 'Guardar cotización'}
+              {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Guardar cotización'}
             </button>
           </div>
         </div>

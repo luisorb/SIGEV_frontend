@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react'
-import { FileSpreadsheet, Plus, BadgeCheck, ClipboardCheck, Download, FileUp, X, Eye } from 'lucide-react'
+import { FileSpreadsheet, Plus, BadgeCheck, ClipboardCheck, Download, FileUp, X, Eye, Pencil } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -13,6 +13,7 @@ import { QuotationDetailModal } from './QuotationDetailModal'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
+import { useAuth } from '../../auth/useAuth'
 
 const MAX_APROBACION_MB = 10
 const MAX_APROBACION_BYTES = MAX_APROBACION_MB * 1024 * 1024
@@ -51,7 +52,9 @@ export function QuotationList({
 }: QuotationListProps) {
   const queryClient = useQueryClient()
   const toast = useToast()
+  const { user } = useAuth()
   const [showModal, setShowModal] = useState(false)
+  const [editOffer, setEditOffer] = useState<Offer | null>(null)
   const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
   const [confirmOffer, setConfirmOffer] = useState<Offer | null>(null)
   const [validateOffer, setValidateOffer] = useState<Offer | null>(null)
@@ -86,6 +89,25 @@ export function QuotationList({
       toast.showToast(notice, 'error')
     } else {
       toast.showToast('Cotización registrada correctamente')
+    }
+  }
+
+  function handleEdited(notice?: string) {
+    queryClient.invalidateQueries({ queryKey: QUOTATIONS_KEY })
+    queryClient.invalidateQueries({ queryKey: ['event', eventoId] })
+    queryClient.invalidateQueries({ queryKey: ['events'] })
+    addAuditEntry({
+      accion: 'Edición de cotización',
+      entidad: 'Quotation',
+      entidadId: editOffer?.id ?? eventoId,
+      usuario: getCurrentUser(),
+      fecha: new Date().toISOString(),
+      detalle: `Cotización ${editOffer?.codigo ?? ''} editada para el evento ${event.numeroEvento}`,
+    })
+    if (notice) {
+      toast.showToast(notice, 'error')
+    } else {
+      toast.showToast('Cotización editada correctamente')
     }
   }
 
@@ -189,6 +211,11 @@ export function QuotationList({
                 const canValidate =
                   canSelect && !isSelected && (offer.estado === 'Borrador' || offer.estado === 'Enviada')
                 const canApprove = canSelect && !isSelected && offer.estado === 'Validada'
+                const canEdit =
+                  !readOnly &&
+                  !oferta &&
+                  (offer.estado === 'Borrador' || offer.estado === 'Enviada') &&
+                  offer.createdById === user?.id
 
                 return (
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
@@ -218,6 +245,15 @@ export function QuotationList({
                         >
                           <Eye className="w-4 h-4" />
                         </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => setEditOffer(offer)}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors"
+                            title="Editar cotización"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
                         {!oferta && canValidate && (
                           <button
                             onClick={() => setValidateOffer(offer)}
@@ -265,6 +301,16 @@ export function QuotationList({
           quotationsCount={quotationsCount}
           onClose={() => setShowModal(false)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {editOffer && (
+        <QuotationRegistrationModal
+          event={event}
+          quotationsCount={quotationsCount}
+          editingOffer={editOffer}
+          onClose={() => setEditOffer(null)}
+          onSaved={handleEdited}
         />
       )}
 
