@@ -21,18 +21,19 @@ export function MatrixTable({ view, detailedRows, globalRows, totals, aliadoIds,
   return <GlobalTable rows={globalRows} totals={totals} aliadoIds={aliadoIds} aliadosMap={aliadosMap} isFullscreen={isFullscreen} onExitFullscreen={onExitFullscreen} />
 }
 
-function SortHeader({ column, sortColumn, sortDirection, onSort, align = 'left', children }: {
+function SortHeader({ column, sortColumn, sortDirection, onSort, align = 'left', minWidth, children }: {
   column: string
   sortColumn: string
   sortDirection: 'asc' | 'desc' | null
   onSort: (column: string) => void
   align?: 'left' | 'right' | 'center'
+  minWidth?: string
   children: React.ReactNode
 }) {
   const isActive = sortColumn === column
   return (
     <th
-      className={`sticky top-0 z-10 px-3 py-3 text-${align} text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] bg-slate-50 cursor-pointer hover:text-slate-700 select-none`}
+      className={`sticky top-0 z-10 px-3 py-3 text-${align} text-xs font-semibold text-slate-500 uppercase tracking-wider ${minWidth ?? 'min-w-[100px]'} bg-slate-50 cursor-pointer hover:text-slate-700 select-none`}
       onClick={() => onSort(column)}
     >
       <div className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : ''}`}>
@@ -142,10 +143,12 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
               <SortHeader column="municipio" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Territorio</SortHeader>
               <SortHeader column="estado" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Estado</SortHeader>
               <SortHeader column="descripcion" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Descripción</SortHeader>
-              <SortHeader column="cantidad" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Cant</SortHeader>
+              <SortHeader column="aliadoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Aliado</SortHeader>
+              <SortHeader column="desembolsoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Recurso disponible</SortHeader>
+              <SortHeader column="cantidad" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right" minWidth="min-w-[55px]">Cant</SortHeader>
               <SortHeader column="valorUnitario" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Vr. Unit</SortHeader>
               <SortHeader column="categoriaTributaria" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="center">Carga Trib</SortHeader>
-              <SortHeader column="base" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Base</SortHeader>
+              <SortHeader column="base" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">Base total</SortHeader>
               <SortHeader column="iva" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">IVA</SortHeader>
               <SortHeader column="impuestoConsumo" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">INC</SortHeader>
               <SortHeader column="feeTarifado" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort} align="right">FEE Tarif</SortHeader>
@@ -163,8 +166,6 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
                   )}
                 </div>
               </th>
-              <SortHeader column="aliadoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Aliado</SortHeader>
-              <SortHeader column="desembolsoNombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Recurso disponible</SortHeader>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -185,6 +186,8 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
                   }`}>{row.estado}</span>
                 </td>
                 <td className="px-3 py-2.5 text-xs text-slate-700 max-w-[200px] truncate" title={row.descripcion}>{row.descripcion}</td>
+                <td className="px-3 py-2.5 text-xs text-slate-700">{row.aliadoNombre}</td>
+                <td className="px-3 py-2.5 text-xs text-slate-700">{row.desembolsoNombre}</td>
                 <td className="px-3 py-2.5 text-xs text-right text-slate-700 tabular-nums">{row.cantidad}</td>
                 <td className="px-3 py-2.5 text-xs text-right text-slate-700 tabular-nums">{formatCurrencyCO(row.valorUnitario)}</td>
                 <td className="px-3 py-2.5 text-xs text-center">
@@ -202,8 +205,6 @@ function DetailedTable({ rows, isFullscreen, onExitFullscreen }: { rows: Detaile
                 <td className="px-3 py-2.5 text-xs text-right tabular-nums text-slate-700">{formatCurrencyCO(row.feeTerceros)}</td>
                 <td className="px-3 py-2.5 text-xs text-right tabular-nums text-slate-700">{formatCurrencyCO(row.ivaFee)}</td>
                 <td className="px-3 py-2.5 text-xs text-right font-semibold tabular-nums text-slate-900 border-l-2 border-slate-300 bg-slate-50/80">{formatCurrencyCO(row.total)}</td>
-                <td className="px-3 py-2.5 text-xs text-slate-700">{row.aliadoNombre}</td>
-                <td className="px-3 py-2.5 text-xs text-slate-700">{row.desembolsoNombre}</td>
               </tr>
             ))}
           </tbody>
