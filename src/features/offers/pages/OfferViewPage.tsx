@@ -9,6 +9,7 @@ import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser } from '../../../config/constants'
 import { getEventApi } from '../../../services/events.service'
 import { getOfertaEconomicaApi, mapOfertaEconomicaToOffer } from '../../../services/offers.service'
+import { getTariffPriceApi } from '../../../services/tariffs.service'
 import { downloadAttachment } from '../../../services/attachments.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
@@ -51,6 +52,25 @@ export function OfferViewPage() {
   const { data: aliados = [] } = useAllies({ all: true })
   const { data: municipios = [] } = useMunicipalities()
   const rates = useActiveCalculationParams()
+
+  const { data: tariffPrices = new Map<string, number>() } = useQuery({
+    queryKey: ['offer-tariff-prices', offer?.id, offer?.municipalityCategory],
+    queryFn: async () => {
+      if (!offer) return new Map<string, number>()
+      const ids = [...new Set(offer.items.filter((i) => i.tariffId).map((i) => i.tariffId as string))]
+      const entries = await Promise.all(
+        ids.map(async (tariffId) => {
+          try {
+            return [tariffId, await getTariffPriceApi(tariffId, offer.municipalityCategory || undefined)] as const
+          } catch {
+            return [tariffId, undefined] as const
+          }
+        }),
+      )
+      return new Map(entries.filter((e): e is readonly [string, number] => e[1] !== undefined))
+    },
+    enabled: !!offer,
+  })
 
   const [activeTab, setActiveTab] = useState<'detalles' | 'items'>('detalles')
 
@@ -297,11 +317,16 @@ export function OfferViewPage() {
                         </td>
                         <td className="px-4 py-2 text-right text-slate-600">{item.cantidad}</td>
                         <td className="px-4 py-2 text-right text-slate-600">
-                          {hasValues ? (
-                            formatCurrencyCO(item.valorUnitario)
-                          ) : (
-                            <span className="italic text-slate-400">Pendiente por cotizar</span>
-                          )}
+                          {(() => {
+                            const unitValue = item.tariffId
+                              ? (tariffPrices.get(item.tariffId) ?? item.valorUnitario)
+                              : item.valorUnitario
+                            return unitValue > 0 ? (
+                              formatCurrencyCO(unitValue)
+                            ) : (
+                              <span className="italic text-slate-400">Pendiente por cotizar</span>
+                            )
+                          })()}
                         </td>
                         <td className="px-4 py-2 text-center">
                           <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${catColors[item.categoriaTributaria] || 'bg-slate-100 text-slate-600'}`}>
