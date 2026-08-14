@@ -1,5 +1,6 @@
 import api from '../lib/api'
 import type { Offer, OfferItem, OfferState } from '../features/offers/types'
+import { CLIENTE_OFERTA_DEFAULT } from '../features/offers/types'
 import type { TaxCategory } from '../types'
 
 export interface OfertaEconomicaItemResponse {
@@ -102,7 +103,7 @@ export function mapOfertaEconomicaToOffer(data: OfertaEconomicaResponse): Offer 
     codigo: data.code,
     nombre: data.name,
     descripcion: '',
-    cliente: data.quotation?.cliente ?? '',
+    cliente: data.quotation?.cliente || CLIENTE_OFERTA_DEFAULT,
     eventoId: data.eventId,
     numeroEvento,
     eventoEstado: event?.status ?? '',

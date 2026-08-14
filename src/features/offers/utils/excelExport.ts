@@ -32,7 +32,7 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
 
   const municipio = event ? resolveMunicipio(event.municipioId, municipios) : undefined
   const numSufijo = event ? { numero: event.numeroEvento, sufijo: event.sufijo } : splitNumeroEvento(offer.numeroEvento ?? '')
-  const responsable = event?.responsable ?? offer.responsable ?? ''
+  const cliente = offer.cliente ?? ''
   const dependencia = event?.dependencia ?? offer.dependencia ?? ''
   const aliadoGeneral = event
     ? (aliados.find((a) => a.id === event.aliadoId)?.nombre ?? offer.aliado ?? '')
@@ -52,7 +52,7 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
     ['Código', offer.codigo],
     ['Número de evento', numSufijo.numero],
     ['Sufijo', numSufijo.sufijo],
-    ['Cliente (responsable)', responsable],
+    ['Cliente', cliente],
     ['Estado', offer.eventoEstado || offer.estado],
     ['Fecha', offer.fechaEjecucion ?? ''],
     ['Ítems', String(offer.items.length)],

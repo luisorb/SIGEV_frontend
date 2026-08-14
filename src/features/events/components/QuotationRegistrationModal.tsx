@@ -8,6 +8,7 @@ import { createQuotationApi } from '../../../services/quotations.service'
 import { uploadAttachmentApi } from '../../../services/attachments.service'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
 import type { OfferInput, OfferItemInput } from '../../offers/types'
+import { CLIENTE_OFERTA_DEFAULT } from '../../offers/types'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
 
 const taxCategoryLabels: Record<TaxCategory, string> = {
@@ -148,7 +149,7 @@ export function QuotationRegistrationModal({
       codigo: previewCode,
       nombre: `Cotización ${previewCode}`,
       descripcion: `Cotización del evento ${baseEventCode}`,
-      cliente: '',
+      cliente: CLIENTE_OFERTA_DEFAULT,
       eventoId: event.id,
       quotationDate: today.toISOString().slice(0, 10),
       items: quoteItems,

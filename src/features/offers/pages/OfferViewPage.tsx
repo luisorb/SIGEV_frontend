@@ -219,7 +219,7 @@ export function OfferViewPage() {
             <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
               <div className="bg-white px-4 py-3.5">{label('Código')}{value(offer.codigo)}</div>
               <div className="bg-white px-4 py-3.5">{label('N° Evento')}{value(offer.numeroEvento || '—')}</div>
-              <div className="bg-white px-4 py-3.5">{label('Cliente')}{value(offer.responsable || '—')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Cliente')}{value(offer.cliente || '—')}</div>
               <div className="bg-white px-4 py-3.5">
                 {label('Estado')}
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 mt-1 text-xs font-semibold rounded-full ${eventStateColors[offer.eventoEstado ?? ''] || 'bg-slate-100 text-slate-800'}`}>

@@ -73,7 +73,7 @@ export function OfferList({
       const cmp = sortColumn === 'codigo'
         ? a.codigo.localeCompare(b.codigo)
         : sortColumn === 'cliente'
-          ? (a.responsable ?? '').localeCompare(b.responsable ?? '')
+          ? (a.cliente ?? '').localeCompare(b.cliente ?? '')
           : sortColumn === 'total'
             ? a.total - b.total
             : sortColumn === 'numeroEvento'
@@ -206,7 +206,7 @@ export function OfferList({
                   <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{offer.codigo}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{offer.numeroEvento || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px] truncate" title={offer.responsable}>{offer.responsable || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px] truncate" title={offer.cliente}>{offer.cliente || '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium ${EVENT_STATE_COLORS[offer.eventoEstado ?? ''] || 'bg-slate-100 text-slate-800'}`}>
                         {offer.eventoEstado || '—'}

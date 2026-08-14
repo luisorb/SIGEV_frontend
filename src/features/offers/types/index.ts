@@ -1,5 +1,7 @@
 import type { TaxCategory, Ally, Municipality, CalculationParams, Event } from '../../../types'
 
+export const CLIENTE_OFERTA_DEFAULT = 'Dirección de sustitución de cultivos ilícitos'
+
 export type OfferState = 'Borrador' | 'Enviada' | 'Validada' | 'Aprobada' | 'Rechazada' | 'Definitiva'
 
 export interface OfferItem {
