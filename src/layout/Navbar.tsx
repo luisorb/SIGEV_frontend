@@ -50,6 +50,12 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        <img
+          src="/pubblica_logo.jpg"
+          alt="Logo"
+          className="hidden md:block h-9 w-auto object-contain mr-1"
+        />
+        <div className="hidden md:block h-6 w-px bg-slate-200 mx-1" />
         <NotificationBell />
         <div className="relative" ref={menuRef}>
         <button
