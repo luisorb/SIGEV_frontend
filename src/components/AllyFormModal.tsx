@@ -4,6 +4,7 @@ import { useAllies, useCreateAlly, useUpdateAlly } from '../hooks/useAllies'
 import { useMunicipalities } from '../hooks/useMunicipalities'
 import { useToast } from './ToastProvider'
 import { getApiErrorMessage } from '../lib/apiErrors'
+import { allyFormSchema } from '../schemas/allySchema'
 import type { Ally } from '../types'
 import type { AllyResponse } from '../services/allies.service'
 
@@ -109,18 +110,21 @@ export function AllyFormModal({ open, editing, onClose, onSaved, showEstado = tr
   }
 
   async function handleSave() {
-    const newErrors: Partial<Record<keyof AllyForm, string>> = {}
-    if (!form.nombre.trim()) newErrors.nombre = 'El nombre (razón social) es obligatorio'
-    if (!form.tipoIdentificacion.trim()) newErrors.tipoIdentificacion = 'Seleccione el tipo de identificación'
-    if (!form.numeroIdentificacion.trim()) newErrors.numeroIdentificacion = 'El número de identificación es obligatorio'
-    if (!form.telefono.trim()) newErrors.telefono = 'El teléfono es obligatorio'
-    if (!form.correo.trim()) newErrors.correo = 'El correo electrónico es obligatorio'
-    else if (!/^\S+@\S+\.\S+$/.test(form.correo)) newErrors.correo = 'Ingrese un correo electrónico válido'
-    if (!form.divipolaCode.trim()) newErrors.divipolaCode = 'Seleccione el departamento DIVIPOLA'
-    if (!form.contacto.trim()) newErrors.contacto = 'El contacto (nombres y apellidos) es obligatorio'
+    const parsed = allyFormSchema.safeParse(form)
+    if (!parsed.success) {
+      const newErrors: Partial<Record<keyof AllyForm, string>> = {}
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0] as keyof AllyForm
+        if (field && !newErrors[field]) newErrors[field] = issue.message
+      }
+      setErrors(newErrors)
+      return
+    }
+
     const trimmedNombre = form.nombre.trim().toLowerCase()
     const trimmedDoc = form.numeroIdentificacion.trim().toLowerCase()
     const trimmedCorreo = form.correo.trim().toLowerCase()
+    const newErrors: Partial<Record<keyof AllyForm, string>> = {}
     if (trimmedNombre && aliados.some((a) => a.id !== editing?.id && a.nombre.trim().toLowerCase() === trimmedNombre)) {
       newErrors.nombre = 'Ya existe un aliado con este nombre (razón social)'
     }
@@ -191,7 +195,7 @@ export function AllyFormModal({ open, editing, onClose, onSaved, showEstado = tr
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <label className={labelBase}>Nombre (razón social) {requiredMark}</label>
-                <input type="text" value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Aliado SAS" className={inp('nombre')} />
+                <input type="text" maxLength={50} value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' })) }} placeholder="Ej: Aliado SAS" className={inp('nombre')} />
                 {errors.nombre && <p className="text-xs text-red-500 mt-1">{errors.nombre}</p>}
               </div>
               <div className="space-y-1.5">
@@ -204,17 +208,17 @@ export function AllyFormModal({ open, editing, onClose, onSaved, showEstado = tr
               </div>
               <div className="space-y-1.5">
                 <label className={labelBase}>Número de identificación {requiredMark}</label>
-                <input type="text" value={form.numeroIdentificacion} onChange={(e) => { setForm({ ...form, numeroIdentificacion: e.target.value }); if (errors.numeroIdentificacion) setErrors((prev) => ({ ...prev, numeroIdentificacion: '' })) }} placeholder="Ej: 900123456" className={inp('numeroIdentificacion')} />
+                <input type="text" maxLength={20} value={form.numeroIdentificacion} onChange={(e) => { setForm({ ...form, numeroIdentificacion: e.target.value }); if (errors.numeroIdentificacion) setErrors((prev) => ({ ...prev, numeroIdentificacion: '' })) }} placeholder="Ej: 900123456" className={inp('numeroIdentificacion')} />
                 {errors.numeroIdentificacion && <p className="text-xs text-red-500 mt-1">{errors.numeroIdentificacion}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className={labelBase}>Teléfono {requiredMark}</label>
-                <input type="tel" value={form.telefono} onChange={(e) => { setForm({ ...form, telefono: e.target.value }); if (errors.telefono) setErrors((prev) => ({ ...prev, telefono: '' })) }} placeholder="Ej: 6010000000" className={inp('telefono')} />
+                <input type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={15} value={form.telefono} onChange={(e) => { setForm({ ...form, telefono: e.target.value.replace(/\D/g, '') }); if (errors.telefono) setErrors((prev) => ({ ...prev, telefono: '' })) }} placeholder="Ej: 6010000000" className={inp('telefono')} />
                 {errors.telefono && <p className="text-xs text-red-500 mt-1">{errors.telefono}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className={labelBase}>Correo electrónico {requiredMark}</label>
-                <input type="email" value={form.correo} onChange={(e) => { setForm({ ...form, correo: e.target.value }); if (errors.correo) setErrors((prev) => ({ ...prev, correo: '' })) }} placeholder="Ej: contacto@aliado.com" className={inp('correo')} />
+                <input type="email" maxLength={50} value={form.correo} onChange={(e) => { setForm({ ...form, correo: e.target.value }); if (errors.correo) setErrors((prev) => ({ ...prev, correo: '' })) }} placeholder="Ej: contacto@aliado.com" className={inp('correo')} />
                 {errors.correo && <p className="text-xs text-red-500 mt-1">{errors.correo}</p>}
               </div>
               <div className="space-y-1.5">
@@ -227,7 +231,7 @@ export function AllyFormModal({ open, editing, onClose, onSaved, showEstado = tr
               </div>
               <div className="space-y-1.5">
                 <label className={labelBase}>Contacto (nombres y apellidos) {requiredMark}</label>
-                <input type="text" value={form.contacto} onChange={(e) => { setForm({ ...form, contacto: e.target.value }); if (errors.contacto) setErrors((prev) => ({ ...prev, contacto: '' })) }} placeholder="Ej: Carlos López" className={inp('contacto')} />
+                <input type="text" maxLength={50} value={form.contacto} onChange={(e) => { setForm({ ...form, contacto: e.target.value }); if (errors.contacto) setErrors((prev) => ({ ...prev, contacto: '' })) }} placeholder="Ej: Carlos López" className={inp('contacto')} />
                 {errors.contacto && <p className="text-xs text-red-500 mt-1">{errors.contacto}</p>}
               </div>
             </div>
