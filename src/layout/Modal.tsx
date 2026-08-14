@@ -8,6 +8,8 @@ interface ModalProps {
   subtitle?: string
   size?: 'md' | 'lg' | 'xl' | 'full'
   children: React.ReactNode
+  closeOnOverlayClick?: boolean
+  closeOnEscape?: boolean
 }
 
 const sizeClasses = {
@@ -17,13 +19,13 @@ const sizeClasses = {
   full: 'max-w-7xl',
 }
 
-export function Modal({ isOpen, onClose, title, subtitle, size = 'xl', children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, subtitle, size = 'xl', children, closeOnOverlayClick = true, closeOnEscape = true }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isOpen) return
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape' && closeOnEscape) onClose()
     }
     document.addEventListener('keydown', handleKey)
     document.body.style.overflow = 'hidden'
@@ -31,7 +33,7 @@ export function Modal({ isOpen, onClose, title, subtitle, size = 'xl', children 
       document.removeEventListener('keydown', handleKey)
       document.body.style.overflow = ''
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, closeOnEscape])
 
   if (!isOpen) return null
 
@@ -39,7 +41,7 @@ export function Modal({ isOpen, onClose, title, subtitle, size = 'xl', children 
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto py-8"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
+      onClick={(e) => { if (closeOnOverlayClick && e.target === overlayRef.current) onClose() }}
     >
       <div className={`bg-white rounded-xl shadow-xl w-full mx-4 ${sizeClasses[size]} flex flex-col`}>
         <div className="flex items-start justify-between px-6 py-5 border-b border-slate-200">

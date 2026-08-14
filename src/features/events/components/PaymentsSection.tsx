@@ -153,6 +153,16 @@ export function PaymentsSection({
     setSupportFile(null)
   }
 
+  function openForm() {
+    resetForm()
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    resetForm()
+    setShowForm(false)
+  }
+
   function toggleItem(itemId: string) {
     setAllocations((prev) =>
       prev.map((a) => {
@@ -225,8 +235,7 @@ export function PaymentsSection({
         description: description.trim() || undefined,
       })
       toast.showToast('Pago registrado correctamente')
-      setShowForm(false)
-      resetForm()
+      closeForm()
     } catch (error) {
       toast.showToast(getApiErrorMessage(error, 'No se pudo registrar el pago'), 'error')
     } finally {
@@ -275,8 +284,8 @@ export function PaymentsSection({
         </div>
         {canManage && !showForm && (
           <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+            onClick={openForm}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Registrar pago
@@ -372,7 +381,7 @@ export function PaymentsSection({
           )}
         </div>
 
-        <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Registrar pago" size="xl">
+        <Modal isOpen={showForm} onClose={closeForm} title="Registrar pago" size="xl" closeOnOverlayClick={false} closeOnEscape={false}>
           <form onSubmit={handleSubmit} className="space-y-4">
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -522,7 +531,7 @@ export function PaymentsSection({
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={closeForm}
                 className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancelar
