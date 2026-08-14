@@ -23,6 +23,20 @@ const METHOD_LABEL: Record<PaymentMethod, string> = {
   prorrateo: 'Prorrateo',
 }
 
+function normalizeBudgetKey(value: string): string {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+function getItemBudget(item: Item | undefined, budgetByKey: Map<string, number>): number {
+  if (!item) return 0
+  for (const key of [item.nombre, item.descripcion]) {
+    if (!key) continue
+    const value = budgetByKey.get(normalizeBudgetKey(key))
+    if (value !== undefined) return value
+  }
+  return item.total
+}
+
 interface PaymentsSectionProps {
   eventId: string
   ofertaTotal: number
@@ -56,11 +70,42 @@ export function PaymentsSection({
   const createPayment = useCreatePayment()
   const deletePayment = useDeletePayment()
 
+  const paidByItem = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const p of payments) {
+      if (p.status === 'Anulado') continue
+      for (const pi of p.paymentItems ?? []) {
+        const current = map.get(pi.itemId) ?? 0
+        map.set(pi.itemId, current + Number(pi.amount))
+      }
+    }
+    return map
+  }, [payments])
+
+  const offerBudgetByKey = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const item of offerItems ?? []) {
+      const key = normalizeBudgetKey(item.descripcion)
+      map.set(key, (map.get(key) ?? 0) + Number(item.total))
+    }
+    return map
+  }, [offerItems])
+
+  const payableItems = useMemo(
+    () =>
+      items.filter((item) => {
+        const budget = getItemBudget(item, offerBudgetByKey)
+        const paidItem = paidByItem.get(item.id) ?? 0
+        return budget - paidItem > 0.009
+      }),
+    [items, paidByItem, offerBudgetByKey],
+  )
+
   const [showForm, setShowForm] = useState(false)
   const [method, setMethod] = useState<PaymentMethod>('por_item')
   const [esAdicional, setEsAdicional] = useState(false)
   const [allocations, setAllocations] = useState<FormItemAllocation[]>(() =>
-    items.map((i) => ({ itemId: i.id, amount: '', selected: false })),
+    payableItems.map((i) => ({ itemId: i.id, amount: '', selected: false })),
   )
   const [prorrateoAmount, setProrrateoAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -86,41 +131,6 @@ export function PaymentsSection({
   const pctEjecucion = summaryRow?.porcentajeEjecucion ?? (valorRef > 0 ? (ejecutado / valorRef) * 100 : 0)
   const pctParticipacion = summaryRow?.porcentajeParticipacion ?? 0
 
-  const paidByItem = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const p of payments) {
-      if (p.status === 'Anulado') continue
-      for (const pi of p.paymentItems ?? []) {
-        const current = map.get(pi.itemId) ?? 0
-        map.set(pi.itemId, current + Number(pi.amount))
-      }
-    }
-    return map
-  }, [payments])
-
-  function normalizeBudgetKey(value: string): string {
-    return value.trim().replace(/\s+/g, ' ').toLowerCase()
-  }
-
-  const offerBudgetByKey = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const item of offerItems ?? []) {
-      const key = normalizeBudgetKey(item.descripcion)
-      map.set(key, (map.get(key) ?? 0) + Number(item.total))
-    }
-    return map
-  }, [offerItems])
-
-  function itemBudget(item: Item | undefined): number {
-    if (!item) return 0
-    for (const key of [item.nombre, item.descripcion]) {
-      if (!key) continue
-      const value = offerBudgetByKey.get(normalizeBudgetKey(key))
-      if (value !== undefined) return value
-    }
-    return item.total
-  }
-
   const itemLabel = (id: string): string => {
     const item = items.find((i) => i.id === id)
     return item?.descripcion || id
@@ -135,19 +145,19 @@ export function PaymentsSection({
   const amountValue = method === 'por_item' ? selectedTotal : Number(prorrateoAmount)
 
   const prorrateoSplit = useMemo(() => {
-    if (method !== 'prorrateo' || items.length === 0) return []
+    if (method !== 'prorrateo' || payableItems.length === 0) return []
     const total = Number(prorrateoAmount)
     if (!Number.isFinite(total) || total <= 0) return []
-    const per = Math.floor((total * 100) / items.length) / 100
-    const rows = items.map(() => per)
-    rows[rows.length - 1] = total - per * (items.length - 1)
-    return rows.map((v, idx) => ({ itemId: items[idx].id, amount: v }))
-  }, [method, items, prorrateoAmount])
+    const per = Math.floor((total * 100) / payableItems.length) / 100
+    const rows = payableItems.map(() => per)
+    rows[rows.length - 1] = total - per * (payableItems.length - 1)
+    return rows.map((v, idx) => ({ itemId: payableItems[idx].id, amount: v }))
+  }, [method, payableItems, prorrateoAmount])
 
   function resetForm() {
     setMethod('por_item')
     setEsAdicional(false)
-    setAllocations(items.map((i) => ({ itemId: i.id, amount: '', selected: false })))
+    setAllocations(payableItems.map((i) => ({ itemId: i.id, amount: '', selected: false })))
     setProrrateoAmount('')
     setDescription('')
     setSupportFile(null)
@@ -168,7 +178,7 @@ export function PaymentsSection({
       prev.map((a) => {
         if (a.itemId !== itemId) return a
         const item = items.find((i) => i.id === itemId)
-        const pending = Math.max(0, itemBudget(item) - (paidByItem.get(itemId) ?? 0))
+        const pending = Math.max(0, getItemBudget(item, offerBudgetByKey) - (paidByItem.get(itemId) ?? 0))
         return { ...a, selected: !a.selected, amount: !a.selected ? String(pending) : a.amount }
       }),
     )
@@ -180,6 +190,7 @@ export function PaymentsSection({
 
   function validate(): string | null {
     if (method === 'por_item') {
+      if (payableItems.length === 0) return 'El evento no tiene ítems pendientes por pagar'
       const selected = allocations.filter((a) => a.selected)
       if (selected.length === 0) return 'Seleccione al menos un ítem del evento'
       for (const a of selected) {
@@ -190,7 +201,7 @@ export function PaymentsSection({
       if (!Number.isFinite(amountValue) || amountValue <= 0) {
         return 'Ingrese un monto válido mayor a cero'
       }
-      if (items.length === 0) return 'El evento no tiene ítems para prorratear'
+      if (payableItems.length === 0) return 'El evento no tiene ítems pendientes por pagar'
     }
     if (amountValue > disponible + 0.009) {
       return `El monto excede el saldo disponible del recurso (saldo: ${formatCurrencyCO(disponible)})`
@@ -355,7 +366,7 @@ export function PaymentsSection({
                 <tbody className="divide-y divide-slate-100">
                   {items.map((item) => {
                     const paidItem = paidByItem.get(item.id) ?? 0
-                    const budget = itemBudget(item)
+                    const budget = getItemBudget(item, offerBudgetByKey)
                     const pending = Math.max(0, budget - paidItem)
                     const pct = budget > 0 ? (paidItem / budget) * 100 : 0
                     return (
@@ -422,7 +433,7 @@ export function PaymentsSection({
 
             {method === 'prorrateo' && (
               <label className="block sm:max-w-xs">
-                <span className="text-xs text-slate-500 font-medium">Monto a prorratear entre los ítems del evento</span>
+                <span className="text-xs text-slate-500 font-medium">Monto a prorratear entre los ítems pendientes por pagar</span>
                 <input
                   type="number"
                   min="0"
@@ -454,10 +465,15 @@ export function PaymentsSection({
             {method === 'por_item' ? (
               <div className="space-y-2">
                 <p className="text-xs text-slate-500 font-medium">Ítems a pagar</p>
-                {items.map((item) => {
+                {payableItems.length === 0 && (
+                  <p className="text-sm text-slate-400">
+                    No hay ítems pendientes por pagar.
+                  </p>
+                )}
+                {payableItems.map((item) => {
                   const allocation = allocations.find((a) => a.itemId === item.id)
                   const paidItem = paidByItem.get(item.id) ?? 0
-                  const pending = Math.max(0, itemBudget(item) - paidItem)
+                  const pending = Math.max(0, getItemBudget(item, offerBudgetByKey) - paidItem)
                   return (
                     <div
                       key={item.id}
@@ -498,7 +514,7 @@ export function PaymentsSection({
               <div className="space-y-2">
                 {prorrateoSplit.length > 0 && (
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <p className="text-xs text-slate-500 font-medium mb-2">Distribución sugerida ({items.length} ítems)</p>
+                    <p className="text-xs text-slate-500 font-medium mb-2">Distribución sugerida ({payableItems.length} ítems)</p>
                     <ul className="space-y-1">
                       {prorrateoSplit.map((row) => (
                         <li key={row.itemId} className="flex items-center justify-between text-sm">
