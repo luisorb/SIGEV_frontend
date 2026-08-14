@@ -34,8 +34,11 @@ const roleColors: Record<string, string> = {
 const adminRoles = ['technical_admin', 'functional_admin']
 
 const OPERATOR_ROLE = 'operator'
+const ADMIN_ROLE = 'technical_admin'
 const OPERATOR_DOCUMENT = 'Pubblica'
 const PUBBLICA_LOGO = '/pubblica_logo.jpg'
+
+const PROTECTED_STATE_ROLES = [OPERATOR_ROLE, ADMIN_ROLE]
 
 function mapUsers(data: { id: string; document: string; fullName: string; email: string; isActive: boolean; roles: { name: string }[] }[]): User[] {
   return data.map(u => ({
@@ -334,15 +337,15 @@ export function AdminUsersPage() {
                         </button>
                         <button
                           onClick={() => setConfirmToggle(user)}
-                          disabled={user.roles.includes(OPERATOR_ROLE)}
+                          disabled={user.roles.some((r) => PROTECTED_STATE_ROLES.includes(r))}
                           className={`p-1.5 rounded-lg transition-colors ${
-                            user.roles.includes(OPERATOR_ROLE)
+                            user.roles.some((r) => PROTECTED_STATE_ROLES.includes(r))
                               ? 'opacity-40 cursor-not-allowed'
                               : user.activo
                                 ? 'hover:bg-red-50 text-slate-400 hover:text-red-600'
                                 : 'hover:bg-green-50 text-slate-400 hover:text-green-600'
                           }`}
-                          title={user.roles.includes(OPERATOR_ROLE) ? 'El estado del Operador no puede modificarse' : (user.activo ? 'Inactivar' : 'Activar')}
+                          title={user.roles.some((r) => PROTECTED_STATE_ROLES.includes(r)) ? 'El estado de este usuario no puede modificarse' : (user.activo ? 'Inactivar' : 'Activar')}
                         >
                           {user.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                         </button>
