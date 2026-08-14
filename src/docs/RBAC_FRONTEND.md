@@ -8,7 +8,7 @@
 | Administrador Funcional | `functional_admin` | Aliados, Recursos disponibles, Parámetros (Tasas/FEE), creación/edición de Eventos e Ítems, Auditoría (consulta). **No** ve usuarios. |
 | Aprobador | `approver` | Aprobar/rechazar eventos, aprobar ejecución, cerrar y legalizar, autorizar excepciones (<4 cotizaciones). Auditoría (consulta). |
 | Operador | `operator` | Crear/editar eventos e ítems, preparar ofertas, avanzar el flujo hasta "Ejecutado". |
-| Solicitante | `solicitante` | Postular eventos **sin valores económicos**. Solo editar un evento devuelto (datos generales, no ítems). |
+| Solicitante | `solicitante` | Postular eventos **sin valores económicos**. Puede agregar/gestionar ítems mientras la orden esté en estado `Abierto`, `En ejecución` o `Devuelto` (solo órdenes que creó). |
 | Analista | `analista` | Ajustar eventos **solo en estado "Devuelto"** según observaciones. Consulta. |
 | Supervisor | `supervisor` | Revisar consistencia, **devolver** registros, editar eventos, consultar auditoría. No legaliza. |
 | Auditor | `auditor` | **Solo lectura**: eventos, ítems, catálogos, reportes y trazabilidad completa (`/audit`). |
@@ -59,7 +59,7 @@ Botones que el frontend debe mostrar según estado + rol:
 | Legalizado → Devuelto (devolución de legalización) | `approver` |
 
 ### Comportamientos especiales por estado
-- **`Devuelto`**: mostrar la `observation` del evento (última devolución) en un banner. Si el usuario es `analista` o `solicitante`, **solo este estado habilita la edición**; el `solicitante` no puede tocar ítems.
+- **`Devuelto`**: mostrar la `observation` del evento (última devolución) en un banner. Si el usuario es `analista` o `solicitante`, **solo este estado habilita la edición del encabezado**; además, el `solicitante` puede agregar/gestionar ítems en `Abierto`, `En ejecución` y `Devuelto`.
 - **Devolución de legalización** (`Legalizado → Devuelto`): el evento queda `Devuelto` con `devolucionLegalizacion = true`; el frontend muestra **solo las carpetas 5-7** (`SOPORTES_MODIFICABLES`) editables y bloquea las 1-4 (`soloModificables`).
 - **`Ejecutado` → cerrar (aprobador)**: mostrar el contador de cotizaciones (`attachments.length`). Si es < 4, ofrecer checkbox **"Autorizar excepción (menos de 4 cotizaciones)"** que envía `authorizeException: true`.
 - **Devolución**: enviar `{ status: 'Devuelto', observation: '<texto>' }`.

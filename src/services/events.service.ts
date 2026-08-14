@@ -146,6 +146,7 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
 
 function mapItemsToDto(items: Item[]): CreateItemDto[] {
   return items.map((i) => ({
+    ...(i.id ? { id: i.id } : {}),
     name: i.nombre ?? i.descripcion,
     description: i.descripcion,
     quantity: i.cantidad,

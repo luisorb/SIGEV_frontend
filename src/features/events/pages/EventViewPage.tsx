@@ -94,6 +94,7 @@ export function EventViewPage() {
     eventTotals,
   } = useItems(
     event?.items.map((i) => ({
+      id: i.id,
       nombre: i.nombre,
       descripcion: i.descripcion,
       unidadMedida: i.unidadMedida,
@@ -419,8 +420,7 @@ export function EventViewPage() {
     userCan('functional_admin') ||
     (isDevuelto && userCan('analista')) ||
     (userCan('solicitante') &&
-      (isDevuelto ||
-        (displayEstado === 'Abierto' && !event.cotizacionSeleccionadaId)))
+      (isDevuelto || displayEstado === 'Abierto' || displayEstado === 'En ejecución'))
 
   const devueltoPermiteSoportes =
     isDevuelto &&
@@ -455,7 +455,9 @@ export function EventViewPage() {
     TERMINAL_STATES.includes(displayEstado)
 
   const itemsReadOnly =
-    !canModifyItems || TERMINAL_STATES.includes(displayEstado) || quotationApproved
+    !canModifyItems ||
+    TERMINAL_STATES.includes(displayEstado) ||
+    (quotationApproved && !userCan('solicitante'))
 
   const label = (text: string) => (
     <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">{text}</p>

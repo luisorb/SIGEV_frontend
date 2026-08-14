@@ -8,6 +8,8 @@ export interface ManagedItem extends ItemInput {
   totals: ItemTotals
 }
 
+export type InitialItem = ItemInput & { id?: string }
+
 interface StoredItem extends ItemInput {
   id: string
 }
@@ -31,15 +33,15 @@ function toInput(item: StoredItem): ItemInput {
   }
 }
 
-function toStored(input: ItemInput): StoredItem {
-  return { ...input, id: generateId() }
+function toStored(input: InitialItem): StoredItem {
+  return { ...input, id: input.id ?? generateId() }
 }
 
 function toManaged(list: StoredItem[], params: CalculationParams): ManagedItem[] {
   return list.map((item) => ({ ...item, totals: calculateItemPreview(toInput(item), params) }))
 }
 
-export function useItems(initialItems?: ItemInput[]) {
+export function useItems(initialItems?: InitialItem[]) {
   const params = useActiveCalculationParams()
   const [items, setItems] = useState<StoredItem[]>(
     () => initialItems?.map(toStored) ?? [],

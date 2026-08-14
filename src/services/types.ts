@@ -107,6 +107,7 @@ export interface ChangeStatusDto {
 }
 
 export interface CreateItemDto {
+  id?: string
   name: string
   description?: string
   quantity: number
