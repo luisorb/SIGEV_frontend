@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Plus, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff, Eye, EyeOff, Handshake } from 'lucide-react'
+import { Plus, ShieldCheck, Shield, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Users, Pencil, Power, PowerOff, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../components/ToastProvider'
 import { USER_ROLES } from '../config/constants'
 import { getUsersApi, createUserApi, updateUserApi } from '../services/users.service'
-import { getAlliesApi } from '../services/allies.service'
 import type { CreateUserDto, UpdateUserDto } from '../services/types'
 import { ROLE_LABELS } from '../lib/permissions'
 import { getApiErrorMessage } from '../lib/apiErrors'
@@ -16,8 +15,6 @@ interface User {
   password: string
   roles: string[]
   activo: boolean
-  allyId?: string | null
-  aliadoNombre?: string
 }
 
 type SortableColumn = 'identificador' | 'nombre' | 'email'
@@ -36,7 +33,7 @@ const roleColors: Record<string, string> = {
 
 const adminRoles = ['technical_admin', 'functional_admin']
 
-function mapUsers(data: { id: string; document: string; fullName: string; email: string; isActive: boolean; roles: { name: string }[]; allyId?: string | null; ally?: { name: string } | null }[]): User[] {
+function mapUsers(data: { id: string; document: string; fullName: string; email: string; isActive: boolean; roles: { name: string }[] }[]): User[] {
   return data.map(u => ({
     id: u.id,
     identificador: u.document,
@@ -45,8 +42,6 @@ function mapUsers(data: { id: string; document: string; fullName: string; email:
     password: '',
     roles: u.roles.map((r) => r.name),
     activo: u.isActive,
-    allyId: u.allyId ?? null,
-    aliadoNombre: u.ally?.name ?? '',
   }))
 }
 
@@ -91,11 +86,9 @@ function SortHeader({ column, sortColumn, sortDirection, onSort, children }: Sor
 export function AdminUsersPage() {
   const toast = useToast()
   const [users, setUsers] = useState<User[]>([])
-  const [allies, setAllies] = useState<{ id: string; code: string; name: string }[]>([])
 
   useEffect(() => {
     getUsersApi().then(data => setUsers(mapUsers(data)))
-    getAlliesApi().then(data => setAllies(data.map(a => ({ id: a.id, code: a.code, name: a.name }))))
   }, [])
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof Omit<User, 'id'>, string>>>({})
@@ -106,8 +99,6 @@ export function AdminUsersPage() {
     password: '',
     roles: [],
     activo: true,
-    allyId: '',
-    aliadoNombre: '',
   }
   const [newUser, setNewUser] = useState<Omit<User, 'id'>>(EMPTY_USER)
 
@@ -137,7 +128,6 @@ export function AdminUsersPage() {
     if (!editingUser && !cleanedUser.password) newErrors.password = 'La contraseña es obligatoria'
     else if (cleanedUser.password && cleanedUser.password.length < 8) newErrors.password = 'Mínimo 8 caracteres'
     if (cleanedUser.roles.length === 0) newErrors.roles = 'Seleccione al menos un rol'
-    if (cleanedUser.roles.includes('operator') && !cleanedUser.allyId) newErrors.allyId = 'Seleccione el Aliado para el rol Operador'
     if (cleanedUser.identificador && users.some(u => u.id !== editingUser?.id && u.identificador.toLowerCase() === cleanedUser.identificador.toLowerCase())) newErrors.identificador = 'El identificador ya está en uso'
     if (cleanedUser.email && users.some(u => u.id !== editingUser?.id && u.email.toLowerCase() === cleanedUser.email.toLowerCase())) newErrors.email = 'El correo ya está en uso'
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
@@ -149,7 +139,6 @@ export function AdminUsersPage() {
           fullName: cleanedUser.nombre,
           email: cleanedUser.email,
           roles: cleanedUser.roles,
-          allyId: cleanedUser.allyId || null,
         }
         if (cleanedUser.password) updateData.password = cleanedUser.password
         await updateUserApi(editingUser.id, updateData)
@@ -162,7 +151,6 @@ export function AdminUsersPage() {
           email: cleanedUser.email,
           password: cleanedUser.password,
           roles: cleanedUser.roles,
-          allyId: cleanedUser.allyId || undefined,
         }
         await createUserApi(createDto)
         toast.showToast(`Usuario "${cleanedUser.nombre}" creado correctamente`)
@@ -197,8 +185,6 @@ export function AdminUsersPage() {
       password: '',
       roles: [...user.roles],
       activo: user.activo,
-      allyId: user.allyId ?? '',
-      aliadoNombre: user.aliadoNombre ?? '',
     })
     setErrors({})
     setShowPassword(false)
@@ -299,7 +285,6 @@ export function AdminUsersPage() {
                 <SortHeader column="nombre" sortColumn={sortColumn} sortDirection={sortDirection} onSort={toggleSort}>Nombre</SortHeader>
                 <SortHeader column="email" sortColumn={sortColumn} sortDirection={sortDirection} onSort={toggleSort}>Email</SortHeader>
                 <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Roles</th>
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Aliado</th>
                 <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Estado</th>
                 <th className="px-3 sm:px-4 py-3 text-right w-20" />
               </tr>
@@ -307,7 +292,7 @@ export function AdminUsersPage() {
             <tbody className="divide-y divide-slate-100">
               {paginatedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
                     No hay usuarios registrados. Crea el primer usuario.
                   </td>
                 </tr>
@@ -326,18 +311,6 @@ export function AdminUsersPage() {
                           </span>
                         ))}
                       </div>
-                    </td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600">
-                      {user.aliadoNombre
-                        ? (
-                          <span className="inline-flex items-center gap-1.5 text-slate-700">
-                            <Handshake className="w-3.5 h-3.5 text-slate-400" />
-                            {user.aliadoNombre}
-                          </span>
-                        )
-                        : user.roles.includes('operator')
-                          ? <span className="text-red-500">Sin aliado</span>
-                          : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-3 sm:px-4 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
@@ -577,29 +550,6 @@ export function AdminUsersPage() {
                 </div>
                 {errors.roles && <p className="text-xs text-red-500">{errors.roles}</p>}
               </div>
-              {newUser.roles.includes('operator') && (
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-slate-700">Aliado asociado <span className="text-red-400 ml-0.5">*</span></label>
-                  <div className="relative">
-                    <Handshake className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <select
-                      value={newUser.allyId ?? ''}
-                      onChange={(e) => {
-                        setNewUser((p) => ({ ...p, allyId: e.target.value, aliadoNombre: allies.find(a => a.id === e.target.value)?.name ?? '' }))
-                        if (errors.allyId) setErrors((prev) => ({ ...prev, allyId: '' }))
-                      }}
-                      className={`w-full pl-10 pr-3 py-2.5 border rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-150 ${errors.allyId ? 'border-red-400' : 'border-slate-300'}`}
-                    >
-                      <option value="">Seleccione un aliado...</option>
-                      {allies.map((a) => (
-                        <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <p className="text-xs text-slate-500">El Operador solo verá y gestionará las órdenes asociadas a este Aliado.</p>
-                  {errors.allyId && <p className="text-xs text-red-500">{errors.allyId}</p>}
-                </div>
-              )}
               {isCreating && (
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-slate-700">Estado</label>
