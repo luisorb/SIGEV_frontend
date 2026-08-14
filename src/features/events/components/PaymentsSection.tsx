@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Banknote, Plus, Trash2, Upload, Download, X, FileText } from 'lucide-react'
-import { usePayments, usePaymentsSummary, useCreatePayment, useDeletePayment } from '../../../hooks/usePayments'
+import { Banknote, Plus, Upload, Download, X, FileText } from 'lucide-react'
+import { usePayments, usePaymentsSummary, useCreatePayment } from '../../../hooks/usePayments'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import { useToast } from '../../../components/ToastProvider'
@@ -68,7 +68,6 @@ export function PaymentsSection({
   const { data: summary = [] } = usePaymentsSummary()
   const { data: desembolsos = [] } = useDisbursements({ all: true })
   const createPayment = useCreatePayment()
-  const deletePayment = useDeletePayment()
 
   const paidByItem = useMemo(() => {
     const map = new Map<string, number>()
@@ -247,16 +246,6 @@ export function PaymentsSection({
     } finally {
       setSubmitting(false)
       setUploading(false)
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!window.confirm('¿Eliminar este pago?')) return
-    try {
-      await deletePayment.mutateAsync(id)
-      toast.showToast('Pago eliminado')
-    } catch (error) {
-      toast.showToast(getApiErrorMessage(error, 'No se pudo eliminar el pago'), 'error')
     }
   }
 
@@ -574,7 +563,6 @@ export function PaymentsSection({
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Soporte</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Registrado por</th>
-                  {canManage && <th className="px-4 py-3" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -616,17 +604,6 @@ export function PaymentsSection({
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500">{p.createdBy?.fullName ?? '—'}</td>
-                    {canManage && (
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          className="text-slate-300 hover:text-red-500 transition-colors"
-                          aria-label="Eliminar pago"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>
