@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, RotateCcw } from 'lucide-react'
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, RotateCcw, Archive } from 'lucide-react'
 import type { Event } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -114,20 +114,6 @@ export function EventList({
             Nueva Orden
           </button>
         )}
-        {canDelete && onToggleDeleted && (
-          <button
-            onClick={onToggleDeleted}
-            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
-              showDeleted
-                ? 'bg-slate-800 text-white border-slate-800'
-                : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
-            }`}
-            title="Ver órdenes anuladas"
-          >
-            <RotateCcw className="w-4 h-4" />
-            {showDeleted ? 'Ver activas' : 'Ver anuladas'}
-          </button>
-        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -190,6 +176,17 @@ export function EventList({
               placeholder="Todos los recursos disponibles"
             />
           </>
+        )}
+
+        {canDelete && onToggleDeleted && (
+          <button
+            onClick={onToggleDeleted}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-lg ml-auto hover:bg-slate-50 transition-colors"
+            title="Histórico de órdenes anuladas"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            {showDeleted ? 'Volver a órdenes activas' : 'Histórico de órdenes anuladas'}
+          </button>
         )}
       </div>
 

@@ -192,7 +192,7 @@ export async function getDeletedEventsApi(): Promise<Event[]> {
 }
 
 export async function getEventApi(id: string): Promise<Event | null> {
-  const response = await api.get<Record<string, unknown>>(`/api/v1/events/${id}`)
+  const response = await api.get<Record<string, unknown>>(`/api/v1/events/${id}`, { params: { includeDeleted: 'true' } })
   return mapBackendEvent(response.data)
 }
 

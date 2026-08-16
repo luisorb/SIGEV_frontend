@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { EventList } from '../components/EventList'
 import { useEventList } from '../hooks/useEventList'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -9,7 +10,8 @@ import { Trash2, RotateCcw } from 'lucide-react'
 import type { Event } from '../../../types'
 
 export function EventsListPage() {
-  const [showDeleted, setShowDeleted] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const showDeleted = searchParams.get('anuladas') === '1'
   const { data: localEvents = [], isLoading } = useQuery({
     queryKey: ['events', showDeleted],
     queryFn: showDeleted ? getDeletedEventsApi : getEventsApi,
@@ -38,6 +40,21 @@ export function EventsListPage() {
   const queryClient = useQueryClient()
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null)
   const [restoreEvent, setRestoreEvent] = useState<Event | null>(null)
+
+  const handleToggleDeleted = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (next.get('anuladas') === '1') {
+          next.delete('anuladas')
+        } else {
+          next.set('anuladas', '1')
+        }
+        return next
+      },
+      { replace: true },
+    )
+  }, [setSearchParams])
 
   const handleDeleteRequest = useCallback((id: string) => {
     const event = localEvents.find((e) => e.id === id)
@@ -89,7 +106,7 @@ export function EventsListPage() {
         sort={sort}
         meta={meta}
         showDeleted={showDeleted}
-        onToggleDeleted={() => setShowDeleted((v) => !v)}
+        onToggleDeleted={handleToggleDeleted}
         onFilterChange={updateFilter}
         onSort={toggleSort}
         onPageChange={setPage}
