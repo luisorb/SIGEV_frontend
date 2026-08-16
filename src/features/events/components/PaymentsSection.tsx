@@ -10,7 +10,7 @@ import { downloadAttachment, uploadPaymentSupportApi } from '../../../services/a
 import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
 import type { PaymentMethod } from '../../../services/types'
 import type { AttachmentResponse } from '../../../services/payments.service'
-import type { Item, EventState } from '../../../types'
+import type { Item } from '../../../types'
 
 const STATUS_BADGE: Record<string, string> = {
   Registrado: 'bg-slate-100 text-slate-700',
@@ -20,7 +20,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const METHOD_LABEL: Record<PaymentMethod, string> = {
   por_item: 'Por ítem',
-  prorrateo: 'Prorrateo',
+  prorrateo: 'Por porciento',
 }
 
 function normalizeBudgetKey(value: string): string {
@@ -43,7 +43,6 @@ interface PaymentsSectionProps {
   defaultDisbursementId?: string
   readOnly?: boolean
   items: Item[]
-  eventStatus?: EventState
   offerItems?: { descripcion: string; total: number }[]
 }
 
@@ -59,7 +58,6 @@ export function PaymentsSection({
   defaultDisbursementId,
   readOnly,
   items,
-  eventStatus,
   offerItems,
 }: PaymentsSectionProps) {
   const toast = useToast()
@@ -102,11 +100,10 @@ export function PaymentsSection({
 
   const [showForm, setShowForm] = useState(false)
   const [method, setMethod] = useState<PaymentMethod>('por_item')
-  const [esAdicional, setEsAdicional] = useState(false)
   const [allocations, setAllocations] = useState<FormItemAllocation[]>(() =>
     payableItems.map((i) => ({ itemId: i.id, amount: '', selected: false })),
   )
-  const [prorrateoAmount, setProrrateoAmount] = useState('')
+  const [porcientoValue, setPorcientoValue] = useState('')
   const [description, setDescription] = useState('')
   const [supportFile, setSupportFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -114,7 +111,6 @@ export function PaymentsSection({
   const [activeTab, setActiveTab] = useState<'debe' | 'pagos'>('debe')
 
   const canManage = !readOnly && userCan('functional_admin', 'operator')
-  const esEventoCerrado = eventStatus === 'Cerrado'
 
   const summaryRow = defaultDisbursementId
     ? summary.find((r) => r.disbursementId === defaultDisbursementId)
@@ -142,23 +138,25 @@ export function PaymentsSection({
     return Number.isFinite(v) ? sum + v : sum
   }, 0)
 
-  const amountValue = method === 'por_item' ? selectedTotal : Number(prorrateoAmount)
-
-  const prorrateoSplit = useMemo(() => {
+  const porcientoSplit = useMemo(() => {
     if (method !== 'prorrateo' || payableItems.length === 0) return []
-    const total = Number(prorrateoAmount)
-    if (!Number.isFinite(total) || total <= 0) return []
-    const per = Math.floor((total * 100) / payableItems.length) / 100
-    const rows = payableItems.map(() => per)
-    rows[rows.length - 1] = total - per * (payableItems.length - 1)
-    return rows.map((v, idx) => ({ itemId: payableItems[idx].id, amount: v }))
-  }, [method, payableItems, prorrateoAmount])
+    const pct = Number(porcientoValue)
+    if (!Number.isFinite(pct) || pct <= 0) return []
+    return payableItems.map((item) => {
+      const budget = getItemBudget(item, offerBudgetByKey)
+      const alreadyPaid = paidByItem.get(item.id) ?? 0
+      const pending = Math.max(0, budget - alreadyPaid)
+      const amount = Math.min(Math.round(budget * (pct / 100) * 100) / 100, pending)
+      return { itemId: item.id, amount, pending }
+    }).filter((r) => r.amount > 0)
+  }, [method, payableItems, porcientoValue, offerBudgetByKey, paidByItem])
+
+  const amountValue = method === 'por_item' ? selectedTotal : porcientoSplit.reduce((sum, r) => sum + r.amount, 0)
 
   function resetForm() {
     setMethod('por_item')
-    setEsAdicional(false)
     setAllocations(payableItems.map((i) => ({ itemId: i.id, amount: '', selected: false })))
-    setProrrateoAmount('')
+    setPorcientoValue('')
     setDescription('')
     setSupportFile(null)
   }
@@ -226,17 +224,17 @@ export function PaymentsSection({
         attachmentId = attachment.id
       }
       if (!attachmentId) throw new Error('No se pudo cargar el soporte')
+      const items = method === 'por_item'
+        ? allocations
+            .filter((a) => a.selected)
+            .map((a) => ({ itemId: a.itemId, amount: Number(a.amount) }))
+        : porcientoSplit.map((r) => ({ itemId: r.itemId, amount: r.amount }))
       await createPayment.mutateAsync({
         eventId,
         disbursementId: defaultDisbursementId || undefined,
         amount: amountValue,
-        method,
-        esAdicional: esAdicional || undefined,
-        items: method === 'por_item'
-          ? allocations
-              .filter((a) => a.selected)
-              .map((a) => ({ itemId: a.itemId, amount: Number(a.amount) }))
-          : undefined,
+        method: 'por_item',
+        items,
         attachmentId,
         description: description.trim() || undefined,
       })
@@ -413,7 +411,7 @@ export function PaymentsSection({
                   className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
                   <option value="por_item">Por ítem</option>
-                  <option value="prorrateo">Prorrateo</option>
+                  <option value="prorrateo">Por porciento</option>
                 </select>
               </label>
               <label className="block">
@@ -445,36 +443,35 @@ export function PaymentsSection({
               </label>
             </div>
 
+            <label className="block">
+              <span className="text-xs text-slate-500 font-medium">Descripción</span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="Concepto del pago"
+              />
+            </label>
+
             {method === 'prorrateo' && (
               <label className="block sm:max-w-xs">
-                <span className="text-xs text-slate-500 font-medium">Monto a prorratear entre los ítems pendientes por pagar</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={prorrateoAmount}
-                  onChange={(e) => setProrrateoAmount(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="0.00"
-                />
+                <span className="text-xs text-slate-500 font-medium">Porciento a prorratear entre los ítems pendientes por pagar</span>
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={porcientoValue}
+                    onChange={(e) => setPorcientoValue(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder="0.00"
+                  />
+                  <span className="text-sm text-slate-500 font-medium shrink-0">%</span>
+                </div>
               </label>
             )}
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={esAdicional}
-                disabled={!esEventoCerrado}
-                onChange={(e) => setEsAdicional(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30 disabled:opacity-40"
-              />
-              <span className="text-xs text-slate-600 font-medium">
-                Pago adicional al cierre
-              </span>
-              {!esEventoCerrado && (
-                <span className="text-[11px] text-slate-400">(solo disponible cuando el evento está Cerrado)</span>
-              )}
-            </label>
 
             {method === 'por_item' ? (
               <div className="space-y-2">
@@ -526,32 +523,29 @@ export function PaymentsSection({
               </div>
             ) : (
               <div className="space-y-2">
-                {prorrateoSplit.length > 0 && (
+                {porcientoSplit.length > 0 && (
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
                     <p className="text-xs text-slate-500 font-medium mb-2">Distribución sugerida ({payableItems.length} ítems)</p>
                     <ul className="space-y-1">
-                      {prorrateoSplit.map((row) => (
-                        <li key={row.itemId} className="flex items-center justify-between text-sm">
-                          <span className="text-slate-600 truncate pr-2">{itemLabel(row.itemId)}</span>
+                      {porcientoSplit.map((row) => (
+                        <li key={row.itemId} className="flex items-center gap-3 text-sm">
+                          <span className="text-slate-600 truncate flex-1">{itemLabel(row.itemId)}</span>
+                          <span className="text-xs text-slate-400 whitespace-nowrap">{formatCurrencyCO(row.pending)} pend.</span>
+                          <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded bg-primary/10 text-primary">
+                            {porcientoValue}%
+                          </span>
                           <span className="font-medium text-slate-900 whitespace-nowrap">{formatCurrencyCO(row.amount)}</span>
                         </li>
                       ))}
                     </ul>
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-sm">
+                      <span className="text-slate-500 font-medium">Total a pagar:</span>
+                      <span className="font-bold text-slate-900">{formatCurrencyCO(amountValue)}</span>
+                    </div>
                   </div>
                 )}
               </div>
             )}
-
-            <label className="block">
-              <span className="text-xs text-slate-500 font-medium">Descripción</span>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="Concepto del pago"
-              />
-            </label>
 
             <div className="flex items-center justify-end gap-2">
               <button
@@ -596,11 +590,6 @@ export function PaymentsSection({
                   <tr key={p.id} className={`hover:bg-slate-50/50 transition-colors ${p.status === 'Anulado' ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
                       {p.method ? METHOD_LABEL[p.method] : '—'}
-                      {p.esAdicional && (
-                        <span className="ml-1.5 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700 uppercase tracking-wide">
-                          Adicional
-                        </span>
-                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px] truncate">
                       {(p.paymentItems?.length ?? 0) > 0
