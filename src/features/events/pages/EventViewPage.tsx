@@ -1,10 +1,11 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardList, FileSpreadsheet, FolderOpen, MapPin, Package, Wallet } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardList, FileSpreadsheet, FolderOpen, MapPin, Package, Wallet, ExternalLink } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
 import { PaymentsSection } from '../components/PaymentsSection'
+import { MapViewer } from '../components/MapViewer'
 import { useItems, type ManagedItem } from '../hooks/useItems'
 import { useQuotations } from '../../offers/hooks/useQuotations'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -84,6 +85,7 @@ export function EventViewPage() {
   const [localOverrides] = useState<Partial<Event>>({})
 
   const [showHistory, setShowHistory] = useState(false)
+  const [showMap, setShowMap] = useState(false)
   const [activeTab, setActiveTab] = useState<DetailTab>('detalles')
 
   const {
@@ -597,7 +599,24 @@ export function EventViewPage() {
             <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
               <div className="bg-white px-4 py-3.5">{label('Municipio')}{value(municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId)}</div>
               <div className="bg-white px-4 py-3.5">{label('Vereda')}{value(event.vereda || '-')}</div>
-              <div className="bg-white px-4 py-3.5">{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
+              <div className="bg-white px-4 py-3.5">
+                {label('Coordenadas')}
+                {event.latitud && event.longitud ? (
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="text-sm font-semibold text-slate-900">{event.latitud}, {event.longitud}</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowMap(true)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 active:scale-[0.98] transition-all duration-150"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Ver en mapa
+                    </button>
+                  </div>
+                ) : (
+                  value('No registradas')
+                )}
+              </div>
             </dl>
           </section>
 
@@ -758,6 +777,15 @@ export function EventViewPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showMap && event.latitud && event.longitud && (
+        <MapViewer
+          latitud={event.latitud}
+          longitud={event.longitud}
+          municipio={municipio ? `${municipio.nombre} (${municipio.departamento})` : undefined}
+          onClose={() => setShowMap(false)}
+        />
       )}
     </div>
   )
