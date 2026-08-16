@@ -221,7 +221,7 @@ export function ItemManager({
             </div>
 
             <p className="text-sm sm:text-base text-slate-700 mb-4">
-              ¿Estás seguro de eliminar <span className="font-semibold">{deletingItem.descripcion}</span>?
+              ¿Estás seguro de eliminar <span className="font-semibold">{deletingItem.nombre || deletingItem.descripcion}</span>?
             </p>
 
             <div className="flex justify-end gap-3">
