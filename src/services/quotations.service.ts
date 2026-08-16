@@ -148,6 +148,7 @@ export function mapQuotationResponse(data: QuotationResponse): Offer {
 
 export function mapOfferItemToCreateDto(item: OfferItem | OfferItemInput): CreateQuotationItemDto {
   return {
+    ...('itemId' in item && item.itemId ? { itemId: item.itemId } : {}),
     description: item.descripcion,
     quantity: item.cantidad,
     unitPrice: item.valorUnitario,

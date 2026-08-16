@@ -44,6 +44,8 @@ function mapBackendItem(data: Record<string, unknown>): Item {
     feeTerceros: isTarifado ? 0 : feeValue,
     ivaFee: Number(data.feeIvaValue ?? 0),
     total: Number(data.totalValue ?? 0),
+    pagado: Array.isArray(data.paymentItems) ? (data.paymentItems as unknown[]).length > 0 : false,
+    createdAt: data.createdAt ? String(data.createdAt) : undefined,
   }
 }
 
@@ -113,6 +115,11 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
           isDefinitive: q.isDefinitive === true,
           createdAt: String(q.createdAt ?? ''),
           updatedAt: String(q.updatedAt ?? ''),
+          items: Array.isArray(q.items)
+            ? (q.items as Record<string, unknown>[]).map((qi) => ({
+                itemId: qi.itemId ? String(qi.itemId) : undefined,
+              }))
+            : undefined,
         }))
       : undefined,
     observation: String(data.observation ?? data.motivoDevolucion ?? '') || undefined,

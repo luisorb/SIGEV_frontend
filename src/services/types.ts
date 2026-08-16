@@ -193,6 +193,7 @@ export interface GenerateReportDto {
 }
 
 export interface CreateQuotationItemDto {
+  itemId?: string
   description?: string
   quantity: number
   unitPrice?: number

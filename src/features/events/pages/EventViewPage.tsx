@@ -106,6 +106,7 @@ export function EventViewPage() {
       aliadoId: i.aliadoId,
       tariffId: i.tariffId,
       isTariffed: i.isTariffed,
+      createdAt: i.createdAt,
     })),
   )
 
@@ -445,6 +446,20 @@ export function EventViewPage() {
 
   const canManageOffers = userCan('functional_admin', 'operator')
   const quotationApproved = !!event.cotizacionSeleccionadaId
+  const lockReasons = new Map<string, string>()
+  for (const item of event.items) {
+    if (item.pagado) {
+      lockReasons.set(item.id, 'Este ítem ya fue pagado y no se puede editar ni eliminar.')
+    }
+  }
+  if (event.cotizacionSeleccionadaId) {
+    const approvedQuotation = event.quotations?.find((q) => q.id === event.cotizacionSeleccionadaId)
+    for (const qi of approvedQuotation?.items ?? []) {
+      if (qi.itemId) {
+        lockReasons.set(qi.itemId, 'Este ítem está incluido en la cotización aprobada y no se puede editar ni eliminar.')
+      }
+    }
+  }
   const offersReadOnly =
     !canManageOffers || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
@@ -715,6 +730,7 @@ export function EventViewPage() {
         onUpdateItem={handleUpdateItem}
         onRemoveItem={handleRemoveItem}
         readOnly={itemsReadOnly}
+        lockReasons={lockReasons}
         eventAliadoId={event.aliadoId}
         schemaType={event.esquema}
       />

@@ -8,11 +8,12 @@ interface ItemRowProps {
   onEdit?: (item: ManagedItem) => void
   onRemove?: (id: string) => void
   readOnly?: boolean
+  lockReason?: string
   index?: number
 }
 
-export function ItemRow({ item, onEdit, onRemove, readOnly = false, index = 0 }: ItemRowProps) {
-  const isLocked = readOnly || item.isTariffed
+export function ItemRow({ item, onEdit, onRemove, readOnly = false, lockReason, index = 0 }: ItemRowProps) {
+  const isLocked = readOnly || !!lockReason || item.isTariffed
   return (
     <tr className={`transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'} hover:bg-blue-50/20 ${isLocked ? 'opacity-80' : ''}`}>
       <td className="px-5 py-3">
@@ -42,22 +43,28 @@ export function ItemRow({ item, onEdit, onRemove, readOnly = false, index = 0 }:
       </td>
       {!readOnly && (
         <td className="px-5 py-3 text-right">
-          <div className="flex items-center justify-end gap-1">
-            <button
-              onClick={() => onEdit?.(item)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
-              title="Editar ítem"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onRemove?.(item.id)}
-              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-              title="Eliminar ítem"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          {lockReason ? (
+            <span className="inline-flex items-center gap-1 text-slate-300" title={lockReason}>
+              <Lock className="w-4 h-4" />
+            </span>
+          ) : (
+            <div className="flex items-center justify-end gap-1">
+              <button
+                onClick={() => onEdit?.(item)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
+                title="Editar ítem"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onRemove?.(item.id)}
+                className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                title="Eliminar ítem"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </td>
       )}
     </tr>

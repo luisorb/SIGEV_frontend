@@ -23,6 +23,7 @@ export interface OfferItem {
 }
 
 export interface OfferItemInput {
+  itemId?: string
   descripcion: string
   cantidad: number
   valorUnitario: number

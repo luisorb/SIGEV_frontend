@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import type { ManagedItem } from '../hooks/useItems'
 import type { ItemInput, Ally, SchemaType } from '../../../types'
@@ -12,6 +12,7 @@ interface ItemManagerProps {
   onUpdateItem?: (id: string, updates: ItemInput) => void | Promise<void>
   onRemoveItem?: (id: string) => void | Promise<void>
   readOnly?: boolean
+  lockReasons?: Map<string, string>
   eventAliadoId?: string
   schemaType?: SchemaType
 }
@@ -23,6 +24,7 @@ export function ItemManager({
   onUpdateItem,
   onRemoveItem,
   readOnly = false,
+  lockReasons,
   eventAliadoId,
   schemaType = 'cotizacion',
 }: ItemManagerProps) {
@@ -30,10 +32,17 @@ export function ItemManager({
   const [editingItem, setEditingItem] = useState<ManagedItem | null>(null)
   const [deletingItem, setDeletingItem] = useState<ManagedItem | null>(null)
 
+  const lockReasonFor = (id: string) => lockReasons?.get(id) ?? ''
+
   const isDetalle = schemaType === 'detalle'
-  const tarifadas = items.filter((i) => i.isTariffed)
-  const noTarifadas = items.filter((i) => !i.isTariffed)
-  const itemIndex = new Map(items.map((it, idx) => [it.id, idx]))
+  const sortedItems = useMemo(() => {
+    const ts = (it: ManagedItem) =>
+      it.createdAt ? new Date(it.createdAt).getTime() : Number.POSITIVE_INFINITY
+    return [...items].sort((a, b) => ts(b) - ts(a))
+  }, [items])
+  const tarifadas = sortedItems.filter((i) => i.isTariffed)
+  const noTarifadas = sortedItems.filter((i) => !i.isTariffed)
+  const itemIndex = new Map(sortedItems.map((it, idx) => [it.id, idx]))
 
   function sectionRow(label: string, count: number, badgeClass: string) {
     return (
@@ -153,6 +162,7 @@ export function ItemManager({
                       onEdit={!readOnly ? setEditingItem : undefined}
                       onRemove={!readOnly ? handleDeleteRequest : undefined}
                       readOnly={readOnly}
+                      lockReason={lockReasonFor(item.id)}
                       index={itemIndex.get(item.id) ?? 0}
                     />
                   ))
@@ -173,13 +183,14 @@ export function ItemManager({
                       onEdit={!readOnly ? setEditingItem : undefined}
                       onRemove={!readOnly ? handleDeleteRequest : undefined}
                       readOnly={readOnly}
+                      lockReason={lockReasonFor(item.id)}
                       index={itemIndex.get(item.id) ?? 0}
                     />
                   ))
                 )}
               </>
             ) : (
-              items.map((item, i) => (
+              sortedItems.map((item, i) => (
                 <ItemRow
                   key={item.id}
                   item={item}
@@ -187,6 +198,7 @@ export function ItemManager({
                   onEdit={!readOnly ? setEditingItem : undefined}
                   onRemove={!readOnly ? handleDeleteRequest : undefined}
                   readOnly={readOnly}
+                  lockReason={lockReasonFor(item.id)}
                   index={i}
                 />
               ))

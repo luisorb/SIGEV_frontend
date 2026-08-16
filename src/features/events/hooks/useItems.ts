@@ -5,13 +5,15 @@ import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationP
 
 export interface ManagedItem extends ItemInput {
   id: string
+  createdAt?: string
   totals: ItemTotals
 }
 
-export type InitialItem = ItemInput & { id?: string }
+export type InitialItem = ItemInput & { id?: string; createdAt?: string }
 
 interface StoredItem extends ItemInput {
   id: string
+  createdAt?: string
 }
 
 let nextId = 1
@@ -64,7 +66,7 @@ export function useItems(initialItems?: InitialItem[]) {
   }, [JSON.stringify(initialItems ?? [])])
 
   function addItem(item: ItemInput): ManagedItem[] {
-    const next = [...itemsRef.current, { ...item, id: generateId() }]
+    const next = [...itemsRef.current, { ...item, id: generateId(), createdAt: new Date().toISOString() }]
     itemsRef.current = next
     setItems(next)
     return toManaged(next, params)

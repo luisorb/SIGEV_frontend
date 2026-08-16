@@ -201,6 +201,7 @@ export function QuotationRegistrationModal({
     const quoteItems: OfferItemInput[] = items.filter((it) => it.selected).map((it) => {
       const isExempt = it.categoriaTributaria === 'Tercero' || it.categoriaTributaria === 'Reembolso'
       const dtoItem: OfferItemInput = {
+        itemId: it.eventItemId,
         descripcion: it.nombre || it.descripcion,
         cantidad: it.cantidad,
         valorUnitario: it.isTariffed ? 0 : it.valorUnitario,

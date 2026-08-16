@@ -114,6 +114,8 @@ export interface Item {
   feeTerceros: number
   ivaFee: number
   total: number
+  pagado?: boolean
+  createdAt?: string
 }
 
 export interface ItemInput {
@@ -287,6 +289,7 @@ export interface Quotation {
   isDefinitive: boolean
   createdAt: string
   updatedAt: string
+  items?: { itemId?: string }[]
 }
 
 export interface Event {
