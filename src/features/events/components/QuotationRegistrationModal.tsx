@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { X, FileUp, Save, Loader2, Receipt, FileText, Download } from 'lucide-react'
-import type { Event, TaxCategory, Attachment } from '../../../types'
+import {
+  X, FileUp, Save, Loader2, Receipt, FileText, Download, CheckCircle2, AlertCircle, FileCheck2,
+} from 'lucide-react'
+import type { Event, TaxCategory, Attachment, ItemInput } from '../../../types'
 import { TAX_CATEGORIES } from '../../../config/constants'
-import { formatDateCO } from '../../../utils/formatters'
+import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
+import { calculateEventSummary } from '../../../utils/calculationEngine'
 import { getTariffPriceApi } from '../../../services/tariffs.service'
 import { createQuotationApi, updateQuotationApi } from '../../../services/quotations.service'
 import {
@@ -112,6 +115,7 @@ export function QuotationRegistrationModal({
     })
   })
   const [tariffPrices, setTariffPrices] = useState<Record<string, number>>({})
+  const [tariffPricesLoaded, setTariffPricesLoaded] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([])
   const [saving, setSaving] = useState(false)
@@ -143,14 +147,26 @@ export function QuotationRegistrationModal({
     const tariffIds = Array.from(
       new Set(items.filter((it) => it.isTariffed && it.tariffId).map((it) => it.tariffId as string)),
     )
+    if (tariffIds.length === 0) return
+    let active = true
     Promise.all(
       tariffIds.map(async (tariffId) => {
         const price = await getTariffPriceApi(tariffId, event.municipalityCategory)
         return [tariffId, price] as const
       }),
     )
-      .then((prices) => setTariffPrices(Object.fromEntries(prices)))
-      .catch(() => setTariffPrices({}))
+      .then((prices) => {
+        if (active) setTariffPrices(Object.fromEntries(prices))
+      })
+      .catch(() => {
+        if (active) setTariffPrices({})
+      })
+      .finally(() => {
+        if (active) setTariffPricesLoaded(true)
+      })
+    return () => {
+      active = false
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -162,6 +178,42 @@ export function QuotationRegistrationModal({
   const today = new Date()
   const selectedCount = items.filter((it) => it.selected).length
   const allSelected = items.length > 0 && items.every((it) => it.selected)
+
+  function effectiveUnitValue(it: QuotationItemForm): number {
+    if (it.isTariffed) {
+      return it.tariffId ? tariffPrices[it.tariffId] ?? 0 : 0
+    }
+    return it.valorUnitario || 0
+  }
+
+  function rowError(it: QuotationItemForm): string | null {
+    if (!it.selected) return null
+    if (it.isTariffed && !it.tariffId) return 'Seleccione un servicio del tarifario'
+    if (!it.isTariffed && (!it.valorUnitario || it.valorUnitario <= 0)) return 'Ingrese el valor unitario negociado'
+    return null
+  }
+
+  const selectedItems = useMemo(() => items.filter((it) => it.selected), [items])
+
+  const summary = useMemo(() => {
+    const inputs: ItemInput[] = selectedItems.map((it) => ({
+      descripcion: it.nombre || it.descripcion,
+      cantidad: it.cantidad,
+      valorUnitario: it.isTariffed
+        ? it.tariffId
+          ? tariffPrices[it.tariffId] ?? 0
+          : 0
+        : it.valorUnitario || 0,
+      categoriaTributaria: it.categoriaTributaria,
+      isTariffed: it.isTariffed,
+      ...(it.tariffId ? { tariffId: it.tariffId } : {}),
+    }))
+    return calculateEventSummary(inputs, params)
+  }, [selectedItems, tariffPrices, params])
+
+  const pendingTariffValues = selectedItems.some(
+    (it) => it.isTariffed && it.tariffId && tariffPrices[it.tariffId] === undefined,
+  )
 
   function toggleAllItems(selected: boolean) {
     setItems((prev) => prev.map((it) => ({ ...it, selected })))
@@ -177,14 +229,14 @@ export function QuotationRegistrationModal({
     if (items.length === 0) {
       return 'La orden no tiene ítems registrados para cotizar'
     }
-    const selectedItems = items.filter((it) => it.selected)
     if (selectedItems.length === 0) return 'Seleccione al menos un ítem para la cotización'
     for (const it of selectedItems) {
       const label = it.nombre || it.descripcion
-      if (it.isTariffed && !it.tariffId) {
-        return `El ítem "${label}" requiere seleccionar un servicio del tarifario`
-      }
-      if (!it.isTariffed && (!it.valorUnitario || it.valorUnitario <= 0)) {
+      const err = rowError(it)
+      if (err) {
+        if (it.isTariffed) {
+          return `El ítem "${label}" requiere seleccionar un servicio del tarifario`
+        }
         return `Ingrese el valor unitario negociado del ítem "${label}"`
       }
     }
@@ -316,18 +368,35 @@ export function QuotationRegistrationModal({
             </div>
             <div className="px-6 py-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Ítems a valorar</p>
-              <p className="mt-0.5 font-mono text-sm text-slate-900 tabular-nums">{selectedCount}</p>
+              <p className="mt-0.5 font-mono text-sm text-slate-900 tabular-nums">
+                {selectedCount} <span className="text-slate-400">de {items.length}</span>
+              </p>
             </div>
           </div>
         </div>
 
         <div className="px-6 py-6 space-y-7">
           <section>
-            <header className="flex items-center gap-2 mb-3">
-              <span className="w-1 h-3.5 bg-primary rounded-sm" aria-hidden="true" />
-              <h4 className="text-[11px] font-mono uppercase tracking-widest text-slate-500">
-                Ítems de la orden · valoración económica
-              </h4>
+            <header className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[11px] font-semibold shrink-0"
+                  aria-hidden="true"
+                >
+                  1
+                </span>
+                <h4 className="text-sm font-semibold text-slate-800">Selección y valoración de ítems</h4>
+              </div>
+              {items.length > 0 && (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                    selectedCount > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <CheckCircle2 className={`w-3.5 h-3.5 ${selectedCount > 0 ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  {selectedCount} de {items.length} aplican
+                </span>
+              )}
             </header>
 
             {items.length === 0 ? (
@@ -337,11 +406,11 @@ export function QuotationRegistrationModal({
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[900px]">
+              <div className="overflow-x-auto rounded-lg border border-slate-200">
+                <table className="w-full text-sm min-w-[920px]">
                   <thead>
-                    <tr className="border-b-2 border-slate-300">
-                      <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-14">
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-16">
                         <label className="inline-flex items-center gap-1.5 cursor-pointer select-none" title="Marcar o desmarcar todos los ítems">
                           <input
                             type="checkbox"
@@ -350,22 +419,31 @@ export function QuotationRegistrationModal({
                             onChange={(e) => toggleAllItems(e.target.checked)}
                             className="w-4 h-4 rounded text-primary border-slate-300 focus:ring-primary/50"
                           />
-                          <span className="normal-case tracking-normal">Todos</span>
+                          <span>Aplica</span>
                         </label>
                       </th>
                       <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-10">N.º</th>
                       <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500">Servicio</th>
                       <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-20">Cant.</th>
-                      <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-36">Clasificación</th>
-                      <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-36">Vr. unitario</th>
-                      <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-36">Carga tributaria</th>
+                      <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-44">Vr. unitario</th>
+                      <th className="px-3 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-slate-500 w-40">Carga tributaria</th>
+                      <th className="px-3 py-2.5 text-right text-[10px] font-mono uppercase tracking-widest text-slate-500 w-40">Vr. total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {items.map((it, idx) => {
                       const resolvedPrice = it.isTariffed && it.tariffId ? tariffPrices[it.tariffId] : undefined
+                      const priceLoading = it.isTariffed && it.tariffId && resolvedPrice === undefined && !tariffPricesLoaded
+                      const effectiveUnit = effectiveUnitValue(it)
+                      const lineTotal = effectiveUnit * it.cantidad
+                      const err = rowError(it)
                       return (
-                        <tr key={it.eventItemId} className={`align-top ${it.selected ? 'hover:bg-slate-50/60' : 'opacity-50'}`}>
+                        <tr
+                          key={it.eventItemId}
+                          className={`align-top transition-colors ${
+                            err ? 'bg-red-50/40' : it.selected ? 'hover:bg-slate-50/60' : 'opacity-50'
+                          }`}
+                        >
                           <td className="px-3 py-3.5">
                             <input
                               type="checkbox"
@@ -376,35 +454,38 @@ export function QuotationRegistrationModal({
                           </td>
                           <td className="px-3 py-3.5 font-mono text-xs text-slate-400 tabular-nums">{idx + 1}</td>
                           <td className="px-3 py-3.5">
-                            <p className="font-medium text-slate-900">{it.nombre || it.descripcion}</p>
+                            <p className={`font-medium text-slate-900 ${it.selected ? '' : 'text-slate-500'}`}>
+                              {it.nombre || it.descripcion}
+                            </p>
                             {it.descripcion && it.descripcion !== it.nombre && (
                               <p className="text-xs text-slate-500 mt-0.5">{it.descripcion}</p>
                             )}
+                            <span
+                              className={`mt-1.5 inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-medium ${
+                                it.isTariffed ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {it.isTariffed ? 'Tarifado' : 'No tarifado'}
+                            </span>
                           </td>
                           <td className="px-3 py-3.5 text-right font-mono text-slate-700 tabular-nums">{it.cantidad}</td>
                           <td className="px-3 py-3.5">
                             {it.isTariffed ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
-                                Tarifado
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
-                                No tarifado
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-3 py-3.5">
-                            {it.isTariffed ? (
                               <div className="text-right">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={resolvedPrice ?? ''}
-                                  readOnly
-                                  disabled
-                                  placeholder="Según tarifario"
-                                  className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm font-mono text-right bg-slate-50 text-slate-600 placeholder:text-slate-400"
-                                />
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    value={resolvedPrice ?? ''}
+                                    readOnly
+                                    disabled
+                                    placeholder="Según tarifario"
+                                    className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm font-mono text-right bg-slate-50 text-slate-600 placeholder:text-slate-400 pr-8"
+                                  />
+                                  {priceLoading && (
+                                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />
+                                  )}
+                                </div>
                                 {resolvedPrice !== undefined && (
                                   <p className="text-[10px] font-mono text-emerald-700 mt-0.5">
                                     Cat. {event.municipalityCategory || 'del municipio'}
@@ -412,15 +493,25 @@ export function QuotationRegistrationModal({
                                 )}
                               </div>
                             ) : (
-                              <input
-                                type="number"
-                                min={0}
-                                step={0.01}
-                                value={it.valorUnitario || ''}
-                                onChange={(e) => updateItem(it.eventItemId, { valorUnitario: Number(e.target.value) || 0 })}
-                                placeholder="0.00"
-                                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-sm font-mono text-right focus:ring-2 focus:ring-primary/50 focus:border-transparent"
-                              />
+                              <div className="text-right">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={0.01}
+                                  value={it.valorUnitario || ''}
+                                  onChange={(e) => updateItem(it.eventItemId, { valorUnitario: Number(e.target.value) || 0 })}
+                                  placeholder="0.00"
+                                  className={`w-full px-2.5 py-1.5 border rounded-md text-sm font-mono text-right focus:ring-2 focus:ring-primary/50 focus:border-transparent ${
+                                    err ? 'border-red-300 bg-red-50' : 'border-slate-300'
+                                  }`}
+                                />
+                                {err && (
+                                  <p className="text-[10px] text-red-600 mt-1 inline-flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3 shrink-0" />
+                                    Ingrese el valor unitario
+                                  </p>
+                                )}
+                              </div>
                             )}
                           </td>
                           <td className="px-3 py-3.5">
@@ -433,6 +524,17 @@ export function QuotationRegistrationModal({
                                 <option key={cat} value={cat}>{taxCategoryLabels[cat]}</option>
                               ))}
                             </select>
+                          </td>
+                          <td className="px-3 py-3.5 text-right">
+                            {!it.selected ? (
+                              <span className="text-[11px] text-slate-300">—</span>
+                            ) : effectiveUnit > 0 ? (
+                              <span className="font-mono text-sm font-semibold text-slate-900 tabular-nums">
+                                {formatCurrencyCO(lineTotal)}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-300 italic">Pendiente</span>
+                            )}
                           </td>
                         </tr>
                       )
@@ -459,9 +561,88 @@ export function QuotationRegistrationModal({
           </section>
 
           <section>
+            <header className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[11px] font-semibold shrink-0"
+                  aria-hidden="true"
+                >
+                  2
+                </span>
+                <h4 className="text-sm font-semibold text-slate-800">Resumen de la cotización</h4>
+              </div>
+              {pendingTariffValues && (
+                <span className="inline-flex items-center gap-1.5 text-xs text-amber-600">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Cargando valores del tarifario...
+                </span>
+              )}
+            </header>
+
+            <div className="rounded-lg border border-slate-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="divide-x divide-slate-200">
+                    <td className="px-4 py-3">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Base</p>
+                      <p className="mt-0.5 font-mono text-sm text-slate-900 tabular-nums">
+                        {formatCurrencyCO(summary.eventTotals.baseTotal)}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400">IVA</p>
+                      <p className="mt-0.5 font-mono text-sm text-slate-900 tabular-nums">
+                        {formatCurrencyCO(summary.eventTotals.ivaTotal)}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Imp. consumo</p>
+                      <p className="mt-0.5 font-mono text-sm text-slate-900 tabular-nums">
+                        {formatCurrencyCO(summary.eventTotals.impuestoConsumoTotal)}
+                      </p>
+                    </td>
+                  </tr>
+                  <tr className="divide-x divide-slate-200 border-t border-slate-200">
+                    <td className="px-4 py-3">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400">FEE</p>
+                      <p className="mt-0.5 font-mono text-sm text-slate-900 tabular-nums">
+                        {formatCurrencyCO(summary.eventTotals.feeTarifadoTotal + summary.eventTotals.feeTercerosTotal)}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400">IVA FEE</p>
+                      <p className="mt-0.5 font-mono text-sm text-slate-900 tabular-nums">
+                        {formatCurrencyCO(summary.eventTotals.ivaFeeTotal)}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 bg-primary/5">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-primary">Total estimado</p>
+                      <p className="mt-0.5 font-mono text-lg font-bold text-primary tabular-nums">
+                        {formatCurrencyCO(summary.eventTotals.granTotal)}
+                      </p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-2">
+              {pendingTariffValues
+                ? 'El total se recalcula en vivo a medida que carga el tarifario para los servicios tarifados.'
+                : selectedCount === 0
+                  ? 'Marque al menos un ítem en la columna «Aplica» para ver el resumen de la cotización.'
+                  : 'Resumen calculado con los valores actuales. El total definitivo se consolida al guardar la cotización.'}
+            </p>
+          </section>
+
+          <section>
             <header className="flex items-center gap-2 mb-3">
-              <span className="w-1 h-3.5 bg-primary rounded-sm" aria-hidden="true" />
-              <h4 className="text-[11px] font-mono uppercase tracking-widest text-slate-500">
+              <span
+                className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[11px] font-semibold shrink-0"
+                aria-hidden="true"
+              >
+                3
+              </span>
+              <h4 className="text-sm font-semibold text-slate-800">
                 Documento soporte del proveedor {!isEditing && <span className="text-red-500">*</span>}
               </h4>
             </header>
@@ -511,15 +692,21 @@ export function QuotationRegistrationModal({
               </div>
             )}
             <div
-              className="flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 hover:border-slate-400 transition-colors cursor-pointer"
+              className={`flex items-center gap-3 border rounded-md px-4 py-3 transition-colors cursor-pointer ${
+                file
+                  ? 'border-emerald-300 bg-emerald-50/60 hover:border-emerald-400'
+                  : 'border-dashed border-slate-300 hover:border-slate-400'
+              }`}
               onClick={() => docInputRef.current?.click()}
             >
-              <FileUp className="w-5 h-5 text-slate-400 shrink-0" />
+              <span className={`p-2 rounded-md shrink-0 ${file ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                {file ? <FileCheck2 className="w-5 h-5" /> : <FileUp className="w-5 h-5" />}
+              </span>
               <div className="flex-1 min-w-0">
                 <span className="block text-sm truncate">
                   {file ? (
                     <>
-                      <span className="font-mono text-slate-900">{file.name}</span>
+                      <span className="font-medium text-slate-900">{file.name}</span>
                       <span className="text-slate-400 font-mono"> ({(file.size / 1024).toFixed(1)} KB)</span>
                     </>
                   ) : (
@@ -532,6 +719,12 @@ export function QuotationRegistrationModal({
                     </span>
                   )}
                 </span>
+                {file && (
+                  <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-emerald-700">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Listo para adjuntar
+                  </span>
+                )}
               </div>
               {file && (
                 <button
@@ -558,7 +751,15 @@ export function QuotationRegistrationModal({
             </div>
           )}
 
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-5 border-t border-slate-200">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-5 border-t border-slate-200 sm:items-center">
+            {selectedCount > 0 && (
+              <p className="text-xs text-slate-500 sm:mr-auto">
+                Total estimado:{' '}
+                <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                  {formatCurrencyCO(summary.eventTotals.granTotal)}
+                </span>
+              </p>
+            )}
             <button
               type="button"
               onClick={onClose}
