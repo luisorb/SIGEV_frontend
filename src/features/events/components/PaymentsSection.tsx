@@ -233,7 +233,7 @@ export function PaymentsSection({
         eventId,
         disbursementId: defaultDisbursementId || undefined,
         amount: amountValue,
-        method: 'por_item',
+        method,
         items,
         attachmentId,
         description: description.trim() || undefined,
@@ -448,28 +448,53 @@ export function PaymentsSection({
         )}
 
         <Modal isOpen={showForm} onClose={closeForm} title="Registrar pago" size="xl" closeOnOverlayClick={false} closeOnEscape={false}>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="block">
-                <span className="text-xs text-slate-500 font-medium">Modalidad</span>
+                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Modalidad</span>
                 <select
                   value={method}
                   onChange={(e) => setMethod(e.target.value as PaymentMethod)}
-                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="mt-1.5 w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                 >
                   <option value="por_item">Por ítem</option>
                   <option value="prorrateo">Por porciento</option>
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs text-slate-500 font-medium">
+                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
                   Soporte documental <span className="text-red-500">*</span>
                 </span>
-                <div className="mt-1 flex items-center gap-2">
-                  <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm border border-dashed border-slate-300 rounded-lg bg-white cursor-pointer hover:border-primary/40 transition-colors">
-                    <Upload className="w-4 h-4 text-slate-400" />
-                    {supportFile ? supportFile.name : 'Cargar soporte (PDF, imagen)'}
+                <div className="mt-1.5">
+                  <label className={`flex items-center gap-2.5 px-3 py-2.5 text-sm border rounded-lg cursor-pointer transition-all ${
+                    supportFile
+                      ? 'border-emerald-300 bg-emerald-50/60 hover:border-emerald-400'
+                      : 'border-dashed border-slate-300 hover:border-primary/50 hover:bg-slate-50'
+                  }`}>
+                    {supportFile ? (
+                      <span className="p-1.5 bg-emerald-100 rounded-md shrink-0">
+                        <FileText className="w-4 h-4 text-emerald-600" />
+                      </span>
+                    ) : (
+                      <Upload className="w-4 h-4 text-slate-400 shrink-0" />
+                    )}
+                    <span className="flex-1 min-w-0 truncate">
+                      {supportFile ? (
+                        <span className="font-medium text-slate-900">{supportFile.name}</span>
+                      ) : (
+                        <span className="text-slate-400">Seleccionar archivo...</span>
+                      )}
+                    </span>
+                    {supportFile && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setSupportFile(null) }}
+                        className="text-xs font-medium text-red-600 hover:text-red-700 shrink-0"
+                      >
+                        Quitar
+                      </button>
+                    )}
                     <input
                       type="file"
                       accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.doc,.docx"
@@ -478,135 +503,146 @@ export function PaymentsSection({
                     />
                   </label>
                   {supportFile && (
-                    <button
-                      type="button"
-                      onClick={() => setSupportFile(null)}
-                      className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                      aria-label="Quitar soporte"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    <p className="mt-1 text-[11px] text-emerald-600 flex items-center gap-1">
+                      Listo para adjuntar
+                    </p>
                   )}
                 </div>
               </label>
             </div>
 
             <label className="block">
-              <span className="text-xs text-slate-500 font-medium">Descripción</span>
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Descripción</span>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="mt-1.5 w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
                 placeholder="Concepto del pago"
               />
             </label>
 
             {method === 'prorrateo' && (
-              <label className="block sm:max-w-xs">
-                <span className="text-xs text-slate-500 font-medium">Porciento a prorratear entre los ítems pendientes por pagar</span>
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={porcientoValue}
-                    onChange={(e) => setPorcientoValue(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    placeholder="0.00"
-                  />
-                  <span className="text-sm text-slate-500 font-medium shrink-0">%</span>
-                </div>
-              </label>
+              <div className="bg-slate-50 rounded-xl px-4 py-3.5 border border-slate-200">
+                <label className="block">
+                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Porciento a prorratear</span>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Se aplica sobre el valor total de cada ítem pendiente</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={porcientoValue}
+                      onChange={(e) => setPorcientoValue(e.target.value)}
+                      className="w-32 px-3 py-2.5 text-lg font-bold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors text-center"
+                      placeholder="0"
+                    />
+                    <span className="text-lg font-bold text-slate-400">%</span>
+                  </div>
+                </label>
+              </div>
             )}
 
             {method === 'por_item' ? (
               <div className="space-y-2">
-                <p className="text-xs text-slate-500 font-medium">Ítems a pagar</p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Ítems a pagar</p>
                 {payableItems.length === 0 && (
-                  <p className="text-sm text-slate-400">
-                    No hay ítems pendientes por pagar.
-                  </p>
+                  <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
+                    <p className="text-sm text-slate-400">No hay ítems pendientes por pagar</p>
+                  </div>
                 )}
-                {payableItems.map((item) => {
-                  const allocation = allocations.find((a) => a.itemId === item.id)
-                  const paidItem = paidByItem.get(item.id) ?? 0
-                  const pending = Math.max(0, getItemBudget(item, offerBudgetByKey) - paidItem)
-                  return (
-                    <div
-                      key={item.id}
-                      className={`flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg border transition-colors ${
-                        allocation?.selected ? 'border-primary/40 bg-primary/5' : 'border-slate-200 bg-white'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={allocation?.selected ?? false}
-                        onChange={() => toggleItem(item.id)}
-                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
-                      />
-                      <span className="flex-1 min-w-[200px] text-sm text-slate-700 truncate">
-                        {item.descripcion || item.nombre || item.id}
-                      </span>
-                      <span className="text-xs text-slate-400 whitespace-nowrap">
-                        Pendiente: {formatCurrencyCO(pending)}
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={allocation?.amount ?? ''}
-                        disabled={!allocation?.selected}
-                        onChange={(e) => setItemAmount(item.id, e.target.value)}
-                        placeholder="0.00"
-                        className="w-40 px-3 py-1.5 text-sm border border-slate-300 rounded-lg disabled:bg-slate-50 disabled:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    </div>
-                  )
-                })}
-                <p className="text-xs text-slate-500">
-                  Total a pagar: <span className="font-bold text-slate-900">{formatCurrencyCO(selectedTotal)}</span>
-                </p>
+                <div className="space-y-1.5">
+                  {payableItems.map((item) => {
+                    const allocation = allocations.find((a) => a.itemId === item.id)
+                    const paidItem = paidByItem.get(item.id) ?? 0
+                    const pending = Math.max(0, getItemBudget(item, offerBudgetByKey) - paidItem)
+                    return (
+                      <div
+                        key={item.id}
+                        className={`flex flex-wrap items-center gap-3 px-3.5 py-2.5 rounded-lg border transition-all ${
+                          allocation?.selected
+                            ? 'border-primary/40 bg-primary/5 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={allocation?.selected ?? false}
+                          onChange={() => toggleItem(item.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
+                        />
+                        <span className="flex-1 min-w-[200px] text-sm text-slate-700 truncate">
+                          {item.descripcion || item.nombre || item.id}
+                        </span>
+                        <span className="text-xs text-slate-400 whitespace-nowrap bg-slate-100 px-2 py-0.5 rounded-full">
+                          Pend: {formatCurrencyCO(pending)}
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={allocation?.amount ?? ''}
+                          disabled={!allocation?.selected}
+                          onChange={(e) => setItemAmount(item.id, e.target.value)}
+                          placeholder="0.00"
+                          className="w-40 px-3 py-1.5 text-sm border border-slate-300 rounded-lg disabled:bg-slate-50 disabled:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-xs text-slate-500 font-medium">Total a pagar:</span>
+                  <span className="text-base font-bold text-slate-900">{formatCurrencyCO(selectedTotal)}</span>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
-                {porcientoSplit.length > 0 && (
-                  <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <p className="text-xs text-slate-500 font-medium mb-2">Distribución sugerida ({payableItems.length} ítems)</p>
-                    <ul className="space-y-1">
+                {porcientoSplit.length > 0 ? (
+                  <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                    <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                        Distribución ({porcientoSplit.length} ítem{porcientoSplit.length !== 1 ? 's' : ''})
+                      </p>
+                    </div>
+                    <ul className="divide-y divide-slate-100">
                       {porcientoSplit.map((row) => (
-                        <li key={row.itemId} className="flex items-center gap-3 text-sm">
-                          <span className="text-slate-600 truncate flex-1">{itemLabel(row.itemId)}</span>
-                          <span className="text-xs text-slate-400 whitespace-nowrap">{formatCurrencyCO(row.pending)} pend.</span>
-                          <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded bg-primary/10 text-primary">
+                        <li key={row.itemId} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50/50 transition-colors">
+                          <span className="text-slate-700 truncate flex-1 font-medium">{itemLabel(row.itemId)}</span>
+                          <span className="text-[11px] text-slate-400 whitespace-nowrap">{formatCurrencyCO(row.pending)} pend.</span>
+                          <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary/10 text-primary">
                             {porcientoValue}%
                           </span>
-                          <span className="font-medium text-slate-900 whitespace-nowrap">{formatCurrencyCO(row.amount)}</span>
+                          <span className="font-bold text-slate-900 whitespace-nowrap min-w-[100px] text-right">{formatCurrencyCO(row.amount)}</span>
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Total a pagar:</span>
-                      <span className="font-bold text-slate-900">{formatCurrencyCO(amountValue)}</span>
+                    <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                      <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total a pagar</span>
+                      <span className="text-base font-bold text-slate-900">{formatCurrencyCO(amountValue)}</span>
                     </div>
                   </div>
-                )}
+                ) : porcientoValue && Number(porcientoValue) > 0 ? (
+                  <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
+                    <p className="text-sm text-slate-400">No hay ítems para distribuir con este porciento</p>
+                  </div>
+                ) : null}
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={closeForm}
-                className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-60 transition-colors"
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark disabled:opacity-60 transition-colors shadow-sm"
               >
                 {submitting ? (uploading ? 'Cargando soporte...' : 'Registrando...') : 'Registrar pago'}
               </button>
@@ -630,6 +666,7 @@ export function PaymentsSection({
                 <tr className="bg-slate-50">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modalidad</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ítems</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Soporte</th>
@@ -646,6 +683,9 @@ export function PaymentsSection({
                       {(p.paymentItems?.length ?? 0) > 0
                         ? `${p.paymentItems!.length} ítem${p.paymentItems!.length !== 1 ? 's' : ''}`
                         : p.method === 'prorrateo' ? 'Todos los ítems' : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-500 max-w-[200px] truncate">
+                      {p.description || <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-sm font-bold text-slate-900 text-right whitespace-nowrap">{formatCurrencyCO(p.amount)}</td>
                     <td className="px-4 py-3">
