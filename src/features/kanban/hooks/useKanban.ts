@@ -16,7 +16,7 @@ interface UseKanbanOptions {
 export function useKanban({ events }: UseKanbanOptions) {
   const [pendingChange, setPendingChange] = useState<StateChangeRequest | null>(null)
   const queryClient = useQueryClient()
-  const { canTransition } = useStateMachine()
+  const { canTransition, getAvailableTransitions } = useStateMachine()
   const { roleNames } = useRolePermissions()
   const toast = useToast()
 
@@ -145,6 +145,12 @@ export function useKanban({ events }: UseKanbanOptions) {
     setPendingChange(null)
   }, [])
 
+  function getValidTransitions(eventId: string): EventState[] {
+    const event = events.find((e) => e.id === eventId)
+    if (!event) return []
+    return getAvailableTransitions(event.estado, roleNames, event)
+  }
+
   return {
     grouped,
     counts,
@@ -152,5 +158,6 @@ export function useKanban({ events }: UseKanbanOptions) {
     handleDragEnd,
     confirmStateChange,
     cancelStateChange,
+    getValidTransitions,
   }
 }

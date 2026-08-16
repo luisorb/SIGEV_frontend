@@ -18,6 +18,7 @@ export function KanbanPage() {
     handleDragEnd,
     confirmStateChange,
     cancelStateChange,
+    getValidTransitions,
   } = useKanban({ events })
 
   const aliadosMap = useMemo(() => {
@@ -84,6 +85,7 @@ export function KanbanPage() {
           pendingChange={pendingChange}
           onConfirmChange={confirmStateChange}
           onCancelChange={cancelStateChange}
+          getValidTransitions={getValidTransitions}
         />
       </div>
     </div>

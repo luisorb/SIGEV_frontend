@@ -5,6 +5,7 @@ import { KanbanCard } from './KanbanCard'
 import { StateChangeModal } from './StateChangeModal'
 import { KANBAN_COLUMNS } from '../types'
 import type { KanbanGrouped, KanbanCardData, StateChangeRequest } from '../types'
+import type { EventState } from '../../../types'
 
 interface KanbanBoardProps {
   grouped: KanbanGrouped
@@ -15,6 +16,7 @@ interface KanbanBoardProps {
   pendingChange: StateChangeRequest | null
   onConfirmChange: (reason?: string) => void
   onCancelChange: () => void
+  getValidTransitions: (eventId: string) => EventState[]
 }
 
 export function KanbanBoard({
@@ -26,8 +28,10 @@ export function KanbanBoard({
   pendingChange,
   onConfirmChange,
   onCancelChange,
+  getValidTransitions,
 }: KanbanBoardProps) {
   const [activeCard, setActiveCard] = useState<KanbanCardData | null>(null)
+  const [validTargets, setValidTargets] = useState<EventState[] | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -36,18 +40,24 @@ export function KanbanBoard({
   )
 
   function handleDragStart(event: DragStartEvent) {
-    setActiveCard(event.active.data.current as KanbanCardData)
+    const card = event.active.data.current as KanbanCardData
+    setActiveCard(card)
+    setValidTargets(getValidTransitions(card.id))
   }
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveCard(null)
+    setValidTargets(null)
     const { active, over } = event
     onDragEnd(String(active.id), over ? String(over.id) : undefined)
   }
 
   function handleDragCancel() {
     setActiveCard(null)
+    setValidTargets(null)
   }
+
+  const isDragging = activeCard !== null
 
   return (
     <>
@@ -66,6 +76,8 @@ export function KanbanBoard({
               count={counts[estado] ?? 0}
               aliadosMap={aliadosMap}
               municipiosMap={municipiosMap}
+              isValidTarget={validTargets === null ? null : validTargets.includes(estado)}
+              isDragging={isDragging}
             />
           ))}
         </div>
@@ -77,6 +89,7 @@ export function KanbanBoard({
                 card={activeCard}
                 aliadoNombre={aliadosMap[activeCard.aliadoId]}
                 municipioNombre={municipiosMap[activeCard.municipioId]}
+                isOverlay
               />
             </div>
           )}
