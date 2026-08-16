@@ -117,9 +117,6 @@ export function EventDetailPage() {
     )
   }
 
-  const aliadoName = aliados.find((a) => a.id === event.aliadoId)?.nombre
-  const municipioName = municipios.find((m) => m.id === event.municipioId)?.nombre
-
   return (
     <div className="space-y-6">
       <div>
@@ -131,11 +128,6 @@ export function EventDetailPage() {
           Volver a órdenes
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">Editar {event.numeroEvento}</h1>
-        {event && (
-          <p className="text-sm text-slate-500">
-            {aliadoName} · {municipioName} · {event.items.length} ítems
-          </p>
-        )}
       </div>
 
       <EventForm

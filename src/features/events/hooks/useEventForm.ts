@@ -15,6 +15,7 @@ interface UseEventFormOptions {
 export function useEventForm({ event, onSave }: UseEventFormOptions) {
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema) as never,
+    mode: 'onTouched',
     defaultValues: event
       ? {
           numeroEvento: event.numeroEvento,
@@ -60,6 +61,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
     formState: { errors, isSubmitting },
     setValue,
     control,
+    trigger,
   } = form
 
   const watchedValues = useWatch({ control })
@@ -75,6 +77,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
     isSubmitting,
     watchedValues,
     setValue,
+    trigger,
     form,
   }
 }
