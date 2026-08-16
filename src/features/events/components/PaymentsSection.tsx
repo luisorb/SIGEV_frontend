@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Banknote, Plus, Upload, Download, X, FileText } from 'lucide-react'
+import { Banknote, Plus, Upload, Download, X, FileText, Wallet, TrendingUp, PiggyBank, Receipt, ChevronRight, Clock } from 'lucide-react'
 import { usePayments, usePaymentsSummary, useCreatePayment } from '../../../hooks/usePayments'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useRolePermissions } from '../../auth/useRolePermissions'
@@ -289,47 +289,64 @@ export function PaymentsSection({
 
       <div className="px-6 py-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-          <div className="bg-slate-50 rounded-lg px-4 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
-              Valor REF del recurso
-            </p>
-            <p className="text-sm font-bold text-slate-900 mt-1">
-              {formatCurrencyCO(valorRef)}
-            </p>
+          <div className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 hover:shadow-sm transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Wallet className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Valor REF</p>
+                <p className="text-base font-bold text-slate-900">{formatCurrencyCO(valorRef)}</p>
+              </div>
+            </div>
           </div>
-          <div className="bg-slate-50 rounded-lg px-4 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
-              Oferta económica
-            </p>
-            <p className="text-sm font-bold text-slate-900 mt-1">
-              {formatCurrencyCO(ofertaTotal)}
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Participación: {formatPercentage(Math.min(1, pctParticipacion / 100))}
-            </p>
+
+          <div className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 hover:shadow-sm transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-violet-50 rounded-lg">
+                <Receipt className="w-4 h-4 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Oferta económica</p>
+                <p className="text-base font-bold text-slate-900">{formatCurrencyCO(ofertaTotal)}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Participación: {formatPercentage(Math.min(1, pctParticipacion / 100))}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="bg-slate-50 rounded-lg px-4 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
-              Ejecutado
-            </p>
-            <p className="text-sm font-bold text-emerald-600 mt-1">
-              {formatCurrencyCO(ejecutado)}
-            </p>
-            <div className="mt-2">{renderBar(pctEjecucion, 'bg-emerald-500')}</div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              {formatPercentage(Math.min(1, pctEjecucion / 100))} del recurso
-            </p>
+
+          <div className="bg-white border border-emerald-200 rounded-xl px-4 py-3.5 hover:shadow-sm transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-50 rounded-lg">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Ejecutado</p>
+                <p className="text-base font-bold text-emerald-600">{formatCurrencyCO(ejecutado)}</p>
+              </div>
+            </div>
+            <div className="mt-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-slate-400 font-medium">{formatPercentage(Math.min(1, pctEjecucion / 100))}</span>
+              </div>
+              {renderBar(pctEjecucion, 'bg-emerald-500')}
+            </div>
           </div>
-          <div className="bg-slate-50 rounded-lg px-4 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
-              Saldo disponible
-            </p>
-            <p className="text-sm font-bold text-slate-900 mt-1">
-              {formatCurrencyCO(disponible)}
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">
-              {payments.length === 0 ? 'Sin pagos registrados' : `${payments.length} pago${payments.length !== 1 ? 's' : ''}`}
-            </p>
+
+          <div className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 hover:shadow-sm transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${disponible > 0 ? 'bg-amber-50' : 'bg-slate-100'}`}>
+                <PiggyBank className={`w-4 h-4 ${disponible > 0 ? 'text-amber-600' : 'text-slate-400'}`} />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Saldo disponible</p>
+                <p className={`text-base font-bold ${disponible > 0 ? 'text-slate-900' : 'text-slate-400'}`}>{formatCurrencyCO(disponible)}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {payments.length === 0 ? 'Sin pagos' : `${payments.length} pago${payments.length !== 1 ? 's' : ''}`}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -337,24 +354,36 @@ export function PaymentsSection({
           <button
             type="button"
             onClick={() => setActiveTab('debe')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === 'debe'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            Cuánto se debe por evento
+            <Banknote className="w-3.5 h-3.5" />
+            Cuánto se debe
+            <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full ${
+              activeTab === 'debe' ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'
+            }`}>
+              {items.length}
+            </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('pagos')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === 'pagos'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
+            <Receipt className="w-3.5 h-3.5" />
             Pagos registrados
+            <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full ${
+              activeTab === 'pagos' ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'
+            }`}>
+              {payments.length}
+            </span>
           </button>
         </div>
 
@@ -363,15 +392,15 @@ export function PaymentsSection({
           {items.length === 0 ? (
             <p className="text-sm text-slate-400">El evento no tiene ítems registrados.</p>
           ) : (
-            <div className="overflow-x-auto border border-slate-100 rounded-xl">
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50">
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ítem</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Pagado</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Pendiente</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">%</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ítem</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Pagado</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Pendiente</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[120px]">Progreso</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -380,15 +409,34 @@ export function PaymentsSection({
                     const budget = getItemBudget(item, offerBudgetByKey)
                     const pending = Math.max(0, budget - paidItem)
                     const pct = budget > 0 ? (paidItem / budget) * 100 : 0
+                    const isPaid = pct >= 100
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-2.5 text-sm text-slate-700 max-w-[280px] truncate">
+                        <td className="px-4 py-3 text-sm text-slate-700 max-w-[280px] truncate">
                           {item.descripcion || item.nombre || item.id}
                         </td>
-                        <td className="px-4 py-2.5 text-sm font-semibold text-slate-900 text-right">{formatCurrencyCO(budget)}</td>
-                        <td className="px-4 py-2.5 text-sm text-emerald-600 font-medium text-right">{formatCurrencyCO(paidItem)}</td>
-                        <td className="px-4 py-2.5 text-sm text-slate-600 text-right">{formatCurrencyCO(pending)}</td>
-                        <td className="px-4 py-2.5 text-sm text-slate-500 text-right">{formatPercentage(pct / 100)}</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right whitespace-nowrap">{formatCurrencyCO(budget)}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-emerald-600 text-right whitespace-nowrap">{formatCurrencyCO(paidItem)}</td>
+                        <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
+                          <span className={pending === 0 ? 'text-emerald-600 font-medium' : 'text-slate-600'}>
+                            {formatCurrencyCO(pending)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2 justify-end">
+                            <div className="w-20">
+                              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${isPaid ? 'bg-emerald-500' : pct > 0 ? 'bg-primary' : 'bg-slate-200'}`}
+                                  style={{ width: `${Math.min(100, pct)}%` }}
+                                />
+                              </div>
+                            </div>
+                            <span className={`text-xs font-semibold min-w-[42px] text-right ${isPaid ? 'text-emerald-600' : pct > 0 ? 'text-primary' : 'text-slate-400'}`}>
+                              {formatPercentage(pct / 100)}
+                            </span>
+                          </div>
+                        </td>
                       </tr>
                     )
                   })}
@@ -568,12 +616,15 @@ export function PaymentsSection({
 
         {activeTab === 'pagos' && (
           payments.length === 0 ? (
-          <div className="text-center py-8">
-            <Banknote className="w-8 h-8 text-slate-200 mx-auto" />
-            <p className="text-sm text-slate-400 mt-2">No hay pagos registrados para este evento.</p>
+          <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl">
+            <div className="p-3 bg-slate-100 rounded-full w-fit mx-auto">
+              <Banknote className="w-6 h-6 text-slate-300" />
+            </div>
+            <p className="text-sm font-medium text-slate-500 mt-3">No hay pagos registrados</p>
+            <p className="text-xs text-slate-400 mt-1">Los pagos que registres aparecerán aquí</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50">
@@ -596,7 +647,7 @@ export function PaymentsSection({
                         ? `${p.paymentItems!.length} ítem${p.paymentItems!.length !== 1 ? 's' : ''}`
                         : p.method === 'prorrateo' ? 'Todos los ítems' : '—'}
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right">{formatCurrencyCO(p.amount)}</td>
+                    <td className="px-4 py-3 text-sm font-bold text-slate-900 text-right whitespace-nowrap">{formatCurrencyCO(p.amount)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${STATUS_BADGE[p.status] || 'bg-slate-100 text-slate-700'}`}>
                         {p.status}
@@ -606,11 +657,11 @@ export function PaymentsSection({
                       {(p.attachments?.length ?? 0) > 0 ? (
                         <button
                           onClick={() => handleDownloadSupport(p.attachments![0])}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
                           title={p.attachments![0].originalName}
                         >
                           <Download className="w-3.5 h-3.5" />
-                          Soporte
+                          Descargar
                         </button>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs text-slate-300">
