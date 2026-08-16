@@ -1,9 +1,22 @@
-import { useRef, useState } from 'react'
-import { Folder, FolderOpen, ChevronRight, FileText, Upload, Trash2, Lock, Download, Loader2, X } from 'lucide-react'
+import { useRef, useState, useCallback } from 'react'
+import { Folder, FolderOpen, ChevronRight, FileText, Upload, Trash2, Lock, Download, Loader2, X, Image, Sheet, FileUp } from 'lucide-react'
 import type { Soporte, TipoSoporte, Attachment, EventState } from '../../../types'
 import { SOPORTES_REQUERIDOS, SOPORTES_ESTATICOS } from '../../../types'
 import { formatDateCO } from '../../../utils/formatters'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
+
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith('image/')) return { icon: Image, color: 'text-violet-500', bg: 'bg-violet-50' }
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType === 'application/vnd.ms-excel')
+    return { icon: Sheet, color: 'text-emerald-500', bg: 'bg-emerald-50' }
+  return { icon: FileText, color: 'text-red-500', bg: 'bg-red-50' }
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 function getFolderDescription(tipo: TipoSoporte): string {
   const desc: Record<TipoSoporte, string> = {
@@ -49,6 +62,7 @@ export function SupportDocuments({
   const [deleteTarget, setDeleteTarget] = useState<Attachment | null>(null)
   const [uploadingTipo, setUploadingTipo] = useState<TipoSoporte | null>(null)
   const [openFolder, setOpenFolder] = useState<TipoSoporte | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const folderList = SOPORTES_REQUERIDOS
 
@@ -114,6 +128,37 @@ export function SupportDocuments({
       }
     }
   }
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }, [])
+
+  const handleDrop = useCallback(async (e: React.DragEvent, tipo: TipoSoporte) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    if (uploadingTipo) return
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length === 0) return
+    setUploadingTipo(tipo)
+    try {
+      for (const file of files) {
+        await onUpload(tipo, file)
+      }
+    } catch {
+      // El error ya fue notificado por el manejador del padre
+    } finally {
+      setUploadingTipo(null)
+    }
+  }, [uploadingTipo, onUpload])
 
   function getFolderDocs(tipo: TipoSoporte): { attachments: Attachment[]; soporte?: Soporte } {
     return { attachments: getBackendAttachments(tipo), soporte: getSoporte(tipo) }
@@ -240,49 +285,94 @@ export function SupportDocuments({
 
             <div className="px-6 py-6">
               {openFolderData.attachments.length === 0 && !openFolderData.soporte ? (
-                <div className="border border-dashed border-slate-300 rounded-md px-6 py-10 text-center">
-                  <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">Esta carpeta no tiene documentos cargados.</p>
-                </div>
+                isFolderEditable(openFolder) &&
+                openFolder !== 'Cotizaciones presentadas' &&
+                canUploadManually(openFolder) ? (
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, openFolder)}
+                    onClick={() => fileInputRef.current[openFolder]?.click()}
+                    className={`border-2 border-dashed rounded-xl px-6 py-12 text-center cursor-pointer transition-all ${
+                      isDragOver
+                        ? 'border-primary bg-primary/5 scale-[1.01]'
+                        : 'border-slate-300 hover:border-primary/50 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      ref={(el) => { fileInputRef.current[openFolder] = el }}
+                      type="file"
+                      multiple={isMultiDocument(openFolder)}
+                      accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                      className="hidden"
+                      disabled={uploadingTipo === openFolder}
+                      onChange={(e) => handleFileChange(openFolder, e)}
+                    />
+                    {uploadingTipo === openFolder ? (
+                      <Loader2 className="w-10 h-10 text-primary mx-auto mb-3 animate-spin" />
+                    ) : (
+                      <FileUp className={`w-10 h-10 mx-auto mb-3 ${isDragOver ? 'text-primary' : 'text-slate-300'}`} />
+                    )}
+                    <p className="text-sm font-medium text-slate-700">
+                      {uploadingTipo === openFolder
+                        ? 'Subiendo documentos...'
+                        : isDragOver
+                          ? 'Suelta los archivos aquí'
+                          : 'Arrastra archivos aquí o haz clic para seleccionar'}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1.5">
+                      {isMultiDocument(openFolder) ? 'Puedes seleccionar varios archivos' : 'Selecciona un archivo'} · PDF, JPG, PNG, XLSX, DOC
+                    </p>
+                  </div>
+                ) : (
+                  <div className="border border-dashed border-slate-200 rounded-xl px-6 py-10 text-center">
+                    <Folder className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                    <p className="text-sm text-slate-400">No hay documentos en esta carpeta</p>
+                  </div>
+                )
               ) : (
                 <div className="space-y-2">
-                  {openFolderData.attachments.map((att) => (
-                    <div key={att.id} className="flex items-center gap-3 border border-slate-200 rounded-lg px-4 py-3 hover:bg-slate-50/60 transition-colors">
-                      <div className="p-2 bg-slate-100 rounded-md shrink-0">
-                        <FileText className="w-4 h-4 text-slate-500" />
+                  {openFolderData.attachments.map((att) => {
+                    const fileIcon = getFileIcon(att.mimeType)
+                    const IconComp = fileIcon.icon
+                    return (
+                      <div key={att.id} className="flex items-center gap-3 border border-slate-200 rounded-lg px-4 py-3 hover:bg-slate-50/60 transition-colors">
+                        <div className={`p-2 rounded-md shrink-0 ${fileIcon.bg}`}>
+                          <IconComp className={`w-4 h-4 ${fileIcon.color}`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-slate-900 truncate">{att.originalName}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {formatFileSize(att.fileSize)} · {formatDateCO(att.createdAt)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {onDownload && (
+                            <button
+                              onClick={() => onDownload(att)}
+                              disabled={uploadingTipo === openFolder}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-primary transition-colors disabled:opacity-50"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Descargar
+                            </button>
+                          )}
+                          {isFolderEditable(openFolder) &&
+                            openFolder !== 'Cotizaciones presentadas' &&
+                            canUploadManually(openFolder) && (
+                              <button
+                                onClick={() => setDeleteTarget(att)}
+                                disabled={uploadingTipo === openFolder}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-slate-200 rounded-md hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Eliminar
+                              </button>
+                            )}
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-slate-900 truncate">{att.originalName}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          {(att.fileSize / 1024).toFixed(1)} KB · {formatDateCO(att.createdAt)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {onDownload && (
-                          <button
-                            onClick={() => onDownload(att)}
-                            disabled={uploadingTipo === openFolder}
-                            className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-primary transition-colors"
-                            title="Descargar"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        )}
-              {isFolderEditable(openFolder) &&
-                openFolder !== 'Cotizaciones presentadas' &&
-                canUploadManually(openFolder) && (
-                          <button
-                            onClick={() => setDeleteTarget(att)}
-                            disabled={uploadingTipo === openFolder}
-                            className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                            title="Eliminar documento"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
 
                   {openFolderData.soporte && (
                     <div className="flex items-center gap-3 border border-slate-200 rounded-lg px-4 py-3 bg-slate-50/40">
@@ -292,7 +382,7 @@ export function SupportDocuments({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-slate-900 truncate">{openFolderData.soporte.nombre}</p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                          {(openFolderData.soporte.tamanio / 1024).toFixed(1)} KB · {formatDateCO(openFolderData.soporte.createdAt)}
+                          {formatFileSize(openFolderData.soporte.tamanio)} · {formatDateCO(openFolderData.soporte.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -302,8 +392,19 @@ export function SupportDocuments({
 
               {isFolderEditable(openFolder) &&
                 openFolder !== 'Cotizaciones presentadas' &&
-                canUploadManually(openFolder) && (
-                <div className="mt-5 flex items-center justify-end gap-3">
+                canUploadManually(openFolder) &&
+                (openFolderData.attachments.length > 0 || openFolderData.soporte) && (
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, openFolder)}
+                  onClick={() => fileInputRef.current[openFolder]?.click()}
+                  className={`mt-4 border-2 border-dashed rounded-xl px-6 py-6 text-center cursor-pointer transition-all ${
+                    isDragOver
+                      ? 'border-primary bg-primary/5'
+                      : 'border-slate-200 hover:border-primary/50 hover:bg-slate-50'
+                  }`}
+                >
                   <input
                     ref={(el) => { fileInputRef.current[openFolder] = el }}
                     type="file"
@@ -313,18 +414,22 @@ export function SupportDocuments({
                     disabled={uploadingTipo === openFolder}
                     onChange={(e) => handleFileChange(openFolder, e)}
                   />
-                  <button
-                    onClick={() => fileInputRef.current[openFolder]?.click()}
-                    disabled={uploadingTipo === openFolder}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {uploadingTipo === openFolder ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Upload className="w-3.5 h-3.5" />
-                    )}
-                    {uploadingTipo === openFolder ? 'Subiendo...' : isMultiDocument(openFolder) ? 'Cargar documentos' : 'Cargar documento'}
-                  </button>
+                  {uploadingTipo === openFolder ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                      <span className="text-sm font-medium text-primary">Subiendo documentos...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className={`w-6 h-6 mx-auto mb-1.5 ${isDragOver ? 'text-primary' : 'text-slate-400'}`} />
+                      <p className="text-sm font-medium text-slate-600">
+                        {isDragOver ? 'Suelta los archivos aquí' : 'Arrastra archivos aquí o haz clic para agregar'}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {isMultiDocument(openFolder) ? 'Puedes seleccionar varios archivos' : 'Selecciona un archivo'} · PDF, JPG, PNG, XLSX, DOC
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
