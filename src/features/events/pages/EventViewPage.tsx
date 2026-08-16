@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardList, FileSpreadsheet, FolderOpen, Package, Wallet } from 'lucide-react'
+import { ChevronLeft, ArrowLeftCircle, AlertTriangle, CalendarClock, ClipboardList, FileSpreadsheet, FolderOpen, MapPin, Package, Wallet } from 'lucide-react'
 import { ItemManager } from '../components/ItemManager'
 import { QuotationList } from '../components/QuotationList'
 import { SupportDocuments } from '../components/SupportDocuments'
@@ -564,64 +564,102 @@ export function EventViewPage() {
           </div>
         </div>
 
-        <div className="px-6 py-5">
-          <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
-            <div className="bg-white px-4 py-3.5">{label('Número')}{value(event.numeroEvento)}</div>
-            <div className="bg-white px-4 py-3.5">{label('Sufijo')}{value(event.sufijo || '-')}</div>
-            <div className="bg-white px-4 py-3.5">{label('Fecha del evento')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
-            <div className="bg-white px-4 py-3.5">
-              {label('Esquema')}
-              <span className="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded capitalize">{event.esquema}</span>
+        <div className="px-6 py-5 space-y-6">
+          <section>
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <ClipboardList className="w-4 h-4" />
+              </span>
+              <h3 className="text-sm font-semibold text-slate-700">Datos del evento</h3>
             </div>
-            <div className="bg-white px-4 py-3.5">{label('Responsable')}{value(event.responsable || '-')}</div>
-            <div className="bg-white px-4 py-3.5">{label('Dependencia')}{value(event.dependencia || '-')}</div>
-            <div className="bg-white px-4 py-3.5">{label('Asistentes')}{value(String(event.asistentes))}</div>
-            <div className="bg-white px-4 py-3.5">{label('Días')}{value(String(event.dias))}</div>
-            <div className="bg-white px-4 py-3.5">{label('Municipio')}{value(municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId)}</div>
-            <div className="bg-white px-4 py-3.5">{label('Vereda')}{value(event.vereda || '-')}</div>
-            <div className="bg-white px-4 py-3.5">{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
-            <div className="bg-white px-4 py-3.5">{label('Aliado')}{value(aliado?.nombre ?? event.aliadoId)}</div>
-            <div className="bg-white px-4 py-3.5">{label('Recurso disponible')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
-            <div className="bg-white px-4 py-3.5" aria-hidden="true" />
-            <div className="bg-white px-4 py-3.5" aria-hidden="true" />
-          </dl>
+            <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
+              <div className="bg-white px-4 py-3.5">{label('Número')}{value(event.numeroEvento)}</div>
+              <div className="bg-white px-4 py-3.5">{label('Sufijo')}{value(event.sufijo || '-')}</div>
+              <div className="bg-white px-4 py-3.5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>{label('Fecha del evento')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
+                  <div>{label('Días')}{value(String(event.dias))}</div>
+                </div>
+              </div>
+              <div className="bg-white px-4 py-3.5">{label('Responsable')}{value(event.responsable || '-')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Dependencia')}{value(event.dependencia || '-')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Asistentes')}{value(String(event.asistentes))}</div>
+            </dl>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <MapPin className="w-4 h-4" />
+              </span>
+              <h3 className="text-sm font-semibold text-slate-700">Ubicación</h3>
+            </div>
+            <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
+              <div className="bg-white px-4 py-3.5">{label('Municipio')}{value(municipio ? `${municipio.nombre} (${municipio.departamento})` : event.municipioId)}</div>
+              <div className="bg-white px-4 py-3.5">{label('Vereda')}{value(event.vereda || '-')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Coordenadas')}{value(event.latitud && event.longitud ? `${event.latitud}, ${event.longitud}` : 'No registradas')}</div>
+            </dl>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <Wallet className="w-4 h-4" />
+              </span>
+              <h3 className="text-sm font-semibold text-slate-700">Recursos</h3>
+            </div>
+            <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
+              <div className="bg-white px-4 py-3.5">{label('Aliado')}{value(aliado?.nombre ?? event.aliadoId)}</div>
+              <div className="bg-white px-4 py-3.5">{label('Recurso disponible')}{value(desembolso?.nombre ?? event.desembolsoId)}</div>
+              <div className="bg-white px-4 py-3.5">
+                {label('Esquema')}
+                <span className="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-semibold text-primary bg-primary/10 rounded capitalize">{event.esquema}</span>
+              </div>
+              {event.observaciones && (
+                <div className="bg-white px-4 py-3.5 col-span-2 lg:col-span-3">
+                  {label('Observaciones')}
+                  <p className="text-sm text-slate-700 mt-1 leading-relaxed">{event.observaciones}</p>
+                </div>
+              )}
+            </dl>
+          </section>
         </div>
 
-        <div className="border-t border-slate-100 bg-slate-50/30 px-6 py-4">
+        <div className="border-t border-slate-200 bg-slate-50/60 px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Totales</p>
-            <div className="flex items-center gap-8">
+            <p className="inline-flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <Wallet className="w-3.5 h-3.5" />
+              </span>
+              Totales de la orden
+            </p>
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
               <div className="text-right">
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Base</p>
-                <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Base</p>
+                <p className="text-sm font-bold text-slate-900 mt-1 tabular-nums">{formatCurrencyCO(ofertaTotals?.base ?? eventTotals.baseTotal)}</p>
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Impuestos</p>
-                <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Impuestos</p>
+                <p className="text-sm font-bold text-slate-900 mt-1 tabular-nums">{formatCurrencyCO(ofertaTotals?.impuestos ?? eventTotals.impuestosTotal)}</p>
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">FEE</p>
-                <p className="text-sm font-semibold text-slate-900 mt-0.5">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">FEE</p>
+                <p className="text-sm font-bold text-slate-900 mt-1 tabular-nums">{formatCurrencyCO(ofertaTotals?.fee ?? eventTotals.feeTotal)}</p>
               </div>
-              <div className="text-right">
-                <p className="text-[11px] text-primary/70 uppercase tracking-wider font-semibold">Total</p>
-                <p className="text-base font-bold text-primary mt-0.5">{formatCurrencyCO(ofertaTotals?.total ?? 0)}</p>
+              <div className="pl-6 border-l border-slate-200">
+                <div className="text-right">
+                  <p className="text-[11px] font-semibold text-primary/70 uppercase tracking-wider">Total</p>
+                  <p className="text-lg font-extrabold text-primary mt-1 tabular-nums">{formatCurrencyCO(ofertaTotals?.total ?? 0)}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        {event.observaciones && (
-          <div className="border-t border-slate-100 bg-slate-50/30 px-5 py-4">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-1.5">Observaciones</p>
-            <p className="text-sm text-slate-700 leading-relaxed">{event.observaciones}</p>
-          </div>
-        )}
         </div>
       </div>
 
       <div className={activeTab === 'cotizaciones' ? '' : 'hidden'}>
-      <QuotationList
+        <QuotationList
         eventoId={event.id}
         event={event}
         offers={offers}
