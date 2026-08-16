@@ -60,7 +60,6 @@ export function QuotationList({
   const [validateOffer, setValidateOffer] = useState<Offer | null>(null)
   const [approvalFile, setApprovalFile] = useState<File | null>(null)
   const [approvalFileError, setApprovalFileError] = useState<string | null>(null)
-  const [selectedItemIds, setSelectedItemIds] = useState<Record<string, boolean>>({})
   const approvalInputRef = useRef<HTMLInputElement | null>(null)
 
   const eventOffers = useMemo(
@@ -123,7 +122,7 @@ export function QuotationList({
               Listado de cotizaciones
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {eventOffers.length} cotización{eventOffers.length !== 1 ? 'es' : ''} registrada{eventOffers.length !== 1 ? 's' : ''} · se requieren 3 para cerrar el evento
+              {eventOffers.length} cotización{eventOffers.length !== 1 ? 'es' : ''} registrada{eventOffers.length !== 1 ? 's' : ''} · se requieren al menos 3 para cerrar el evento
             </p>
           </div>
         </div>
@@ -269,7 +268,6 @@ export function QuotationList({
                               setApprovalFile(null)
                               setApprovalFileError(null)
                               setConfirmOffer(offer)
-                              setSelectedItemIds(Object.fromEntries(offer.items.map((i) => [i.id, true])))
                             }}
                             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition-colors"
                             title="Aprobar cotización definitiva (2do Aprobador)"
@@ -329,9 +327,8 @@ export function QuotationList({
                 <h3 className="text-lg font-semibold text-slate-900">Aprobar Cotización Definitiva</h3>
                 <p className="text-sm text-slate-500 mt-1">
                   La cotización <strong>{confirmOffer.codigo}</strong> por{' '}
-                  <strong>{formatCurrencyCO(confirmOffer.total)}</strong> será aprobada como definitiva por un segundo
-                  Aprobador. Esta acción la marcará como ganadora, generará el presupuesto final con los ítems
-                  seleccionados y no podrá cambiarse después.
+                  <strong>{formatCurrencyCO(confirmOffer.total)}</strong> será aprobada como definitiva. Esta acción la marcará como ganadora, generará el presupuesto final con todos los ítems de
+                  la cotización y no podrá cambiarse después.
                 </p>
               </div>
               <button
@@ -339,75 +336,12 @@ export function QuotationList({
                   setConfirmOffer(null)
                   setApprovalFile(null)
                   setApprovalFileError(null)
-                  setSelectedItemIds({})
                 }}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
                 aria-label="Cerrar"
               >
                 <X className="w-4 h-4" />
               </button>
-            </div>
-
-            <div className="mt-5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-slate-700">
-                  Ítems que conformarán el presupuesto final
-                </p>
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedItemIds(Object.fromEntries(confirmOffer.items.map((i) => [i.id, true])))
-                    }
-                    className="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors"
-                  >
-                    Todos
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedItemIds({})}
-                    className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    Ninguno
-                  </button>
-                </div>
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Seleccione los ítems de esta cotización que pasarán al presupuesto definitivo.
-              </p>
-              <div className="mt-2 max-h-48 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
-                {confirmOffer.items.map((item) => {
-                  const checked = !!selectedItemIds[item.id]
-                  return (
-                    <label
-                      key={item.id}
-                      className="flex items-start gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) =>
-                          setSelectedItemIds((prev) => ({ ...prev, [item.id]: e.target.checked }))
-                        }
-                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                      />
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-sm text-slate-900 truncate">{item.descripcion}</span>
-                        <span className="block text-xs text-slate-400">
-                          {item.cantidad} und · {formatCurrencyCO(item.valorUnitario)} c/u
-                        </span>
-                      </span>
-                      <span className="text-sm font-semibold text-slate-900 shrink-0">
-                        {formatCurrencyCO(item.total)}
-                      </span>
-                    </label>
-                  )
-                })}
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                {Object.values(selectedItemIds).filter(Boolean).length} de {confirmOffer.items.length} ítems
-                seleccionados
-              </p>
             </div>
 
             <div className="mt-5">
@@ -454,7 +388,6 @@ export function QuotationList({
                   setConfirmOffer(null)
                   setApprovalFile(null)
                   setApprovalFileError(null)
-                  setSelectedItemIds({})
                 }}
                 className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
@@ -463,19 +396,12 @@ export function QuotationList({
               <button
                 onClick={() => {
                   if (approvalFileError || !approvalFile) return
-                  const file = approvalFile ?? undefined
-                  const itemIds = Object.keys(selectedItemIds).filter((k) => selectedItemIds[k])
-                  onSelectOffer?.(confirmOffer.id, file, itemIds.length ? itemIds : undefined)
+                  onSelectOffer?.(confirmOffer.id, approvalFile)
                   setConfirmOffer(null)
                   setApprovalFile(null)
                   setApprovalFileError(null)
-                  setSelectedItemIds({})
                 }}
-                disabled={
-                  !approvalFile ||
-                  !!approvalFileError ||
-                  Object.values(selectedItemIds).filter(Boolean).length === 0
-                }
+                disabled={!approvalFile || !!approvalFileError}
                 className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Aprobar cotización definitiva
