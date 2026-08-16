@@ -408,7 +408,7 @@ export function EventForm({
 
   return (
     <form ref={formTopRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="space-y-6 scroll-mt-4">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden px-6 py-5">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden px-6 py-5">
         <div className="relative">
           <div className="absolute top-4 left-0 right-0 h-1 bg-slate-100 rounded-full" />
           <div
