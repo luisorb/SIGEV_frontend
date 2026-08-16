@@ -460,14 +460,13 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                 {sortHeader('vigencia', 'Vigencia')}
                 {sortHeader('valorReferencia', 'Valor Ref.', 'text-center')}
                 <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">% Ejecución</th>
-                <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">% Participación</th>
                 {sortHeader('estado', 'Estado', 'text-center')}
                 <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-500">No hay recursos disponibles registrados</td></tr>
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No hay recursos disponibles registrados</td></tr>
               ) : (
                 paged.map((d) => {
                   const row = paymentSummary.find((r) => r.disbursementId === d.id)
@@ -482,13 +481,6 @@ function DesembolsosTab({ showToast }: { showToast: (message: string, type?: 'su
                         <span className={row.porcentajeEjecucion > 100 ? 'text-red-600' : 'text-emerald-600'}>
                           {formatPercentage(Math.min(1, row.porcentajeEjecucion / 100))}
                         </span>
-                      ) : (
-                        <span className="text-slate-400">0.00%</span>
-                      )}
-                    </td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-center font-medium tabular-nums">
-                      {row ? (
-                        <span className="text-indigo-600">{formatPercentage(Math.min(1, row.porcentajeParticipacion / 100))}</span>
                       ) : (
                         <span className="text-slate-400">0.00%</span>
                       )}

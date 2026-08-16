@@ -125,7 +125,6 @@ export function PaymentsSection({
   const ejecutado = summaryRow?.ejecutado ?? paidTotal
   const disponible = Math.max(0, valorRef - ejecutado)
   const pctEjecucion = summaryRow?.porcentajeEjecucion ?? (valorRef > 0 ? (ejecutado / valorRef) * 100 : 0)
-  const pctParticipacion = summaryRow?.porcentajeParticipacion ?? 0
 
   const itemLabel = (id: string): string => {
     const item = items.find((i) => i.id === id)
@@ -309,9 +308,6 @@ export function PaymentsSection({
               <div>
                 <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Oferta económica</p>
                 <p className="text-base font-bold text-slate-900">{formatCurrencyCO(ofertaTotal)}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Participación: {formatPercentage(Math.min(1, pctParticipacion / 100))}
-                </p>
               </div>
             </div>
           </div>
