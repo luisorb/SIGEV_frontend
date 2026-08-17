@@ -128,7 +128,7 @@ export function PaymentsSection({
 
   const itemLabel = (id: string): string => {
     const item = items.find((i) => i.id === id)
-    return item?.descripcion || id
+    return item?.nombre || item?.descripcion || id
   }
 
   const selectedTotal = allocations.reduce((sum, a) => {
@@ -193,6 +193,9 @@ export function PaymentsSection({
       for (const a of selected) {
         const v = Number(a.amount)
         if (!Number.isFinite(v) || v <= 0) return 'Los montos por ítem deben ser mayores a cero'
+        const item = items.find((i) => i.id === a.itemId)
+        const pending = Math.max(0, getItemBudget(item, offerBudgetByKey) - (paidByItem.get(a.itemId) ?? 0))
+        if (v > pending + 0.009) return `El monto del ítem "${item?.nombre || item?.descripcion || a.itemId}" excede el saldo pendiente (${formatCurrencyCO(pending)})`
       }
     } else {
       if (!Number.isFinite(amountValue) || amountValue <= 0) {
@@ -403,7 +406,7 @@ export function PaymentsSection({
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-3 text-sm text-slate-700 max-w-[280px] truncate">
-                          {item.descripcion || item.nombre || item.id}
+                          {item.nombre || item.descripcion || item.id}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right whitespace-nowrap">{formatCurrencyCO(budget)}</td>
                         <td className="px-4 py-3 text-sm font-medium text-emerald-600 text-right whitespace-nowrap">{formatCurrencyCO(paidItem)}</td>
@@ -563,7 +566,7 @@ export function PaymentsSection({
                           className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
                         />
                         <span className="flex-1 min-w-[200px] text-sm text-slate-700 truncate">
-                          {item.descripcion || item.nombre || item.id}
+                          {item.nombre || item.descripcion || item.id}
                         </span>
                         <span className="text-xs text-slate-400 whitespace-nowrap bg-slate-100 px-2 py-0.5 rounded-full">
                           Pend: {formatCurrencyCO(pending)}
@@ -576,7 +579,11 @@ export function PaymentsSection({
                           disabled={!allocation?.selected}
                           onChange={(e) => setItemAmount(item.id, e.target.value)}
                           placeholder="0.00"
-                          className="w-40 px-3 py-1.5 text-sm border border-slate-300 rounded-lg disabled:bg-slate-50 disabled:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                          className={`w-40 px-3 py-1.5 text-sm border rounded-lg disabled:bg-slate-50 disabled:text-slate-300 focus:outline-none focus:ring-2 transition-colors ${
+                            allocation?.selected && Number(allocation.amount) > pending + 0.009
+                              ? 'border-red-300 focus:ring-red-300/30 focus:border-red-400 text-red-600'
+                              : 'border-slate-300 focus:ring-primary/30 focus:border-primary'
+                          }`}
                         />
                       </div>
                     )
