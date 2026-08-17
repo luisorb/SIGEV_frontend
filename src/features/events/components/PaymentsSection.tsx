@@ -39,7 +39,6 @@ function getItemBudget(item: Item | undefined, budgetByKey: Map<string, number>)
 
 interface PaymentsSectionProps {
   eventId: string
-  ofertaTotal: number
   defaultDisbursementId?: string
   readOnly?: boolean
   items: Item[]
@@ -54,7 +53,6 @@ interface FormItemAllocation {
 
 export function PaymentsSection({
   eventId,
-  ofertaTotal,
   defaultDisbursementId,
   readOnly,
   items,
@@ -287,27 +285,15 @@ export function PaymentsSection({
       </div>
 
       <div className="px-6 py-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           <div className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 hover:shadow-sm transition-shadow">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-50 rounded-lg">
                 <Wallet className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Valor REF</p>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Valor total recurso</p>
                 <p className="text-base font-bold text-slate-900">{formatCurrencyCO(valorRef)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 hover:shadow-sm transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-50 rounded-lg">
-                <Receipt className="w-4 h-4 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Oferta económica</p>
-                <p className="text-base font-bold text-slate-900">{formatCurrencyCO(ofertaTotal)}</p>
               </div>
             </div>
           </div>
@@ -318,7 +304,7 @@ export function PaymentsSection({
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
               </div>
               <div className="flex-1">
-                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Ejecutado</p>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Ejecutado (pagos registrados)</p>
                 <p className="text-base font-bold text-emerald-600">{formatCurrencyCO(ejecutado)}</p>
               </div>
             </div>
@@ -339,7 +325,7 @@ export function PaymentsSection({
                 <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Saldo disponible</p>
                 <p className={`text-base font-bold ${disponible > 0 ? 'text-slate-900' : 'text-slate-400'}`}>{formatCurrencyCO(disponible)}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  {payments.length === 0 ? 'Sin pagos' : `${payments.length} pago${payments.length !== 1 ? 's' : ''}`}
+                  {payments.length === 0 ? 'Sin pagos registrados' : `${payments.filter((p) => p.status !== 'Anulado').length} pago${payments.filter((p) => p.status !== 'Anulado').length !== 1 ? 's' : ''} registrado${payments.filter((p) => p.status !== 'Anulado').length !== 1 ? 's' : ''}`}
                 </p>
               </div>
             </div>
@@ -357,7 +343,7 @@ export function PaymentsSection({
             }`}
           >
             <Banknote className="w-3.5 h-3.5" />
-            Cuánto se debe
+            Pendiente por pagar
             <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full ${
               activeTab === 'debe' ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'
             }`}>

@@ -739,7 +739,6 @@ export function EventViewPage() {
       <div className={activeTab === 'pagos' ? '' : 'hidden'}>
         <PaymentsSection
           eventId={event.id}
-          ofertaTotal={ofertaTotals?.total ?? 0}
           defaultDisbursementId={event.desembolsoId}
           readOnly={TERMINAL_STATES.includes(displayEstado)}
           items={event.items ?? []}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import {
-  X, FileUp, Save, Loader2, Receipt, FileText, Download, CheckCircle2, AlertCircle, FileCheck2,
+  X, FileUp, Save, Loader2, Receipt, FileText, Download, CheckCircle2, AlertCircle, FileCheck2, AlertTriangle,
 } from 'lucide-react'
 import type { Event, TaxCategory, Attachment, ItemInput } from '../../../types'
 import { TAX_CATEGORIES } from '../../../config/constants'
@@ -15,6 +15,7 @@ import {
   downloadAttachment,
 } from '../../../services/attachments.service'
 import { useActiveCalculationParams } from '../../../hooks/useActiveCalculationParams'
+import { useDisbursements } from '../../../hooks/useDisbursements'
 import type { Offer, OfferItem, OfferInput, OfferItemInput } from '../../offers/types'
 import { CLIENTE_OFERTA_DEFAULT } from '../../offers/types'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
@@ -73,6 +74,7 @@ export function QuotationRegistrationModal({
   onSaved,
 }: QuotationRegistrationModalProps) {
   const params = useActiveCalculationParams()
+  const { data: desembolsos = [] } = useDisbursements({ all: true })
   const isEditing = Boolean(editingOffer)
 
   const [items, setItems] = useState<QuotationItemForm[]>(() => {
@@ -215,6 +217,11 @@ export function QuotationRegistrationModal({
     (it) => it.isTariffed && it.tariffId && tariffPrices[it.tariffId] === undefined,
   )
 
+  const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
+  const valorReferencia = desembolso?.valorReferencia ?? 0
+  const cotizacionTotal = summary.eventTotals.granTotal
+  const excedeRecurso = valorReferencia > 0 && cotizacionTotal > valorReferencia + 0.009
+
   function toggleAllItems(selected: boolean) {
     setItems((prev) => prev.map((it) => ({ ...it, selected })))
     setError(null)
@@ -239,6 +246,9 @@ export function QuotationRegistrationModal({
         }
         return `Ingrese el valor unitario negociado del ítem "${label}"`
       }
+    }
+    if (valorReferencia > 0 && cotizacionTotal > valorReferencia + 0.009) {
+      return `El valor total de la cotización (${formatCurrencyCO(cotizacionTotal)}) excede el valor del recurso disponible (${formatCurrencyCO(valorReferencia)}). Reduzca los valores o ítems de la cotización.`
     }
     if (!isEditing && !file) {
       return 'El documento soporte del proveedor es obligatorio'
@@ -632,6 +642,22 @@ export function QuotationRegistrationModal({
                   ? 'Marque al menos un ítem en la columna «Aplica» para ver el resumen de la cotización.'
                   : 'Resumen calculado con los valores actuales. El total definitivo se consolida al guardar la cotización.'}
             </p>
+            {valorReferencia > 0 && selectedCount > 0 && (
+              <div className={`mt-3 flex items-start gap-2 text-xs px-3 py-2.5 rounded-lg ${
+                excedeRecurso
+                  ? 'bg-red-50 text-red-700 border border-red-200'
+                  : cotizacionTotal > valorReferencia * 0.9
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-slate-50 text-slate-500 border border-slate-200'
+              }`}>
+                {excedeRecurso ? <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                <span>
+                  {excedeRecurso
+                    ? `El total de la cotización (${formatCurrencyCO(cotizacionTotal)}) supera el valor del recurso disponible (${formatCurrencyCO(valorReferencia)}). No podrá guardarse.`
+                    : `Recurso disponible: ${formatCurrencyCO(valorReferencia)}. Saldo restante: ${formatCurrencyCO(Math.max(0, valorReferencia - cotizacionTotal))}.`}
+                </span>
+              </div>
+            )}
           </section>
 
           <section>
