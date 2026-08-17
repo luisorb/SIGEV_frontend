@@ -33,3 +33,14 @@ export async function markAllNotificationsReadApi(): Promise<{ count: number }> 
 export async function deleteNotificationApi(id: string): Promise<void> {
   await api.delete(`/api/v1/notifications/${id}`)
 }
+
+export interface CreateNotificationDto {
+  type: string
+  message: string
+  eventId: string
+}
+
+export async function createNotificationApi(dto: CreateNotificationDto): Promise<NotificationItem> {
+  const response = await api.post<NotificationItem>('/api/v1/notifications', dto)
+  return response.data
+}

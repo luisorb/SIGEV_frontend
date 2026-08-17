@@ -5,6 +5,8 @@ import {
   markNotificationReadApi,
   markAllNotificationsReadApi,
   deleteNotificationApi,
+  createNotificationApi,
+  type CreateNotificationDto,
 } from '../services/notifications.service'
 
 const NOTIFICATIONS_KEY = ['notifications']
@@ -52,6 +54,17 @@ export function useDeleteNotification() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => deleteNotificationApi(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY })
+      qc.invalidateQueries({ queryKey: UNREAD_KEY })
+    },
+  })
+}
+
+export function useCreateNotification() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreateNotificationDto) => createNotificationApi(dto),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY })
       qc.invalidateQueries({ queryKey: UNREAD_KEY })

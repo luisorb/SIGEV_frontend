@@ -15,6 +15,7 @@ const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   QUOTATION_APPROVED: 'Aprobación definitiva',
   EVENT_REJECTED: 'Orden rechazada',
   EVENT_RETURNED: 'Orden devuelta',
+  ITEMS_ADDED: 'Ítems agregados',
 }
 
 function formatRelativeTime(value: string): string {

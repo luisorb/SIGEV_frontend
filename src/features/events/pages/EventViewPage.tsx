@@ -22,6 +22,7 @@ import { getAuditByEntityApi } from '../../../services/audit.service'
 import { useToast } from '../../../components/ToastProvider'
 import { downloadAttachment, uploadAttachmentApi, deleteAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
+import { useCreateNotification } from '../../../hooks/useNotifications'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
 import { SOPORTES_MODIFICABLES } from '../../../types'
 import type { Event, EventState, TipoSoporte, Attachment, Item, ItemInput } from '../../../types'
@@ -57,6 +58,7 @@ export function EventViewPage() {
   const toast = useToast()
   const queryClient = useQueryClient()
   const { can: userCan } = useRolePermissions()
+  const createNotification = useCreateNotification()
   const { allQuotations: offers, selectQuotation, validateQuotation } = useQuotations()
 
   const { data: event, isLoading } = useQuery({
@@ -264,6 +266,13 @@ export function EventViewPage() {
     try {
       await persistItems(addItem(item))
       toast.showToast('Ítem agregado correctamente')
+      if (event.estado === 'Abierto') {
+        createNotification.mutate({
+          type: 'ITEMS_ADDED',
+          message: `Se agregaron ítems a la orden ${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''} en estado Abierto`,
+          eventId: event.id,
+        })
+      }
     } catch (error) {
       toast.showToast(getApiErrorMessage(error, 'No se pudo agregar el ítem'), 'error')
     }
