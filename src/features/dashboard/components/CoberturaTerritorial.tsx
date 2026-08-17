@@ -1,10 +1,9 @@
 import { MapPin } from 'lucide-react'
-import { Treemap, ResponsiveContainer, Tooltip } from 'recharts'
-import type { ReactElement } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer, LabelList } from 'recharts'
 import type { CoberturaItem } from '../types'
 import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
 
-const COLORS = ['#f43340', '#EAB308', '#22C55E', '#6366F1', '#F97316', '#EC4899', '#14B8A6', '#A855F7']
+const COLORS = ['#6366F1', '#3B82F6', '#14B8A6', '#22C55E', '#EAB308', '#F97316', '#EC4899', '#A855F7']
 
 interface CoberturaTerritorialProps {
   rows: CoberturaItem[]
@@ -30,55 +29,52 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
       <p className="text-slate-500">{d.departamento}</p>
       <p className="text-slate-600">Valor: {formatCurrencyCO(d.valorTotal)}</p>
       <p className="text-slate-600">Eventos: {d.cantidadEventos}</p>
-      <p className="text-slate-600">Participación: {formatPercentage(d.porcentaje)}</p>
+      <p className="text-slate-600">Participacion: {formatPercentage(d.porcentaje)}</p>
     </div>
   )
 }
 
-interface TreemapContentProps {
-  x: number
-  y: number
-  width: number
-  height: number
-  index: number
-  municipio: string
-  cantidadEventos: number
-  valorTotal: number
-}
+function CustomBarShape(props: Record<string, unknown>) {
+  const { x, y, width, height, index } = props as {
+    x: number; y: number; width: number; height: number; index: number
+  }
+  const radius = 4
+  const color = COLORS[(index as number) % COLORS.length]
 
-function TreemapContent({ x, y, width, height, index, municipio, cantidadEventos }: TreemapContentProps) {
-  if (width < 20 || height < 20) return null
+  if (!width || !height) return null
+
   return (
     <g>
+      <defs>
+        <linearGradient id={`barGrad-${index}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={color} stopOpacity={0.7} />
+          <stop offset="100%" stopColor={color} stopOpacity={1} />
+        </linearGradient>
+      </defs>
       <rect
         x={x}
         y={y}
         width={width}
         height={height}
-        fill={COLORS[index % COLORS.length]}
-        rx={4}
-        ry={4}
-        opacity={0.85}
+        fill={`url(#barGrad-${index})`}
+        rx={0}
+        ry={0}
       />
-      <text
-        x={x + width / 2}
-        y={y + height / 2 - 4}
-        textAnchor="middle"
-        fill="white"
-        fontSize={width < 60 ? 9 : 11}
-        fontWeight={600}
-      >
-        {municipio}
-      </text>
-      <text
-        x={x + width / 2}
-        y={y + height / 2 + 12}
-        textAnchor="middle"
-        fill="rgba(255,255,255,0.85)"
-        fontSize={9}
-      >
-        {cantidadEventos} eventos
-      </text>
+      <rect
+        x={x + width - radius}
+        y={y}
+        width={radius}
+        height={height}
+        fill={`url(#barGrad-${index})`}
+      />
+      <path
+        d={`M ${x + width - radius} ${y} Q ${x + width} ${y} ${x + width} ${y + radius}`}
+        fill={color}
+      />
+      <path
+        d={`M ${x + width - radius} ${y + height} Q ${x + width} ${y + height} ${x + width} ${y + height - radius}`}
+        fill={color}
+      />
     </g>
   )
 }
@@ -91,8 +87,9 @@ export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
     cantidadEventos: r.cantidadEventos,
     valorTotal: r.valorTotal,
     porcentaje: r.porcentaje,
-    size: r.valorTotal,
   }))
+
+  const maxValue = Math.max(...data.map((d) => d.valorTotal), 0)
 
   return (
     <div className="bg-white rounded-xl border border-slate-200">
@@ -107,22 +104,54 @@ export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
         </div>
       ) : (
         <div className="p-5">
-          <ResponsiveContainer width="100%" height={260}>
-            <Treemap
+          <ResponsiveContainer width="100%" height={Math.max(rows.length * 44, 120)}>
+            <BarChart
               data={data}
-              dataKey="size"
-              aspectRatio={4 / 3}
-              stroke="rgba(255,255,255,0.3)"
-              content={TreemapContent as unknown as (props: unknown) => ReactElement}
+              layout="vertical"
+              margin={{ top: 2, right: 60, left: 0, bottom: 2 }}
+              barCategoryGap="20%"
             >
-              <Tooltip content={<CustomTooltip />} />
-            </Treemap>
+              <XAxis
+                type="number"
+                hide
+                domain={[0, maxValue * 1.15]}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={110}
+                tick={{ fontSize: 11, fill: '#475569', fontWeight: 500 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: 'rgba(99, 102, 241, 0.04)' }}
+              />
+              <Bar
+                dataKey="valorTotal"
+                shape={<CustomBarShape />}
+                barSize={24}
+                radius={[0, 4, 4, 0]}
+              >
+                {data.map((_, index) => (
+                  <Cell key={`cell-${index}`} />
+                ))}
+                <LabelList
+                  dataKey="porcentaje"
+                  position="right"
+                  formatter={(v: number) => formatPercentage(v)}
+                  style={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
+                  offset={8}
+                />
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-3">
             {rows.map((row, i) => (
               <div key={row.municipioId} className="flex items-center gap-1.5 text-xs">
                 <span
-                  className="w-2.5 h-2.5 rounded-sm shrink-0"
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: COLORS[i % COLORS.length] }}
                 />
                 <span className="text-slate-600">{row.municipio}</span>

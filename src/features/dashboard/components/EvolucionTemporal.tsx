@@ -18,11 +18,28 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   const d = payload[0].payload
   if (!d) return null
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 text-xs space-y-1">
+    <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 text-xs space-y-1.5">
       <p className="font-semibold text-slate-900">{label ?? d.mes}</p>
-      <p className="text-slate-600">Eventos: {d.cantidadEventos}</p>
-      <p className="text-slate-600">Valor: {formatCurrencyCO(d.valorTotal)}</p>
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-indigo-500" />
+        <span className="text-slate-600">Eventos: <span className="font-medium text-slate-900">{d.cantidadEventos}</span></span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+        <span className="text-slate-600">Valor: <span className="font-medium text-slate-900">{formatCurrencyCO(d.valorTotal)}</span></span>
+      </div>
     </div>
+  )
+}
+
+function ActiveDot(props: Record<string, unknown>) {
+  const { cx, cy } = props as { cx?: number; cy?: number }
+  if (cx == null || cy == null) return null
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={6} fill="#10b981" opacity={0.15} />
+      <circle cx={cx} cy={cy} r={3.5} fill="#10b981" stroke="#fff" strokeWidth={2} />
+    </g>
   )
 }
 
@@ -46,8 +63,8 @@ export function EvolucionTemporal({ rows }: EvolucionTemporalProps) {
             <ComposedChart data={rows} margin={{ top: 8, right: 4, left: 8, bottom: 0 }}>
               <defs>
                 <linearGradient id="fillValorTemporal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f43340" stopOpacity={0.22} />
-                  <stop offset="95%" stopColor="#f43340" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.18} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -74,33 +91,35 @@ export function EvolucionTemporal({ rows }: EvolucionTemporalProps) {
                 tickLine={false}
                 width={36}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99, 102, 241, 0.04)' }} />
               <Bar
                 yAxisId="eventos"
                 dataKey="cantidadEventos"
                 name="Eventos"
                 barSize={18}
                 radius={[4, 4, 0, 0]}
-                fill="#E2E8F0"
+                fill="#818cf8"
               />
               <Area
                 yAxisId="valor"
                 type="monotone"
                 dataKey="valorTotal"
                 name="Valor"
-                stroke="#f43340"
+                stroke="#10b981"
                 strokeWidth={2.5}
                 fill="url(#fillValorTemporal)"
+                dot={<ActiveDot />}
+                activeDot={{ r: 5, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
               />
             </ComposedChart>
           </ResponsiveContainer>
           <div className="flex items-center justify-center gap-6 mt-3 text-xs">
             <span className="flex items-center gap-1.5 text-slate-600">
-              <span className="w-3 h-0.5 rounded" style={{ backgroundColor: '#f43340' }} />
+              <span className="w-3 h-0.5 rounded" style={{ backgroundColor: '#10b981' }} />
               Valor total por mes
             </span>
             <span className="flex items-center gap-1.5 text-slate-600">
-              <span className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: '#E2E8F0' }} />
+              <span className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: '#818cf8' }} />
               Eventos registrados
             </span>
           </div>

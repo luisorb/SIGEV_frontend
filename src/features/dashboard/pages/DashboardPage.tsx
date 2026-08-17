@@ -99,7 +99,6 @@ export function DashboardPage() {
             <ConsolidadoAliado rows={consolidadoAliado} />
           </div>
           <EvolucionTemporal rows={tendenciaMensual} />
-          <CoberturaTerritorial rows={coberturaTerritorial} />
         </div>
         <div className="space-y-6">
           <NumeroEventosCard
@@ -111,6 +110,7 @@ export function DashboardPage() {
             aliados={aliados}
             desembolsos={desembolsos}
           />
+          <CoberturaTerritorial rows={coberturaTerritorial} />
         </div>
       </div>
     </div>
