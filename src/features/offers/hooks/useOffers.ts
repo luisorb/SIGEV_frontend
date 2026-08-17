@@ -29,6 +29,8 @@ export function usePermissions(): {
 
 export function useOffers() {
   const [search, setSearch] = useState('')
+  const { user } = useAuth()
+  const isSolicitante = user?.roleNames.includes('solicitante') ?? false
 
   const { data: offers = [], isLoading, error } = useQuery({
     queryKey: OFFERS_KEY,
@@ -38,19 +40,25 @@ export function useOffers() {
     },
   })
 
+  const visibleOffers = useMemo(() => {
+    if (!isSolicitante) return offers
+    const userName = user?.nombre ?? ''
+    return offers.filter((o) => o.responsable === userName)
+  }, [offers, isSolicitante, user?.nombre])
+
   const filteredOffers = useMemo(() => {
-    if (!search) return offers
+    if (!search) return visibleOffers
     const q = search.toLowerCase()
-    return offers.filter(
+    return visibleOffers.filter(
       (o) =>
         o.codigo.toLowerCase().includes(q) ||
         (o.numeroEvento ?? '').toLowerCase().includes(q) ||
         (o.cliente ?? '').toLowerCase().includes(q)
     )
-  }, [offers, search])
+  }, [visibleOffers, search])
 
   function getOffer(id: string): Offer | undefined {
-    return offers.find((o) => o.id === id)
+    return visibleOffers.find((o) => o.id === id)
   }
 
   function handleExport(offerId: string) {

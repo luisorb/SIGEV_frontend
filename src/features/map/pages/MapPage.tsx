@@ -5,6 +5,7 @@ import { getMunicipalityStatsApi, searchMunicipalitiesApi } from '../../../servi
 import type { MunicipalityResponse } from '../../../services/map.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
+import { useAuth } from '../../auth/useAuth'
 import { EVENT_STATES } from '../../../config/constants'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 import { MapPin, SlidersHorizontal, X, AlertTriangle, RotateCcw, Loader2 } from 'lucide-react'
@@ -12,6 +13,8 @@ import { MapPin, SlidersHorizontal, X, AlertTriangle, RotateCcw, Loader2 } from 
 export function MapPage() {
   const { data: aliados = [] } = useAllies({ all: true })
   const { data: desembolsos = [] } = useDisbursements()
+  const { user } = useAuth()
+  const isSolicitante = user?.roleNames.includes('solicitante') ?? false
 
   const [selectedDesembolso, setSelectedDesembolso] = useState('')
   const [selectedAliado, setSelectedAliado] = useState('')
@@ -35,6 +38,18 @@ export function MapPage() {
   })
 
   const groups = useMemo(() => statsQuery.data ?? [], [statsQuery.data])
+
+  const groupsByRole = useMemo(() => {
+    if (!isSolicitante) return groups
+    const userName = user?.nombre ?? ''
+    return groups
+      .map((g) => ({
+        ...g,
+        eventos: g.eventos.filter((e) => e.responsable === userName),
+      }))
+      .filter((g) => g.eventos.length > 0)
+      .map((g) => ({ ...g, totalEventos: g.eventos.length }))
+  }, [groups, isSolicitante, user?.nombre])
 
   useEffect(() => {
     if (selectedMunicipio) return
@@ -66,10 +81,10 @@ export function MapPage() {
   }, [])
 
   const visibleGroups = useMemo(() => {
-    if (!selectedMunicipio) return groups
+    if (!selectedMunicipio) return groupsByRole
     const id = selectedMunicipio.divipolaCode ?? selectedMunicipio.id
-    return groups.filter((g) => g.municipioId === id)
-  }, [groups, selectedMunicipio])
+    return groupsByRole.filter((g) => g.municipioId === id)
+  }, [groupsByRole, selectedMunicipio])
 
   const aliadosMap = useMemo(() => {
     const m: Record<string, { nombre: string; color: string }> = {}
