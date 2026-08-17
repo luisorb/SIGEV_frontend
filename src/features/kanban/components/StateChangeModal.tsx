@@ -12,7 +12,7 @@ const stateConfig: Record<string, { label: string; color: string; bg: string; ri
   Cancelado: { label: 'Cancelado', color: 'text-rose-700', bg: 'bg-rose-50', ring: 'ring-rose-300', icon: 'bg-rose-500' },
 }
 
-function getTransitionMeta(from: string, to: string) {
+function getTransitionMeta(_from: string, to: string) {
   if (to === 'Cancelado') {
     return {
       type: 'reject' as const,

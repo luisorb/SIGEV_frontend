@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { EventMapGroup } from '../types'
@@ -124,61 +124,6 @@ function buildPopupHtml(
   `
 }
 
-function buildGroupPopupHtml(
-  group: EventMapGroup,
-  aliadosMap: Record<string, { nombre: string; color: string }>,
-): string {
-  const summaryByState: Record<string, number> = {}
-  for (const ev of group.eventos) {
-    summaryByState[ev.estado] = (summaryByState[ev.estado] || 0) + 1
-  }
-
-  const stateBadges = Object.entries(summaryByState)
-    .map(([estado, count]) => {
-      const color = stateHexColors[estado] || '#64748b'
-      return `<span style="
-        display: inline-flex; align-items: center; gap: 3px;
-        font-size: 11px; font-weight: 500; color: white;
-        background: ${color}; padding: 2px 7px; border-radius: 999px;
-      "><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.7)"></span>${escapeHtml(estado)} <strong>${count}</strong></span>`
-    })
-    .join(' ')
-
-  return `
-    <div style="font-family: system-ui, sans-serif; min-width: 240px; padding: 6px 6px 4px 6px;">
-      <div style="
-        font-size: 14px; font-weight: 700; color: #0f172a;
-        padding-bottom: 8px; margin-bottom: 8px;
-        border-bottom: 1px solid #e2e8f0;
-        display: flex; align-items: center; gap: 6px;
-        padding-right: 28px;
-      ">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-        </svg>
-        <span>${escapeHtml(group.municipioNombre)}</span>
-        <span style="font-weight: 400; color: #64748b; font-size: 11px;">${escapeHtml(group.departamento)}</span>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
-        <div style="display: flex; justify-content: space-between;">
-          <span style="font-size: 12px; color: #64748b;">Eventos</span>
-          <span style="font-size: 13px; font-weight: 700; color: #0f172a;">${group.totalEventos}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span style="font-size: 12px; color: #64748b;">Valor total</span>
-          <span style="font-size: 13px; font-weight: 700; color: #0f172a;">${formatCurrencyCO(group.totalValor)}</span>
-        </div>
-      </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-        ${stateBadges}
-      </div>
-      <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center;">
-        Haz click en los marcadores individuales para ver detalles
-      </div>
-    </div>
-  `
-}
-
 function addResetControl(map: L.Map) {
   const ResetControl = L.Control.extend({
     onAdd: function () {
@@ -205,7 +150,6 @@ function clusterNearbyMarkers(
   markersRef: L.Layer[],
 ): void {
   const POINT_RADIUS = 0.005
-  const clustered = new Set<string>()
 
   for (const group of groups) {
     const allEvents = group.eventos.filter(
@@ -271,10 +215,6 @@ export function ExecutionMap({ groups, aliadosMap }: ExecutionMapProps) {
   const mapRef = useRef<L.Map | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const markersRef = useRef<L.Layer[]>([])
-
-  const resetView = useCallback(() => {
-    mapRef.current?.flyTo([MAP_CENTER.lat, MAP_CENTER.lng], MAP_ZOOM, { duration: 0.8 })
-  }, [])
 
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return

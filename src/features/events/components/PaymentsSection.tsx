@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Banknote, Plus, Upload, Download, X, FileText, Wallet, TrendingUp, PiggyBank, Receipt, ChevronRight, Clock } from 'lucide-react'
+import { Banknote, Plus, Upload, Download, FileText, Wallet, TrendingUp, PiggyBank, Receipt } from 'lucide-react'
 import { usePayments, usePaymentsSummary, useCreatePayment } from '../../../hooks/usePayments'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useRolePermissions } from '../../auth/useRolePermissions'
