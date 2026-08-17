@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Banknote, Plus, Upload, Download, FileText, Wallet, TrendingUp, PiggyBank, Receipt } from 'lucide-react'
+import { Banknote, Plus, Upload, Download, FileText, Wallet, TrendingUp, PiggyBank, Receipt, AlertCircle } from 'lucide-react'
 import { usePayments, usePaymentsSummary, useCreatePayment } from '../../../hooks/usePayments'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useRolePermissions } from '../../auth/useRolePermissions'
@@ -109,6 +109,8 @@ export function PaymentsSection({
   const [activeTab, setActiveTab] = useState<'debe' | 'pagos'>('debe')
 
   const canManage = !readOnly && userCan('functional_admin', 'operator')
+  const hasApprovedOffer = useMemo(() => (offerItems ?? []).length > 0, [offerItems])
+  const [showNoOfferModal, setShowNoOfferModal] = useState(false)
 
   const summaryRow = defaultDisbursementId
     ? summary.find((r) => r.disbursementId === defaultDisbursementId)
@@ -275,7 +277,13 @@ export function PaymentsSection({
         </div>
         {canManage && !showForm && (
           <button
-            onClick={openForm}
+            onClick={() => {
+              if (!hasApprovedOffer) {
+                setShowNoOfferModal(true)
+                return
+              }
+              openForm()
+            }}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -700,6 +708,28 @@ export function PaymentsSection({
           )
         )}
       </div>
+
+      {showNoOfferModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-2 bg-amber-100 rounded-xl mb-3">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+              </div>
+              <h3 className="text-base font-semibold text-slate-900">Oferta económica requerida</h3>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+                El evento debe contar con oferta económica aprobada antes de registrar pagos
+              </p>
+              <button
+                onClick={() => setShowNoOfferModal(false)}
+                className="mt-5 px-4 py-1.5 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
