@@ -140,7 +140,7 @@ export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
                 <LabelList
                   dataKey="porcentaje"
                   position="right"
-                  formatter={(v: number) => formatPercentage(v)}
+                  formatter={(v) => formatPercentage(Number(v))}
                   style={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
                   offset={8}
                 />
