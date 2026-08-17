@@ -24,13 +24,15 @@ interface NavItem {
   roles?: readonly string[]
 }
 
+const ALL_ROLES_EXCEPT_SOLICITANTE = ['technical_admin', 'functional_admin', 'approver', 'operator', 'analista', 'supervisor', 'auditor', 'consulta'] as const
+
 const navItems: NavItem[] = [
   { label: 'Panel', to: '/', icon: LayoutDashboard },
   { label: 'Órdenes', to: '/ordenes', icon: ClipboardList },
   { label: 'Ofertas Económicas', to: '/ofertas', icon: FileSpreadsheet },
-  { label: 'Matriz de Ejecución', to: '/matriz', icon: Table2 },
-  { label: 'Tablero', to: '/tablero', icon: KanbanSquare },
-  { label: 'Mapa', to: '/mapa', icon: Map },
+  { label: 'Matriz de Ejecución', to: '/matriz', icon: Table2, roles: ALL_ROLES_EXCEPT_SOLICITANTE },
+  { label: 'Tablero', to: '/tablero', icon: KanbanSquare, roles: ALL_ROLES_EXCEPT_SOLICITANTE },
+  { label: 'Mapa', to: '/mapa', icon: Map, roles: ALL_ROLES_EXCEPT_SOLICITANTE },
   { label: 'Parámetros', to: '/parametros', icon: Settings, roles: ['functional_admin'] },
   { label: 'Usuarios', to: '/usuarios', icon: Users, roles: ['technical_admin'] },
   { label: 'Respaldo', to: '/respaldo', icon: DatabaseBackup, roles: ['technical_admin'] },
