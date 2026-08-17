@@ -1,3 +1,5 @@
+import type { EventState } from '../../../types'
+
 export interface DashboardFiltersState {
   periodoInicio: string
   periodoFin: string
@@ -40,4 +42,25 @@ export interface EventoIncompleto {
   sufijo: string
   responsable: string
   motivo: string
+}
+
+export interface EstadoRow {
+  estado: EventState
+  cantidadEventos: number
+  valorTotal: number
+}
+
+export interface TendenciaMes {
+  key: string
+  mes: string
+  cantidadEventos: number
+  valorTotal: number
+}
+
+export interface ComposicionTotal {
+  base: number
+  impuestos: number
+  fee: number
+  ivaFee: number
+  total: number
 }

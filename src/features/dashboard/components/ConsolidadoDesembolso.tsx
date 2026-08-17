@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { Banknote } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { ConsolidadoRow } from '../types'
 import type { PaymentSummaryRow } from '../../../services/payments.service'
-import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
-const COLORS = ['#f43340', '#EAB308', '#22C55E', '#6366F1', '#F97316', '#EC4899']
+import { formatCurrencyCO, formatCurrencyCOCompact, formatPercentage } from '../../../utils/formatters'
+const COLORS = ['#3B82F6', '#F59E0B', '#22C55E', '#8B5CF6', '#EC4899', '#F97316']
 
 interface ConsolidadoDesembolsoProps {
   rows: ConsolidadoRow[]
@@ -30,6 +31,9 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
 }
 
 export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: ConsolidadoDesembolsoProps) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const total = rows.reduce((sum, r) => sum + r.valorTotal, 0)
+
   return (
     <div className="bg-white rounded-xl border border-slate-200">
       <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-200">
@@ -42,27 +46,45 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
         </div>
       ) : (
         <div className="p-5">
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={rows}
-                dataKey="valorTotal"
-                nameKey="nombre"
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={90}
-                paddingAngle={3}
-                strokeWidth={0}
-              >
-                {rows.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex flex-wrap justify-center gap-4 mt-3">
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={rows}
+                  dataKey="valorTotal"
+                  nameKey="nombre"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={92}
+                  paddingAngle={2}
+                  strokeWidth={2}
+                  stroke="#ffffff"
+                  onMouseEnter={(_, index) => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  {rows.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            {hoveredIndex === null && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-slate-900 tabular-nums leading-tight">
+                    {formatCurrencyCOCompact(total)}
+                  </p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
+                    Total ejecutado
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-4">
             {rows.map((row, i) => (
               <div key={row.id} className="flex items-center gap-1.5 text-xs">
                 <span
@@ -76,31 +98,22 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
           </div>
 
           {paymentSummary.length > 0 && (
-            <div className="mt-5 border-t border-slate-100 pt-4 space-y-3">
+            <div className="mt-5 border-t border-slate-100 pt-4 space-y-4">
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Indicadores por recurso disponible (≤100%)
+                Ejecución financiera por recurso disponible
               </p>
               {paymentSummary.map((row) => {
                 const pctEjecucion = row.porcentajeEjecucion ?? row.percentage * 100
-                const pctParticipacion = row.porcentajeParticipacion ?? 0
                 return (
                   <div key={row.disbursementId} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600 font-medium">
-                        {row.name}
-                      </span>
-                      <span className="text-slate-500">
+                      <span className="text-slate-600 font-medium">{row.name}</span>
+                      <span className="text-slate-500 tabular-nums">
                         {formatCurrencyCO(row.paid)} de {formatCurrencyCO(row.amount)}
                       </span>
                     </div>
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] mb-0.5">
-                        <span className="text-slate-400">% Ejecución financiera</span>
-                        <span className="font-semibold text-slate-700">
-                          {formatPercentage(Math.min(1, pctEjecucion / 100))}
-                        </span>
-                      </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-300"
                           style={{
@@ -109,23 +122,9 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
                           }}
                         />
                       </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] mb-0.5">
-                        <span className="text-slate-400">% Participación de eventos</span>
-                        <span className="font-semibold text-slate-700">
-                          {formatPercentage(Math.min(1, pctParticipacion / 100))}
-                        </span>
-                      </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{
-                            width: `${Math.min(100, Math.max(0, pctParticipacion))}%`,
-                            backgroundColor: pctParticipacion > 100 ? '#f43340' : '#6366F1',
-                          }}
-                        />
-                      </div>
+                      <span className="text-xs font-semibold text-slate-700 w-12 text-right tabular-nums">
+                        {formatPercentage(Math.min(1, pctEjecucion / 100))}
+                      </span>
                     </div>
                   </div>
                 )

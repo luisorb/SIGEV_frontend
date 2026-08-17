@@ -1,9 +1,19 @@
 import { useState, useMemo } from 'react'
 import type { Event, Ally, Disbursement, Municipality, EventState } from '../../../types'
-import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow, CoberturaItem, EventoIncompleto } from '../types'
+import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow, CoberturaItem, EventoIncompleto, EstadoRow, TendenciaMes, ComposicionTotal } from '../types'
 import { getEventEconomics } from '../../../utils/eventEconomics'
+import { EVENT_STATES } from '../../../config/constants'
 
 const ESTADOS_EN_EJECUCION: EventState[] = ['En ejecución', 'Ejecutado', 'Cerrado', 'Legalizado']
+
+function formatMonthLabel(key: string): string {
+  const [year, month] = key.split('-').map(Number)
+  const label = new Date(year, month - 1, 1).toLocaleDateString('es-CO', {
+    month: 'short',
+    year: '2-digit',
+  })
+  return label.replace('.', '')
+}
 
 function isEventoAprobadoOEnEjecucion(event: Event): boolean {
   if (event.cotizacionSeleccionadaId) return true
@@ -213,6 +223,72 @@ export function useDashboard(
     return result
   }, [filteredEvents])
 
+  const seguimientoPorEstado = useMemo<EstadoRow[]>(() => {
+    const groups: Record<string, EstadoRow> = {}
+
+    for (const event of filteredEvents) {
+      if (!groups[event.estado]) {
+        groups[event.estado] = {
+          estado: event.estado,
+          cantidadEventos: 0,
+          valorTotal: 0,
+        }
+      }
+      groups[event.estado].cantidadEventos++
+      groups[event.estado].valorTotal += getEventEconomics(event).total
+    }
+
+    const rows = EVENT_STATES.map((estado) => groups[estado] ?? {
+      estado,
+      cantidadEventos: 0,
+      valorTotal: 0,
+    })
+    return rows
+  }, [filteredEvents])
+
+  const tendenciaMensual = useMemo<TendenciaMes[]>(() => {
+    const groups = new Map<string, { cantidadEventos: number; valorTotal: number }>()
+
+    for (const event of filteredEvents) {
+      const dateStr = event.fechaEvento || event.createdAt?.slice(0, 10) || ''
+      if (!dateStr) continue
+      const d = new Date(dateStr.length === 10 ? `${dateStr}T00:00:00` : dateStr)
+      if (Number.isNaN(d.getTime())) continue
+
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const current = groups.get(key) ?? { cantidadEventos: 0, valorTotal: 0 }
+      current.cantidadEventos++
+      current.valorTotal += getEventEconomics(event).total
+      groups.set(key, current)
+    }
+
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, g]) => ({
+        key,
+        mes: formatMonthLabel(key),
+        cantidadEventos: g.cantidadEventos,
+        valorTotal: g.valorTotal,
+      }))
+  }, [filteredEvents])
+
+  const composicionTotal = useMemo<ComposicionTotal>(() => {
+    let base = 0
+    let impuestos = 0
+    let fee = 0
+    let ivaFee = 0
+
+    for (const event of filteredEvents) {
+      const e = getEventEconomics(event)
+      base += e.base
+      impuestos += e.iva + e.impuestoConsumo
+      fee += e.feeTarifado + e.feeTerceros
+      ivaFee += e.ivaFee
+    }
+
+    return { base, impuestos, fee, ivaFee, total: base + impuestos + fee + ivaFee }
+  }, [filteredEvents])
+
   function updateFilter(key: keyof DashboardFiltersState, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
@@ -242,6 +318,9 @@ export function useDashboard(
     consolidadoAliado,
     coberturaTerritorial,
     eventosIncompletos,
+    seguimientoPorEstado,
+    tendenciaMensual,
+    composicionTotal,
     aliadosMap,
     desembolsosMap,
     municipiosMap,

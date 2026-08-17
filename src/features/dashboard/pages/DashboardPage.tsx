@@ -8,6 +8,9 @@ import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
 import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
 import { EventosIncompletos } from '../components/EventosIncompletos'
 import { NumeroEventosCard } from '../components/NumeroEventosCard'
+import { EventosPorEstado } from '../components/EventosPorEstado'
+import { ComposicionTotal } from '../components/ComposicionTotal'
+import { EvolucionTemporal } from '../components/EvolucionTemporal'
 import { useQuery } from '@tanstack/react-query'
 import { getEventsApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
@@ -32,6 +35,9 @@ export function DashboardPage() {
     consolidadoAliado,
     coberturaTerritorial,
     eventosIncompletos,
+    seguimientoPorEstado,
+    tendenciaMensual,
+    composicionTotal,
     dependencias,
     filteredEvents,
     totalRegistrados,
@@ -86,10 +92,13 @@ export function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          <EventosPorEstado rows={seguimientoPorEstado} />
+          <ComposicionTotal data={composicionTotal} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ConsolidadoDesembolso rows={consolidadoDesembolso} paymentSummary={paymentSummary} />
             <ConsolidadoAliado rows={consolidadoAliado} />
           </div>
+          <EvolucionTemporal rows={tendenciaMensual} />
           <CoberturaTerritorial rows={coberturaTerritorial} />
         </div>
         <div className="space-y-6">

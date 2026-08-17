@@ -54,3 +54,14 @@ export function formatDateTimeCO(date: string | Date): string {
 export function formatPercentage(value: number): string {
   return `${(value * 100).toFixed(2)}%`
 }
+
+const compactCurrencyFormatter = new Intl.NumberFormat(LOCAL_CONFIG.locale, {
+  style: 'currency',
+  currency: LOCAL_CONFIG.currency,
+  notation: 'compact',
+  maximumFractionDigits: 1,
+})
+
+export function formatCurrencyCOCompact(amount: number): string {
+  return compactCurrencyFormatter.format(amount)
+}
