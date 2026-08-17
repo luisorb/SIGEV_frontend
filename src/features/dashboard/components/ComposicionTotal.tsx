@@ -3,10 +3,10 @@ import type { ComposicionTotal } from '../types'
 import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
 
 const SEGMENTS = [
-  { key: 'base', label: 'Base', source: 'Cantidad × Valor unitario', color: '#3B82F6' },
-  { key: 'impuestos', label: 'Impuestos', source: 'IVA + INC', color: '#F59E0B' },
-  { key: 'fee', label: 'FEE Técnico Adm.', source: 'Tarifado + Terceros', color: '#f43340' },
-  { key: 'ivaFee', label: 'IVA del FEE', source: 'IVA sobre el FEE', color: '#14B8A6' },
+  { key: 'base', label: 'Base', source: 'Cantidad × Valor unitario', gradient: 'linear-gradient(135deg, #f43340, #e85d6a)' },
+  { key: 'impuestos', label: 'Impuestos', source: 'IVA + INC', gradient: 'linear-gradient(135deg, #f97316, #fb923c)' },
+  { key: 'fee', label: 'FEE Técnico Adm.', source: 'Tarifado + Terceros', gradient: 'linear-gradient(135deg, #eab308, #facc15)' },
+  { key: 'ivaFee', label: 'IVA del FEE', source: 'IVA sobre el FEE', gradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
 ] as const
 
 interface ComposicionTotalProps {
@@ -35,17 +35,18 @@ export function ComposicionTotal({ data }: ComposicionTotalProps) {
           <div className="flex h-8 w-full rounded-lg overflow-hidden">
             {SEGMENTS.map((seg, i) => {
               const pct = total > 0 ? (values[i] / total) * 100 : 0
+              const useDarkText = i >= 2
               return (
                 <div
                   key={seg.key}
                   className="relative group h-full flex items-center justify-center transition-all"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: seg.color,
+                    background: seg.gradient,
                   }}
                 >
                   {pct > 12 && (
-                    <span className="text-[10px] font-semibold text-white tabular-nums drop-shadow-sm">
+                    <span className={`text-[10px] font-semibold tabular-nums drop-shadow-sm ${useDarkText ? 'text-slate-800' : 'text-white'}`}>
                       {formatPercentage(total > 0 ? values[i] / total : 0)}
                     </span>
                   )}
@@ -62,7 +63,7 @@ export function ComposicionTotal({ data }: ComposicionTotalProps) {
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span
                       className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: seg.color }}
+                      style={{ background: seg.gradient }}
                     />
                     <span className="text-slate-600 leading-tight">
                       {seg.label} <span className="text-slate-400">({seg.source})</span>

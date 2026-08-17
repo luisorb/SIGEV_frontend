@@ -6,15 +6,6 @@ import { EVENT_STATES } from '../../../config/constants'
 
 const ESTADOS_EN_EJECUCION: EventState[] = ['En ejecución', 'Ejecutado', 'Cerrado', 'Legalizado']
 
-function formatMonthLabel(key: string): string {
-  const [year, month] = key.split('-').map(Number)
-  const label = new Date(year, month - 1, 1).toLocaleDateString('es-CO', {
-    month: 'short',
-    year: '2-digit',
-  })
-  return label.replace('.', '')
-}
-
 function isEventoAprobadoOEnEjecucion(event: Event): boolean {
   if (event.cotizacionSeleccionadaId) return true
   return ESTADOS_EN_EJECUCION.includes(event.estado)
@@ -247,29 +238,42 @@ export function useDashboard(
   }, [filteredEvents])
 
   const tendenciaMensual = useMemo<TendenciaMes[]>(() => {
-    const groups = new Map<string, { cantidadEventos: number; valorTotal: number }>()
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth()
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+
+    const groups = new Map<number, { cantidadEventos: number; valorTotal: number }>()
 
     for (const event of filteredEvents) {
       const dateStr = event.fechaEvento || event.createdAt?.slice(0, 10) || ''
       if (!dateStr) continue
       const d = new Date(dateStr.length === 10 ? `${dateStr}T00:00:00` : dateStr)
       if (Number.isNaN(d.getTime())) continue
+      if (d.getFullYear() !== currentYear || d.getMonth() !== currentMonth) continue
 
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      const current = groups.get(key) ?? { cantidadEventos: 0, valorTotal: 0 }
+      const day = d.getDate()
+      const current = groups.get(day) ?? { cantidadEventos: 0, valorTotal: 0 }
       current.cantidadEventos++
       current.valorTotal += getEventEconomics(event).total
-      groups.set(key, current)
+      groups.set(day, current)
     }
 
-    return Array.from(groups.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([key, g]) => ({
+    const result: TendenciaMes[] = []
+    for (let day = 1; day <= daysInMonth; day++) {
+      const g = groups.get(day)
+      const key = String(day)
+      const mes = `${day}`
+      const label = `${day} de ${now.toLocaleDateString('es-CO', { month: 'long' })}`
+      result.push({
         key,
-        mes: formatMonthLabel(key),
-        cantidadEventos: g.cantidadEventos,
-        valorTotal: g.valorTotal,
-      }))
+        mes,
+        label,
+        cantidadEventos: g?.cantidadEventos ?? 0,
+        valorTotal: g?.valorTotal ?? 0,
+      })
+    }
+    return result
   }, [filteredEvents])
 
   const composicionTotal = useMemo<ComposicionTotal>(() => {

@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer, LabelL
 import type { CoberturaItem } from '../types'
 import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
 
-const COLORS = ['#6366F1', '#3B82F6', '#14B8A6', '#22C55E', '#EAB308', '#F97316', '#EC4899', '#A855F7']
+const COLORS = ['#f43340', '#22c55e', '#3b82f6', '#eab308', '#f97316', '#8b5cf6', '#14b8a6', '#ec4899']
 
 interface CoberturaTerritorialProps {
   rows: CoberturaItem[]

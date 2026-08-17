@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { ConsolidadoRow } from '../types'
 import type { PaymentSummaryRow } from '../../../services/payments.service'
 import { formatCurrencyCO, formatCurrencyCOCompact, formatPercentage } from '../../../utils/formatters'
-const COLORS = ['#3B82F6', '#F59E0B', '#22C55E', '#8B5CF6', '#EC4899', '#F97316']
+const COLORS = ['#f43340', '#3b82f6', '#22c55e', '#eab308', '#8b5cf6', '#f97316']
 
 interface ConsolidadoDesembolsoProps {
   rows: ConsolidadoRow[]
@@ -49,6 +49,14 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
           <div className="relative">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
+                <defs>
+                  {COLORS.map((color, i) => (
+                    <linearGradient key={i} id={`donutGradD-${i}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={color} stopOpacity={0.65} />
+                    </linearGradient>
+                  ))}
+                </defs>
                 <Pie
                   data={rows}
                   dataKey="valorTotal"
@@ -64,7 +72,7 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
                   onMouseLeave={() => setHoveredIndex(null)}
                 >
                   {rows.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    <Cell key={i} fill={`url(#donutGradD-${i % COLORS.length})`} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
@@ -118,7 +126,7 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
                           className="h-full rounded-full transition-all duration-300"
                           style={{
                             width: `${Math.min(100, Math.max(0, pctEjecucion))}%`,
-                            backgroundColor: pctEjecucion > 100 ? '#f43340' : '#22C55E',
+                            backgroundColor: pctEjecucion > 100 ? '#dc2626' : '#22c55e',
                           }}
                         />
                       </div>

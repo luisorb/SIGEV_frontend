@@ -11,9 +11,9 @@ export function MetricGrid({ metrics }: MetricGridProps) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         icon={DollarSign}
-        label="Valor Total Ejecución"
+        label="Valor Total Ejecuci&oacute;n"
         value={metrics.valorTotalEjecucion}
-        accent="blue"
+        accent="red"
       />
       <MetricCard
         icon={Calculator}
@@ -23,15 +23,15 @@ export function MetricGrid({ metrics }: MetricGridProps) {
       />
       <MetricCard
         icon={Percent}
-        label="FEE Técnico Administrativo"
+        label="FEE T&eacute;cnico Administrativo"
         value={metrics.feeAcumulado}
-        accent="purple"
+        accent="green"
       />
       <MetricCard
         icon={Receipt}
         label="Impuestos Acumulados"
         value={metrics.impuestosAcumulados}
-        accent="rose"
+        accent="slate"
       />
     </div>
   )

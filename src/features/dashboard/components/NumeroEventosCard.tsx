@@ -1,29 +1,24 @@
-import { ClipboardList, TrendingUp } from 'lucide-react'
-import { formatNumberCO } from '../../../utils/formatters'
+import { ClipboardList } from 'lucide-react'
 
 interface NumeroEventosCardProps {
   count: number
   totalRegistrados: number
 }
 
-export function NumeroEventosCard({ count, totalRegistrados }: NumeroEventosCardProps) {
-  const porcentaje = totalRegistrados > 0 ? (count / totalRegistrados) * 100 : 0
-
+export function NumeroEventosCard({ count }: NumeroEventosCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div className="space-y-2 min-w-0">
-          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-            Número de Eventos
+    <div className="bg-white rounded-xl border border-slate-200 border-l-[3px] border-l-red-500 p-4 transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider leading-tight block">
+            N&uacute;mero de Eventos Aprobados
           </span>
-          <p className="text-3xl font-bold tracking-tight tabular-nums text-slate-900">{formatNumberCO(count)}</p>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-emerald-600" />
-            {porcentaje.toFixed(0)}% de {formatNumberCO(totalRegistrados)} registrados
+          <p className="text-xl font-bold tracking-tight mt-1.5 tabular-nums text-slate-900">
+            {count}
           </p>
         </div>
-        <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-          <ClipboardList className="w-5 h-5 text-emerald-600" />
+        <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+          <ClipboardList className="w-5 h-5 text-red-500" />
         </div>
       </div>
     </div>

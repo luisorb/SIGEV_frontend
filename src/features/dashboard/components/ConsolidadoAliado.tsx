@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { ConsolidadoRow } from '../types'
 import { formatCurrencyCO, formatCurrencyCOCompact, formatPercentage } from '../../../utils/formatters'
 
-const COLORS = ['#3B82F6', '#F59E0B', '#22C55E', '#8B5CF6', '#EC4899', '#F97316']
+const COLORS = ['#f43340', '#3b82f6', '#22c55e', '#eab308', '#8b5cf6', '#f97316']
 
 interface ConsolidadoAliadoProps {
   rows: ConsolidadoRow[]
@@ -48,6 +48,14 @@ export function ConsolidadoAliado({ rows }: ConsolidadoAliadoProps) {
           <div className="relative">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
+                <defs>
+                  {COLORS.map((color, i) => (
+                    <linearGradient key={i} id={`donutGradA-${i}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={color} stopOpacity={0.65} />
+                    </linearGradient>
+                  ))}
+                </defs>
                 <Pie
                   data={rows}
                   dataKey="valorTotal"
@@ -63,7 +71,7 @@ export function ConsolidadoAliado({ rows }: ConsolidadoAliadoProps) {
                   onMouseLeave={() => setHoveredIndex(null)}
                 >
                   {rows.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    <Cell key={i} fill={`url(#donutGradA-${i % COLORS.length})`} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />

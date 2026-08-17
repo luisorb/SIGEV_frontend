@@ -10,7 +10,6 @@ interface DashboardFiltersProps {
   aliados: Ally[]
   desembolsos: Disbursement[]
   municipios: Municipality[]
-  dependencias: string[]
   hasActiveFilters: boolean
   onFilterChange: (key: keyof DashboardFiltersState, value: string) => void
   onReset: () => void
@@ -21,7 +20,6 @@ export function DashboardFilters({
   aliados,
   desembolsos,
   municipios,
-  dependencias,
   hasActiveFilters,
   onFilterChange,
   onReset,
@@ -134,20 +132,6 @@ export function DashboardFilters({
             value={filters.municipioId ?? ''}
             onChange={(v) => onFilterChange('municipioId', v)}
             placeholder="Todos"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
-            Dependencia
-          </label>
-          <SearchableSelect
-            size="sm"
-            className="w-44"
-            options={dependencias.map((d) => ({ value: d, label: d }))}
-            value={filters.dependencia}
-            onChange={(v) => onFilterChange('dependencia', v)}
-            placeholder="Todas"
           />
         </div>
         </>

@@ -7,7 +7,7 @@ import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
 import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
 import { EventosIncompletos } from '../components/EventosIncompletos'
-import { NumeroEventosCard } from '../components/NumeroEventosCard'
+
 import { EventosPorEstado } from '../components/EventosPorEstado'
 import { ComposicionTotal } from '../components/ComposicionTotal'
 import { EvolucionTemporal } from '../components/EvolucionTemporal'
@@ -38,7 +38,6 @@ export function DashboardPage() {
     seguimientoPorEstado,
     tendenciaMensual,
     composicionTotal,
-    dependencias,
     filteredEvents,
     totalRegistrados,
     totalEnEjecucion,
@@ -80,7 +79,6 @@ export function DashboardPage() {
         aliados={aliados}
         desembolsos={desembolsos}
         municipios={municipios}
-        dependencias={dependencias}
         hasActiveFilters={hasActiveFilters}
         onFilterChange={updateFilter}
         onReset={resetFilters}
@@ -101,10 +99,6 @@ export function DashboardPage() {
           <EvolucionTemporal rows={tendenciaMensual} />
         </div>
         <div className="space-y-6">
-          <NumeroEventosCard
-            count={metrics.numeroEventos}
-            totalRegistrados={totalRegistrados}
-          />
           <RecentOrders
             events={events}
             aliados={aliados}

@@ -53,6 +53,7 @@ export interface EstadoRow {
 export interface TendenciaMes {
   key: string
   mes: string
+  label?: string
   cantidadEventos: number
   valorTotal: number
 }

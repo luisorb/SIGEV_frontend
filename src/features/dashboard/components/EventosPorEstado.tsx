@@ -3,13 +3,13 @@ import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveCo
 import type { EstadoRow } from '../types'
 
 const STATE_COLORS: Record<string, string> = {
-  Abierto: '#EAB308',
-  'En ejecución': '#3B82F6',
-  Ejecutado: '#F97316',
+  Abierto: '#eab308',
+  'En ejecución': '#f43340',
+  Ejecutado: '#22c55e',
   Cerrado: '#64748B',
-  Legalizado: '#A855F7',
-  Devuelto: '#D97706',
-  Cancelado: '#F43F5E',
+  Legalizado: '#3b82f6',
+  Devuelto: '#f97316',
+  Cancelado: '#8b5cf6',
 }
 
 interface EventosPorEstadoProps {
@@ -50,6 +50,15 @@ export function EventosPorEstado({ rows }: EventosPorEstadoProps) {
         <div className="p-5">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={rows} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
+              <defs>
+                {Object.values(STATE_COLORS).map((color, i) => (
+                  <linearGradient key={i} id={`estadoGrad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={color} stopOpacity={1} />
+                    <stop offset="50%" stopColor={color} stopOpacity={0.85} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0.6} />
+                  </linearGradient>
+                ))}
+              </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis
                 dataKey="estado"
@@ -70,9 +79,12 @@ export function EventosPorEstado({ rows }: EventosPorEstadoProps) {
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
               <Bar dataKey="cantidadEventos" radius={[4, 4, 0, 0]} barSize={26}>
-                {rows.map((row) => (
-                  <Cell key={row.estado} fill={STATE_COLORS[row.estado] ?? '#94a3b8'} />
-                ))}
+                {rows.map((row, i) => {
+                  const colorIdx = Object.keys(STATE_COLORS).indexOf(row.estado)
+                  return (
+                    <Cell key={row.estado} fill={`url(#estadoGrad-${colorIdx >= 0 ? colorIdx : i % Object.values(STATE_COLORS).length})`} />
+                  )
+                })}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
