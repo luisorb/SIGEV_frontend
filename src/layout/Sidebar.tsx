@@ -26,8 +26,10 @@ interface NavItem {
 
 const ALL_ROLES_EXCEPT_RESTRICTED = ['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta'] as const
 
+const ROLES_WITH_PANEL = ['technical_admin', 'functional_admin', 'approver', 'operator', 'analista', 'supervisor', 'auditor', 'consulta'] as const
+
 const navItems: NavItem[] = [
-  { label: 'Panel', to: '/', icon: LayoutDashboard },
+  { label: 'Panel', to: '/', icon: LayoutDashboard, roles: ROLES_WITH_PANEL },
   { label: 'Órdenes', to: '/ordenes', icon: ClipboardList },
   { label: 'Ofertas Económicas', to: '/ofertas', icon: FileSpreadsheet },
   { label: 'Matriz de Ejecución', to: '/matriz', icon: Table2, roles: ALL_ROLES_EXCEPT_RESTRICTED },

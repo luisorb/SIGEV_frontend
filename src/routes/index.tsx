@@ -17,6 +17,15 @@ import { AuditPage } from '../pages/AuditPage'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { RoleRoute } from '../features/auth/components/RoleRoute'
+import { useAuth } from '../features/auth/useAuth'
+
+function DashboardGuard() {
+  const { user } = useAuth()
+  if (user?.roleNames.includes('solicitante')) {
+    return <Navigate to="/ordenes" replace />
+  }
+  return <DashboardPage />
+}
 
 export const router = createBrowserRouter([
   {
@@ -30,7 +39,7 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <DashboardPage /> },
+          { index: true, element: <DashboardGuard /> },
           { path: 'ordenes', element: <EventsListPage /> },
           {
             path: 'ordenes/nueva',

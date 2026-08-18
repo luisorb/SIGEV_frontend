@@ -39,7 +39,10 @@ export function LoginPage() {
     setError('')
     const result = await login(data.identificador, data.password)
     if (result.success) {
-      navigate('/', { replace: true })
+      const authData = sessionStorage.getItem('sigev-auth')
+      const user = authData ? (JSON.parse(authData) as { roleNames?: string[] }) : null
+      const isSolicitante = user?.roleNames?.includes('solicitante')
+      navigate(isSolicitante ? '/ordenes' : '/', { replace: true })
     } else {
       setError(result.error ?? 'Error al iniciar sesión')
     }
