@@ -29,7 +29,7 @@ const emptyItem: ItemInput = {
 const taxCategoryLabels: Record<TaxCategory, string> = {
   IVA: 'IVA (19%)',
   Consumo: 'Consumo (8%)',
-  Tercero: 'Tercero (0%)',
+  Tercero: 'Pago a Tercero (0%)',
   Reembolso: 'Reembolso (0%)',
 }
 
