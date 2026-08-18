@@ -473,8 +473,6 @@ export function EventViewPage() {
   const offersReadOnly =
     detailReadOnly || !canManageOffers || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
-  const canSelectQuotation =
-    userCan('approver') && !TERMINAL_STATES.includes(displayEstado) && !quotationApproved
 
   const soportesReadOnly =
     detailReadOnly ||
@@ -714,7 +712,7 @@ export function EventViewPage() {
         onValidateOffer={handleValidateOffer}
         oferta={ofertaEconomica ?? null}
         readOnly={offersReadOnly}
-        canSelectQuotation={canSelectQuotation}
+        canSelectQuotation={false}
       />
       </div>
 

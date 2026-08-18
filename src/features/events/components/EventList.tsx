@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, RotateCcw, Archive, Package, FileSpreadsheet, FolderOpen } from 'lucide-react'
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, RotateCcw, Archive, Package, FileSpreadsheet, FolderOpen, ShieldCheck } from 'lucide-react'
 import type { Event, EventState } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -67,7 +67,7 @@ interface EventListProps {
   onPageSizeChange: (size: PageSize) => void
   onDeleteRequest: (id: string) => void
   onRestoreRequest?: (id: string) => void
-  onEventAction?: (event: Event, action: 'items' | 'quotations' | 'supports') => void
+  onEventAction?: (event: Event, action: 'items' | 'quotations' | 'supports' | 'approvals') => void
 }
 
 export function EventList({
@@ -141,6 +141,14 @@ export function EventList({
       canEditSoportes &&
       !SOPORTES_LOCKED_STATES.includes(estado) &&
       !TERMINAL_STATES.includes(estado)
+    )
+  }
+
+  const canApproveQuotations = (event: Event) => {
+    return (
+      userCan('approver') &&
+      !TERMINAL_STATES.includes(event.estado) &&
+      !event.cotizacionSeleccionadaId
     )
   }
 
@@ -326,6 +334,15 @@ export function EventList({
                               title="Gestionar soportes documentales"
                             >
                               <FolderOpen className="w-4 h-4" />
+                            </button>
+                          )}
+                          {!showDeleted && canApproveQuotations(event) && onEventAction && (
+                            <button
+                              onClick={() => onEventAction(event, 'approvals')}
+                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors"
+                              title="Validar / Aprobar cotizaciones"
+                            >
+                              <ShieldCheck className="w-4 h-4" />
                             </button>
                           )}
                           {showDeleted ? (

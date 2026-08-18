@@ -44,7 +44,7 @@ export function EventsListPage() {
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null)
   const [restoreEvent, setRestoreEvent] = useState<Event | null>(null)
   const [actionEvent, setActionEvent] = useState<Event | null>(null)
-  const [actionType, setActionType] = useState<'items' | 'quotations' | 'supports' | null>(null)
+  const [actionType, setActionType] = useState<'items' | 'quotations' | 'supports' | 'approvals' | null>(null)
   const createdEventId = searchParams.get('created')
 
   const handleCloseCreatedModal = useCallback(() => {
@@ -55,7 +55,7 @@ export function EventsListPage() {
     }, { replace: true })
   }, [setSearchParams])
 
-  const handleEventAction = useCallback((event: Event, action: 'items' | 'quotations' | 'supports') => {
+  const handleEventAction = useCallback((event: Event, action: 'items' | 'quotations' | 'supports' | 'approvals') => {
     setActionEvent(event)
     setActionType(action)
   }, [])
@@ -218,6 +218,9 @@ export function EventsListPage() {
         <ItemsModal event={actionEvent} isOpen onClose={handleCloseAction} />
       )}
       {actionEvent && actionType === 'quotations' && (
+        <QuotationsModal event={actionEvent} isOpen onClose={handleCloseAction} />
+      )}
+      {actionEvent && actionType === 'approvals' && (
         <QuotationsModal event={actionEvent} isOpen onClose={handleCloseAction} />
       )}
       {actionEvent && actionType === 'supports' && (
