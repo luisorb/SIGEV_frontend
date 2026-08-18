@@ -454,6 +454,7 @@ export function EventViewPage() {
   }
 
   const canManageOffers = userCan('functional_admin', 'operator')
+  const detailReadOnly = userCan('solicitante') || userCan('operator')
   const quotationApproved = !!event.cotizacionSeleccionadaId
   const lockReasons = new Map<string, string>()
   for (const item of event.items) {
@@ -470,17 +471,19 @@ export function EventViewPage() {
     }
   }
   const offersReadOnly =
-    !canManageOffers || TERMINAL_STATES.includes(displayEstado) || quotationApproved
+    detailReadOnly || !canManageOffers || TERMINAL_STATES.includes(displayEstado) || quotationApproved
 
   const canSelectQuotation =
     userCan('approver') && !TERMINAL_STATES.includes(displayEstado) && !quotationApproved
 
   const soportesReadOnly =
+    detailReadOnly ||
     SOPORTES_LOCKED_STATES.includes(displayEstado) ||
     !canEditSoportes ||
     TERMINAL_STATES.includes(displayEstado)
 
   const itemsReadOnly =
+    detailReadOnly ||
     !canModifyItems ||
     TERMINAL_STATES.includes(displayEstado) ||
     (quotationApproved && !userCan('solicitante'))

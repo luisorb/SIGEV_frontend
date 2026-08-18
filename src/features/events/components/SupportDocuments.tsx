@@ -40,6 +40,7 @@ interface SupportDocumentsProps {
   devolucionLegalizacion?: boolean
   devueltoDesde?: string | null
   quotationApproved?: boolean
+  hideHeader?: boolean
   onUpload: (tipo: TipoSoporte, file: File) => Promise<void>
   onDelete: (attachmentId: string) => void
   onDownload?: (attachment: Attachment) => void
@@ -54,6 +55,7 @@ export function SupportDocuments({
   devolucionLegalizacion = false,
   devueltoDesde = null,
   quotationApproved = false,
+  hideHeader = false,
   onUpload,
   onDelete,
   onDownload,
@@ -184,21 +186,23 @@ export function SupportDocuments({
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400">
-            <FolderOpen className="w-4 h-4" />
-          </span>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
-              Soportes Documentales
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Carpetas obligatorias para el cierre del evento
-            </p>
+      {!hideHeader && (
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">
+              <FolderOpen className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                Soportes Documentales
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Carpetas obligatorias para el cierre del evento
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
         {folderList.map((tipo) => {

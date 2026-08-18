@@ -1,6 +1,9 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { EventList } from '../components/EventList'
+import { ItemsModal } from '../components/ItemsModal'
+import { QuotationsModal } from '../components/QuotationsModal'
+import { SupportDocsModal } from '../components/SupportDocsModal'
 import { useEventList } from '../hooks/useEventList'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventsApi, getDeletedEventsApi, deleteEventApi, restoreEventApi } from '../../../services/events.service'
@@ -40,6 +43,18 @@ export function EventsListPage() {
   const queryClient = useQueryClient()
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null)
   const [restoreEvent, setRestoreEvent] = useState<Event | null>(null)
+  const [actionEvent, setActionEvent] = useState<Event | null>(null)
+  const [actionType, setActionType] = useState<'items' | 'quotations' | 'supports' | null>(null)
+
+  const handleEventAction = useCallback((event: Event, action: 'items' | 'quotations' | 'supports') => {
+    setActionEvent(event)
+    setActionType(action)
+  }, [])
+
+  const handleCloseAction = useCallback(() => {
+    setActionEvent(null)
+    setActionType(null)
+  }, [])
 
   const handleToggleDeleted = useCallback(() => {
     setSearchParams(
@@ -113,6 +128,7 @@ export function EventsListPage() {
         onPageSizeChange={setPageSize}
         onDeleteRequest={handleDeleteRequest}
         onRestoreRequest={handleRestoreRequest}
+        onEventAction={handleEventAction}
       />
 
       {deleteEvent && (
@@ -187,6 +203,16 @@ export function EventsListPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {actionEvent && actionType === 'items' && (
+        <ItemsModal event={actionEvent} isOpen onClose={handleCloseAction} />
+      )}
+      {actionEvent && actionType === 'quotations' && (
+        <QuotationsModal event={actionEvent} isOpen onClose={handleCloseAction} />
+      )}
+      {actionEvent && actionType === 'supports' && (
+        <SupportDocsModal event={actionEvent} isOpen onClose={handleCloseAction} />
       )}
     </>
   )

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, RotateCcw, Archive } from 'lucide-react'
-import type { Event } from '../../../types'
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Eye, Pencil, Trash2, RotateCcw, Archive, Package, FileSpreadsheet, FolderOpen } from 'lucide-react'
+import type { Event, EventState } from '../../../types'
 import type { EventListFilters, EventListSort, EventListMeta } from '../types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
 import { EVENT_STATES } from '../../../config/constants'
@@ -11,6 +11,9 @@ import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import type { PageSize } from '../hooks/useEventList'
 import { SearchableSelect } from '../../../components/SearchableSelect'
+
+const TERMINAL_STATES: EventState[] = ['Cancelado']
+const SOPORTES_LOCKED_STATES: EventState[] = ['Ejecutado', 'Cerrado', 'Legalizado']
 
 const stateColors: Record<string, string> = {
   Abierto: 'bg-yellow-100 text-yellow-800',
@@ -64,6 +67,7 @@ interface EventListProps {
   onPageSizeChange: (size: PageSize) => void
   onDeleteRequest: (id: string) => void
   onRestoreRequest?: (id: string) => void
+  onEventAction?: (event: Event, action: 'items' | 'quotations' | 'supports') => void
 }
 
 export function EventList({
@@ -79,6 +83,7 @@ export function EventList({
   onPageSizeChange,
   onDeleteRequest,
   onRestoreRequest,
+  onEventAction,
 }: EventListProps) {
   const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
@@ -95,6 +100,49 @@ export function EventList({
       !event.cotizacionSeleccionadaId &&
       userCan('analista', 'solicitante'))
   const canDelete = userCan('functional_admin')
+
+  const canManageItems = (event: Event) => {
+    const estado = event.estado
+    const isDevuelto = estado === 'Devuelto'
+    const quotationApproved = !!event.cotizacionSeleccionadaId
+    return (
+      userCan('functional_admin') ||
+      (isDevuelto && userCan('analista')) ||
+      (userCan('solicitante') &&
+        (isDevuelto || estado === 'Abierto' || estado === 'En ejecución'))
+    ) && !TERMINAL_STATES.includes(estado) && !(quotationApproved && !userCan('solicitante'))
+  }
+
+  const canManageQuotations = (event: Event) => {
+    const estado = event.estado
+    return (
+      userCan('functional_admin', 'operator') &&
+      !TERMINAL_STATES.includes(estado) &&
+      !event.cotizacionSeleccionadaId
+    )
+  }
+
+  const canManageSupports = (event: Event) => {
+    const estado = event.estado
+    const isDevuelto = estado === 'Devuelto'
+    const esDevolucionLegalizacion = isDevuelto && event.devolucionLegalizacion === true
+    const devueltoPermiteSoportes =
+      isDevuelto &&
+      (esDevolucionLegalizacion ||
+        event.devueltoDesde === 'En ejecución' ||
+        event.devueltoDesde === 'Ejecutado' ||
+        event.devueltoDesde === 'Cerrado')
+    const canEditSoportes =
+      userCan('functional_admin', 'operator', 'supervisor') ||
+      (isDevuelto && userCan('analista')) ||
+      ((devueltoPermiteSoportes || estado === 'En ejecución') &&
+        userCan('solicitante'))
+    return (
+      canEditSoportes &&
+      !SOPORTES_LOCKED_STATES.includes(estado) &&
+      !TERMINAL_STATES.includes(estado)
+    )
+  }
 
   return (
     <div className="space-y-4 h-full flex flex-col">
@@ -253,6 +301,33 @@ export function EventList({
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          {!showDeleted && canManageItems(event) && onEventAction && (
+                            <button
+                              onClick={() => onEventAction(event, 'items')}
+                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                              title="Gestionar ítems"
+                            >
+                              <Package className="w-4 h-4" />
+                            </button>
+                          )}
+                          {!showDeleted && canManageQuotations(event) && onEventAction && (
+                            <button
+                              onClick={() => onEventAction(event, 'quotations')}
+                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors"
+                              title="Gestionar cotizaciones"
+                            >
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </button>
+                          )}
+                          {!showDeleted && canManageSupports(event) && onEventAction && (
+                            <button
+                              onClick={() => onEventAction(event, 'supports')}
+                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition-colors"
+                              title="Gestionar soportes documentales"
+                            >
+                              <FolderOpen className="w-4 h-4" />
+                            </button>
+                          )}
                           {showDeleted ? (
                             canDelete && onRestoreRequest && (
                               <button
