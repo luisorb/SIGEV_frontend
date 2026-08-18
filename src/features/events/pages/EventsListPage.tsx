@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventsApi, getDeletedEventsApi, deleteEventApi, restoreEventApi } from '../../../services/events.service'
 import { useToast } from '../../../components/ToastProvider'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
-import { Trash2, RotateCcw } from 'lucide-react'
+import { Trash2, RotateCcw, Package, CheckCircle } from 'lucide-react'
 import type { Event } from '../../../types'
 
 export function EventsListPage() {
@@ -45,6 +45,15 @@ export function EventsListPage() {
   const [restoreEvent, setRestoreEvent] = useState<Event | null>(null)
   const [actionEvent, setActionEvent] = useState<Event | null>(null)
   const [actionType, setActionType] = useState<'items' | 'quotations' | 'supports' | null>(null)
+  const createdEventId = searchParams.get('created')
+
+  const handleCloseCreatedModal = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('created')
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
 
   const handleEventAction = useCallback((event: Event, action: 'items' | 'quotations' | 'supports') => {
     setActionEvent(event)
@@ -213,6 +222,46 @@ export function EventsListPage() {
       )}
       {actionEvent && actionType === 'supports' && (
         <SupportDocsModal event={actionEvent} isOpen onClose={handleCloseAction} />
+      )}
+
+      {createdEventId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-[scaleIn_200ms_ease-out]">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-3 bg-emerald-100 rounded-full mb-4">
+                <CheckCircle className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Orden registrada satisfactoriamente</h3>
+              <p className="text-sm text-slate-500 mt-2">
+                ¿Desea agregarle ítems ahora? Puede hacerlo más tarde desde el icono{' '}
+                <Package className="w-3.5 h-3.5 inline -mt-0.5" />{' '}
+                <span className="font-medium">Gestionar ítems</span> en la columna de acciones del listado.
+              </p>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  const event = localEvents.find((e) => e.id === createdEventId)
+                  handleCloseCreatedModal()
+                  if (event) {
+                    setActionEvent(event)
+                    setActionType('items')
+                  }
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                <Package className="w-4 h-4" />
+                Sí, Agregar ítems
+              </button>
+              <button
+                onClick={handleCloseCreatedModal}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all duration-150"
+              >
+                No, agregar más tarde
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )

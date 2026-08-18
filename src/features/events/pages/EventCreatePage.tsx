@@ -51,8 +51,7 @@ export function EventCreatePage() {
       await queryClient.invalidateQueries({ queryKey: ['events'] })
       await queryClient.invalidateQueries({ queryKey: ['map-stats'] })
 
-      toast.showToast(`Orden ${newEvent.numeroEvento}${newEvent.sufijo ? `-${newEvent.sufijo}` : ''} creada correctamente`)
-      navigate('/ordenes')
+      navigate(`/ordenes?created=${newEvent.id}`)
     } catch (error) {
       toast.showToast(getApiErrorMessage(error, 'No se pudo crear la orden'), 'error')
     }
