@@ -51,9 +51,9 @@ export const router = createBrowserRouter([
           },
           { path: 'ofertas', element: <OffersPage /> },
           { path: 'ofertas/:id', element: <OfferViewPage /> },
-          { path: 'matriz', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'operator', 'analista', 'supervisor', 'auditor', 'consulta']}><MatrixPage /></RoleRoute> },
-          { path: 'tablero', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'operator', 'analista', 'supervisor', 'auditor', 'consulta']}><KanbanPage /></RoleRoute> },
-          { path: 'mapa', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'operator', 'analista', 'supervisor', 'auditor', 'consulta']}><MapPage /></RoleRoute> },
+          { path: 'matriz', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta']}><MatrixPage /></RoleRoute> },
+          { path: 'tablero', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta']}><KanbanPage /></RoleRoute> },
+          { path: 'mapa', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta']}><MapPage /></RoleRoute> },
           {
             path: 'parametros',
             element: (
