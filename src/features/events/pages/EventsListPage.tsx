@@ -9,12 +9,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getEventsApi, getDeletedEventsApi, deleteEventApi, restoreEventApi } from '../../../services/events.service'
 import { useToast } from '../../../components/ToastProvider'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
+import { useRolePermissions } from '../../auth/useRolePermissions'
 import { Trash2, RotateCcw, Package, CheckCircle } from 'lucide-react'
 import type { Event } from '../../../types'
 
 export function EventsListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const showDeleted = searchParams.get('anuladas') === '1'
+  const { can: userCan } = useRolePermissions()
   const { data: localEvents = [], isLoading } = useQuery({
     queryKey: ['events', showDeleted],
     queryFn: showDeleted ? getDeletedEventsApi : getEventsApi,
@@ -37,7 +39,7 @@ export function EventsListPage() {
     setPageSize,
     meta,
     paginatedEvents,
-  } = useEventList(activeEvents)
+  } = useEventList(activeEvents, userCan('approver'))
 
   const toast = useToast()
   const queryClient = useQueryClient()

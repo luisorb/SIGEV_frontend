@@ -9,6 +9,7 @@ import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { useRolePermissions } from '../../auth/useRolePermissions'
+import { hasPendingApprovalQuotations } from '../hooks/useEventList'
 import type { PageSize } from '../hooks/useEventList'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 
@@ -152,6 +153,8 @@ export function EventList({
     )
   }
 
+  const isApprover = userCan('approver')
+
   return (
     <div className="space-y-4 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
@@ -280,7 +283,7 @@ export function EventList({
                   const desembolso = desembolsos.find((d) => d.id === event.desembolsoId)
                   const municipio = municipios.find((m) => m.id === event.municipioId)
                   return (
-                    <tr key={event.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={event.id} className={`hover:bg-slate-50 transition-colors${isApprover && hasPendingApprovalQuotations(event) ? ' font-bold' : ''}`}>
                       <td className="px-4 py-3">
                         <span className="font-medium text-slate-900">
                           {event.numeroEvento}{event.sufijo ? `-${event.sufijo}` : ''}

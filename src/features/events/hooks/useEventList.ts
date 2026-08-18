@@ -9,7 +9,16 @@ const SORTABLE_TEXT_COLUMNS = [
   'fechaEvento', 'esquema', 'aliadoId', 'desembolsoId',
 ] as const
 
-export function useEventList(events: Event[]) {
+const APPROVAL_PENDING_STATUSES = ['Borrador', 'Enviada', 'Validada']
+
+export function hasPendingApprovalQuotations(event: Event): boolean {
+  if (event.cotizacionSeleccionadaId) return false
+  if (event.ofertaEconomica) return false
+  if (!event.quotations || event.quotations.length === 0) return false
+  return event.quotations.some((q) => APPROVAL_PENDING_STATUSES.includes(q.status))
+}
+
+export function useEventList(events: Event[], isApprover: boolean = false) {
   const [filters, setFilters] = useState<EventListFilters>({
     search: '',
     estado: '',
@@ -74,8 +83,16 @@ export function useEventList(events: Event[]) {
       })
     }
 
+    if (isApprover) {
+      result.sort((a, b) => {
+        const aPending = hasPendingApprovalQuotations(a) ? 0 : 1
+        const bPending = hasPendingApprovalQuotations(b) ? 0 : 1
+        return aPending - bPending
+      })
+    }
+
     return result
-  }, [events, filters, sort])
+  }, [events, filters, sort, isApprover])
 
   const meta: EventListMeta = {
     total: events.length,
