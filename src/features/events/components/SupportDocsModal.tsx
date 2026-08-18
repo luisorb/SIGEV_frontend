@@ -25,13 +25,14 @@ export function SupportDocsModal({ event: initialEvent, isOpen, onClose }: Suppo
   const queryClient = useQueryClient()
   const { can: userCan } = useRolePermissions()
 
-  const { data: event } = useQuery({
+  const { data } = useQuery({
     queryKey: ['event', initialEvent.id],
     queryFn: () => getEventApi(initialEvent.id),
     initialData: initialEvent,
     enabled: isOpen,
   })
 
+  const event = data ?? initialEvent
   if (!event) return null
 
   const displayEstado = event.estado
