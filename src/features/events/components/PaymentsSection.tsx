@@ -20,7 +20,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const METHOD_LABEL: Record<PaymentMethod, string> = {
   por_item: 'Por ítem',
-  prorrateo: 'Por porciento',
+  prorrateo: 'Porcentaje',
 }
 
 function normalizeBudgetKey(value: string): string {
@@ -452,7 +452,7 @@ export function PaymentsSection({
                   className="mt-1.5 w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                 >
                   <option value="por_item">Por ítem</option>
-                  <option value="prorrateo">Por porciento</option>
+                  <option value="prorrateo">Porcentaje</option>
                 </select>
               </label>
               <label className="block">
@@ -518,7 +518,7 @@ export function PaymentsSection({
             {method === 'prorrateo' && (
               <div className="bg-slate-50 rounded-xl px-4 py-3.5 border border-slate-200">
                 <label className="block">
-                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Porciento a prorratear</span>
+                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Porcentaje a prorratear</span>
                   <p className="text-[11px] text-slate-400 mt-0.5">Se aplica sobre el valor total de cada ítem pendiente</p>
                   <div className="mt-2 flex items-center gap-2">
                     <input
