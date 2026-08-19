@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useDashboard } from '../hooks/useDashboard'
 import { MetricGrid } from '../components/MetricGrid'
 import { DashboardFilters } from '../components/DashboardFilters'
@@ -7,7 +8,6 @@ import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
 import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
 import { EventosIncompletos } from '../components/EventosIncompletos'
-
 import { EventosPorEstado } from '../components/EventosPorEstado'
 import { ComposicionTotal } from '../components/ComposicionTotal'
 import { EvolucionTemporal } from '../components/EvolucionTemporal'
@@ -17,6 +17,7 @@ import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
 import { usePaymentsSummary } from '../../../hooks/usePayments'
+import type { DashboardSectionRefs } from '../types'
 
 export function DashboardPage() {
   const { data: events = [], isLoading } = useQuery({ queryKey: ['events'], queryFn: getEventsApi })
@@ -24,6 +25,26 @@ export function DashboardPage() {
   const { data: desembolsos = [] } = useDisbursements({ all: true })
   const { data: municipios = [] } = useMunicipalities()
   const { data: paymentSummary = [] } = usePaymentsSummary()
+
+  const refEventosIncompletos = useRef<HTMLDivElement>(null)
+  const refEventosPorEstado = useRef<HTMLDivElement>(null)
+  const refComposicionTotal = useRef<HTMLDivElement>(null)
+  const refConsolidadoDesembolso = useRef<HTMLDivElement>(null)
+  const refConsolidadoAliado = useRef<HTMLDivElement>(null)
+  const refEvolucionTemporal = useRef<HTMLDivElement>(null)
+  const refRecentOrders = useRef<HTMLDivElement>(null)
+  const refCoberturaTerritorial = useRef<HTMLDivElement>(null)
+
+  const sectionRefs: DashboardSectionRefs = {
+    eventosIncompletos: refEventosIncompletos,
+    eventosPorEstado: refEventosPorEstado,
+    composicionTotal: refComposicionTotal,
+    consolidadoDesembolso: refConsolidadoDesembolso,
+    consolidadoAliado: refConsolidadoAliado,
+    evolucionTemporal: refEvolucionTemporal,
+    recentOrders: refRecentOrders,
+    coberturaTerritorial: refCoberturaTerritorial,
+  }
 
   const {
     filters,
@@ -71,6 +92,10 @@ export function DashboardPage() {
           coberturaTerritorial={coberturaTerritorial}
           filters={filters}
           hasActiveFilters={hasActiveFilters}
+          sectionRefs={sectionRefs}
+          eventosIncompletos={eventosIncompletos}
+          totalRegistrados={totalRegistrados}
+          totalEnEjecucion={totalEnEjecucion}
         />
       </div>
 
@@ -84,27 +109,43 @@ export function DashboardPage() {
         onReset={resetFilters}
       />
 
-      <EventosIncompletos events={eventosIncompletos} />
+      <div ref={refEventosIncompletos}>
+        <EventosIncompletos events={eventosIncompletos} />
+      </div>
 
       <MetricGrid metrics={metrics} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <EventosPorEstado rows={seguimientoPorEstado} />
-          <ComposicionTotal data={composicionTotal} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ConsolidadoDesembolso rows={consolidadoDesembolso} paymentSummary={paymentSummary} />
-            <ConsolidadoAliado rows={consolidadoAliado} />
+          <div ref={refEventosPorEstado}>
+            <EventosPorEstado rows={seguimientoPorEstado} />
           </div>
-          <EvolucionTemporal rows={tendenciaMensual} />
+          <div ref={refComposicionTotal}>
+            <ComposicionTotal data={composicionTotal} />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div ref={refConsolidadoDesembolso}>
+              <ConsolidadoDesembolso rows={consolidadoDesembolso} paymentSummary={paymentSummary} />
+            </div>
+            <div ref={refConsolidadoAliado}>
+              <ConsolidadoAliado rows={consolidadoAliado} />
+            </div>
+          </div>
+          <div ref={refEvolucionTemporal}>
+            <EvolucionTemporal rows={tendenciaMensual} />
+          </div>
         </div>
         <div className="space-y-6">
-          <RecentOrders
-            events={events}
-            aliados={aliados}
-            desembolsos={desembolsos}
-          />
-          <CoberturaTerritorial rows={coberturaTerritorial} />
+          <div ref={refRecentOrders}>
+            <RecentOrders
+              events={events}
+              aliados={aliados}
+              desembolsos={desembolsos}
+            />
+          </div>
+          <div ref={refCoberturaTerritorial}>
+            <CoberturaTerritorial rows={coberturaTerritorial} />
+          </div>
         </div>
       </div>
     </div>

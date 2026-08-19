@@ -65,3 +65,14 @@ export interface ComposicionTotal {
   ivaFee: number
   total: number
 }
+
+export interface DashboardSectionRefs {
+  eventosIncompletos: React.RefObject<HTMLDivElement | null>
+  eventosPorEstado: React.RefObject<HTMLDivElement | null>
+  composicionTotal: React.RefObject<HTMLDivElement | null>
+  consolidadoDesembolso: React.RefObject<HTMLDivElement | null>
+  consolidadoAliado: React.RefObject<HTMLDivElement | null>
+  evolucionTemporal: React.RefObject<HTMLDivElement | null>
+  recentOrders: React.RefObject<HTMLDivElement | null>
+  coberturaTerritorial: React.RefObject<HTMLDivElement | null>
+}

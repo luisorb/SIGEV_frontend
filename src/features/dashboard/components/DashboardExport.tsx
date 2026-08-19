@@ -1,6 +1,13 @@
 import { FileSpreadsheet, FileText } from 'lucide-react'
 import type { Event, Ally, Disbursement, Municipality } from '../../../types'
-import type { ConsolidadoRow, CoberturaItem, DashboardFiltersState, DashboardMetrics } from '../types'
+import type {
+  ConsolidadoRow,
+  CoberturaItem,
+  DashboardFiltersState,
+  DashboardMetrics,
+  EventoIncompleto,
+  DashboardSectionRefs,
+} from '../types'
 import { formatCurrencyCO, formatDateCO, formatDateTimeCO, formatPercentage } from '../../../utils/formatters'
 import { getEventEconomics } from '../../../utils/eventEconomics'
 import type { jsPDF } from 'jspdf'
@@ -18,6 +25,10 @@ interface DashboardExportProps {
   coberturaTerritorial: CoberturaItem[]
   filters: DashboardFiltersState
   hasActiveFilters: boolean
+  sectionRefs: DashboardSectionRefs
+  eventosIncompletos: EventoIncompleto[]
+  totalRegistrados: number
+  totalEnEjecucion: number
 }
 
 const PAGE_MARGIN = 14
@@ -102,6 +113,14 @@ function ensureSpace(doc: jsPDF, y: number, pageHeight: number, estimatedRows: n
   return y
 }
 
+function ensureSpaceForImage(doc: jsPDF, y: number, pageHeight: number, imageHeightMm: number): number {
+  if (y + imageHeightMm > pageHeight - 22) {
+    doc.addPage()
+    return 24
+  }
+  return y
+}
+
 function drawPageChrome(doc: jsPDF, pageWidth: number, pageHeight: number, generatedAt: string) {
   const totalPages = doc.getNumberOfPages()
   for (let i = 1; i <= totalPages; i++) {
@@ -132,6 +151,65 @@ function drawPageChrome(doc: jsPDF, pageWidth: number, pageHeight: number, gener
     doc.text('SIGEV', PAGE_MARGIN, y)
     doc.text(`Página ${i} de ${totalPages}`, pageWidth - PAGE_MARGIN, y, { align: 'right' })
   }
+}
+
+interface CapturedImage {
+  dataUrl: string
+  width: number
+  height: number
+}
+
+async function captureElement(el: HTMLDivElement): Promise<CapturedImage> {
+  const domtoimage = await import('dom-to-image-more')
+  const node = el.querySelector('.recharts-wrapper') ?? el
+  const dataUrl = await domtoimage.toPng(node, {
+    bgcolor: '#ffffff',
+    pixelRatio: 2,
+    cacheBust: true,
+    ignoreCSSRuleErrors: true,
+    disableEmbedFonts: true,
+    filter: (n: Node) => {
+      if (n instanceof HTMLElement) {
+        if (n.classList?.contains('recharts-tooltip-wrapper')) return false
+        if (n.classList?.contains('recharts-active-dot')) return false
+      }
+      return true
+    },
+  })
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = reject
+    image.src = dataUrl
+  })
+
+  return { dataUrl, width: img.width, height: img.height }
+}
+
+function addImageToPDF(
+  doc: jsPDF,
+  captured: CapturedImage,
+  y: number,
+  contentWidth: number,
+  pageWidth: number,
+  pageHeight: number,
+  title: string,
+): number {
+  const imgRatio = captured.height / captured.width
+  const imgWidth = contentWidth
+  const imgHeight = imgRatio * imgWidth
+  const maxImgHeight = pageHeight - 40
+  const scaledHeight = Math.min(imgHeight, maxImgHeight)
+  const scaledWidth = imgHeight > maxImgHeight ? (maxImgHeight / imgHeight) * imgWidth : imgWidth
+
+  y = ensureSpaceForImage(doc, y, pageHeight, scaledHeight + 12)
+  y = drawSectionTitle(doc, title, y, pageWidth)
+
+  const xOffset = PAGE_MARGIN + (contentWidth - scaledWidth) / 2
+  doc.addImage(captured.dataUrl, 'PNG', xOffset, y, scaledWidth, scaledHeight)
+
+  return y + scaledHeight + 8
 }
 
 const CURRENCY_FMT = '"$"#,##0.00'
@@ -282,6 +360,10 @@ export function DashboardExport({
   coberturaTerritorial,
   filters,
   hasActiveFilters,
+  sectionRefs,
+  eventosIncompletos,
+  totalRegistrados,
+  totalEnEjecucion,
 }: DashboardExportProps) {
   async function handleExportXLSX() {
     const { utils, writeFile } = await import('xlsx')
@@ -491,7 +573,7 @@ export function DashboardExport({
 
     doc.setFontSize(9)
     doc.setTextColor(...TEXT_FAINT)
-    doc.text(`${metrics.numeroEventos} evento(s) en ejecución`, pageWidth - PAGE_MARGIN, 34, { align: 'right' })
+    doc.text(`${totalRegistrados} evento(s) registrados · ${totalEnEjecucion} aprobados / en ejecución`, pageWidth - PAGE_MARGIN, 34, { align: 'right' })
 
     doc.setDrawColor(...TEXT_DARK)
     doc.setLineWidth(0.9)
@@ -555,9 +637,147 @@ export function DashboardExport({
       }, autoTable) + 10
     }
 
+    if (eventosIncompletos.length > 0) {
+      y = ensureSpace(doc, y, pageHeight, eventosIncompletos.length + 1)
+      y = drawSectionTitle(doc, 'Alertas de eventos incompletos', y, pageWidth)
+      y = renderTable(doc, {
+        startY: y,
+        head: ['Evento', 'Responsable', 'Motivo'],
+        body: eventosIncompletos.map((e) => [
+          `${e.numeroEvento}${e.sufijo ? `-${e.sufijo}` : ''}`,
+          e.responsable,
+          e.motivo,
+        ]),
+        columnStyles: { 0: { fontStyle: 'bold' } },
+      }, autoTable) + 10
+    }
+
+    const chartEntries: [React.RefObject<HTMLDivElement | null>, string][] = [
+      [sectionRefs.eventosPorEstado, 'Eventos por estado'],
+      [sectionRefs.composicionTotal, 'Composición del total ejecutado'],
+      [sectionRefs.evolucionTemporal, 'Actividad mensual'],
+      [sectionRefs.coberturaTerritorial, 'Cobertura Territorial'],
+    ]
+
+    for (const [ref, title] of chartEntries) {
+      if (ref.current) {
+        try {
+          const captured = await captureElement(ref.current)
+          y = addImageToPDF(doc, captured, y, contentWidth, pageWidth, pageHeight, title)
+        } catch (err) {
+          console.error(`Error capturando "${title}":`, err)
+          y = ensureSpace(doc, y, pageHeight, 3)
+          y = drawSectionTitle(doc, title, y, pageWidth)
+          doc.setFont('helvetica', 'italic')
+          doc.setFontSize(9)
+          doc.setTextColor(...TEXT_FAINT)
+          doc.text('Gráfica no disponible en esta exportación.', PAGE_MARGIN, y)
+          y += 10
+        }
+      }
+    }
+
+    const DONUT_COLORS: [number, number, number][] = [
+      [244, 51, 64],
+      [59, 130, 246],
+      [34, 197, 94],
+      [234, 179, 8],
+      [139, 92, 246],
+      [249, 115, 22],
+    ]
+
+    function computeImageHeight(captured: CapturedImage): number {
+      const imgRatio = captured.height / captured.width
+      const imgHeight = imgRatio * contentWidth
+      const maxImgHeight = pageHeight - 40
+      return Math.min(imgHeight, maxImgHeight)
+    }
+
+    function computeLegendHeight(rows: ConsolidadoRow[]): number {
+      if (rows.length === 0) return 0
+      const rowHeight = 6
+      return Math.ceil(rows.length / 2) * rowHeight + 6
+    }
+
+    async function addDonutBlock(
+      ref: React.RefObject<HTMLDivElement | null>,
+      title: string,
+      rows: ConsolidadoRow[],
+    ) {
+      if (rows.length === 0) return
+      if (!ref.current) {
+        y = ensureSpace(doc, y, pageHeight, 3)
+        y = drawSectionTitle(doc, title, y, pageWidth)
+        return
+      }
+
+      try {
+        const captured = await captureElement(ref.current)
+        const imgH = computeImageHeight(captured)
+        const legendH = computeLegendHeight(rows)
+        const totalBlock = imgH + legendH + 18
+
+        y = ensureSpace(doc, y, pageHeight, totalBlock)
+        y = drawSectionTitle(doc, title, y, pageWidth)
+
+        const finalWidth = contentWidth
+        const finalHeight = imgH
+
+        const xOffset = PAGE_MARGIN
+        doc.addImage(captured.dataUrl, 'PNG', xOffset, y, finalWidth, finalHeight)
+        y += finalHeight + 4
+
+        drawDonutLegend(rows)
+      } catch (err) {
+        console.error(`Error capturando "${title}":`, err)
+        y = ensureSpace(doc, y, pageHeight, 3)
+        y = drawSectionTitle(doc, title, y, pageWidth)
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(9)
+        doc.setTextColor(...TEXT_FAINT)
+        doc.text('Gráfica no disponible en esta exportación.', PAGE_MARGIN, y)
+        y += 10
+      }
+    }
+
+    function drawDonutLegend(rows: ConsolidadoRow[]) {
+      if (rows.length === 0) return
+      const colWidth = contentWidth / 2
+      const rowHeight = 6
+      const startY = y
+
+      rows.forEach((row, i) => {
+        const col = i % 2
+        const rowIdx = Math.floor(i / 2)
+        const x = PAGE_MARGIN + col * colWidth
+        const cellY = startY + rowIdx * rowHeight
+        const color = DONUT_COLORS[i % DONUT_COLORS.length]
+
+        doc.setFillColor(...color)
+        doc.circle(x + 3, cellY + 2, 2, 'F')
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+        doc.setTextColor(...TEXT_MUTED)
+        doc.text(row.nombre, x + 8, cellY + 2.8)
+
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(8)
+        doc.setTextColor(...TEXT_DARK)
+        const valText = `${formatCurrencyCO(row.valorTotal)} (${formatPercentage(row.porcentaje)})`
+        doc.text(valText, x + 8 + doc.getTextWidth(row.nombre) + 3, cellY + 2.8)
+      })
+
+      const totalRows = Math.ceil(rows.length / 2)
+      y = startY + totalRows * rowHeight + 6
+    }
+
+    await addDonutBlock(sectionRefs.consolidadoDesembolso, 'Ejecución por recurso disponible', consolidadoDesembolso)
+    await addDonutBlock(sectionRefs.consolidadoAliado, 'Ejecución por Aliado', consolidadoAliado)
+
     if (consolidadoDesembolso.length > 0) {
       y = ensureSpace(doc, y, pageHeight, consolidadoDesembolso.length)
-      y = drawSectionTitle(doc, '1. Ejecución por recurso disponible', y, pageWidth)
+      y = drawSectionTitle(doc, '1. Ejecución por recurso disponible (tabla)', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
         head: ['Recurso disponible', 'Eventos', 'Valor Total', 'FEE Total', 'Participación'],
@@ -574,7 +794,7 @@ export function DashboardExport({
 
     if (consolidadoAliado.length > 0) {
       y = ensureSpace(doc, y, pageHeight, consolidadoAliado.length)
-      y = drawSectionTitle(doc, '2. Ejecución por Aliado', y, pageWidth)
+      y = drawSectionTitle(doc, '2. Ejecución por Aliado (tabla)', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
         head: ['Aliado', 'Eventos', 'Valor Total', 'FEE Total', 'Participación'],
@@ -591,7 +811,7 @@ export function DashboardExport({
 
     if (coberturaTerritorial.length > 0) {
       y = ensureSpace(doc, y, pageHeight, coberturaTerritorial.length)
-      y = drawSectionTitle(doc, '3. Cobertura Territorial', y, pageWidth)
+      y = drawSectionTitle(doc, '3. Cobertura Territorial (tabla)', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
         head: ['Municipio', 'Departamento', 'Eventos', 'Valor Total', 'Participación'],
