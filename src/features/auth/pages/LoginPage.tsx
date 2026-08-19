@@ -79,7 +79,7 @@ export function LoginPage() {
 
       <div className="w-full max-w-md animate-[slideInUp_0.4s_ease-out]">
         <div className="relative">
-          <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-900/25 border border-white/80 ring-1 ring-slate-100 p-8 sm:p-10 overflow-hidden">
+          <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-900/25 border border-white/80 ring-1 ring-slate-100 p-8 pb-4 sm:p-10 sm:pb-5 overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary-dark via-primary to-primary-dark" />
 
             <div className="mb-8">
@@ -185,6 +185,11 @@ export function LoginPage() {
                 {isSubmitting ? 'Ingresando…' : 'Ingresar'}
               </button>
             </form>
+
+            <div className="mt-5 pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
+              <img src="/pubblica_logo.jpg" alt="Pubblica" className="h-10 w-auto object-contain" />
+              <img src="/direccion_logo.webp" alt="Dirección" className="h-14 w-auto object-contain" />
+            </div>
           </div>
         </div>
       </div>
