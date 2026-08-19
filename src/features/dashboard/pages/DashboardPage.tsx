@@ -96,6 +96,9 @@ export function DashboardPage() {
           eventosIncompletos={eventosIncompletos}
           totalRegistrados={totalRegistrados}
           totalEnEjecucion={totalEnEjecucion}
+          seguimientoPorEstado={seguimientoPorEstado}
+          tendenciaMensual={tendenciaMensual}
+          composicionTotal={composicionTotal}
         />
       </div>
 

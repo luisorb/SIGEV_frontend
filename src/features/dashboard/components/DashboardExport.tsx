@@ -7,6 +7,9 @@ import type {
   DashboardMetrics,
   EventoIncompleto,
   DashboardSectionRefs,
+  EstadoRow,
+  TendenciaMes,
+  ComposicionTotal,
 } from '../types'
 import { formatCurrencyCO, formatDateCO, formatDateTimeCO, formatPercentage } from '../../../utils/formatters'
 import { getEventEconomics } from '../../../utils/eventEconomics'
@@ -29,6 +32,9 @@ interface DashboardExportProps {
   eventosIncompletos: EventoIncompleto[]
   totalRegistrados: number
   totalEnEjecucion: number
+  seguimientoPorEstado: EstadoRow[]
+  tendenciaMensual: TendenciaMes[]
+  composicionTotal: ComposicionTotal
 }
 
 const PAGE_MARGIN = 14
@@ -364,6 +370,9 @@ export function DashboardExport({
   eventosIncompletos,
   totalRegistrados,
   totalEnEjecucion,
+  seguimientoPorEstado,
+  tendenciaMensual,
+  composicionTotal,
 }: DashboardExportProps) {
   async function handleExportXLSX() {
     const { utils, writeFile } = await import('xlsx')
@@ -397,6 +406,113 @@ export function DashboardExport({
       }),
       'Resumen',
     )
+
+    if (eventosIncompletos.length > 0) {
+      utils.book_append_sheet(
+        wb,
+        buildSheet(utils, {
+          name: 'Incompletos',
+          title: 'Eventos Incompletos',
+          columns: [
+            { header: 'Evento', wch: 18 },
+            { header: 'Responsable', wch: 22 },
+            { header: 'Motivo', wch: 30 },
+          ],
+          rows: eventosIncompletos.map((e) => [
+            `${e.numeroEvento}${e.sufijo ? `-${e.sufijo}` : ''}`,
+            e.responsable,
+            e.motivo,
+          ]),
+          autofilter: true,
+        }),
+        'Incompletos',
+      )
+    }
+
+    if (seguimientoPorEstado.length > 0) {
+      utils.book_append_sheet(
+        wb,
+        buildSheet(utils, {
+          name: 'Por Estado',
+          title: 'Eventos por Estado',
+          columns: [
+            { header: 'Estado', wch: 18 },
+            { header: 'Eventos', wch: 10, fmt: 'number' },
+            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+            { header: 'Participación', wch: 14, fmt: 'percent' },
+          ],
+          rows: (() => {
+            const totalEventos = seguimientoPorEstado.reduce((s, r) => s + r.cantidadEventos, 0)
+            return seguimientoPorEstado.map((row) => [
+              row.estado,
+              row.cantidadEventos,
+              row.valorTotal,
+              totalEventos > 0 ? row.cantidadEventos / totalEventos : 0,
+            ])
+          })(),
+          foot: (() => {
+            const totalEventos = seguimientoPorEstado.reduce((s, r) => s + r.cantidadEventos, 0)
+            return [
+              'Total',
+              totalEventos,
+              seguimientoPorEstado.reduce((s, r) => s + r.valorTotal, 0),
+              1,
+            ]
+          })(),
+          autofilter: true,
+        }),
+        'Por Estado',
+      )
+    }
+
+    utils.book_append_sheet(
+      wb,
+      buildSheet(utils, {
+        name: 'Composición',
+        title: 'Composición del Total Ejecutado',
+        columns: [
+          { header: 'Componente', wch: 28 },
+          { header: 'Origen', wch: 24 },
+          { header: 'Valor', wch: 20, fmt: 'currency' },
+          { header: 'Participación', wch: 14, fmt: 'percent' },
+        ],
+        rows: [
+          ['Base', 'Cantidad × Valor unitario', composicionTotal.base, composicionTotal.total > 0 ? composicionTotal.base / composicionTotal.total : 0],
+          ['Impuestos', 'IVA + INC', composicionTotal.impuestos, composicionTotal.total > 0 ? composicionTotal.impuestos / composicionTotal.total : 0],
+          ['FEE Técnico Adm.', 'Tarifado + Terceros', composicionTotal.fee, composicionTotal.total > 0 ? composicionTotal.fee / composicionTotal.total : 0],
+          ['IVA del FEE', 'IVA sobre el FEE', composicionTotal.ivaFee, composicionTotal.total > 0 ? composicionTotal.ivaFee / composicionTotal.total : 0],
+        ],
+        foot: ['Total', '', composicionTotal.total, 1],
+      }),
+      'Composición',
+    )
+
+    if (tendenciaMensual.length > 0) {
+      utils.book_append_sheet(
+        wb,
+        buildSheet(utils, {
+          name: 'Tendencia Mensual',
+          title: 'Actividad Mensual',
+          columns: [
+            { header: 'Período', wch: 16 },
+            { header: 'Eventos', wch: 10, fmt: 'number' },
+            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+          ],
+          rows: tendenciaMensual.map((row) => [
+            row.label ?? row.mes,
+            row.cantidadEventos,
+            row.valorTotal,
+          ]),
+          foot: [
+            'Total',
+            tendenciaMensual.reduce((s, r) => s + r.cantidadEventos, 0),
+            tendenciaMensual.reduce((s, r) => s + r.valorTotal, 0),
+          ],
+          autofilter: true,
+        }),
+        'Tendencia Mensual',
+      )
+    }
 
     if (consolidadoDesembolso.length > 0) {
       utils.book_append_sheet(
