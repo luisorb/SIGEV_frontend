@@ -602,15 +602,11 @@ export function EventViewPage() {
             <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
               <div className="bg-white px-4 py-3.5">{label('Número')}{value(event.numeroEvento)}</div>
               <div className="bg-white px-4 py-3.5">{label('Sufijo')}{value(event.sufijo || '-')}</div>
-              <div className="bg-white px-4 py-3.5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>{label('Fecha del evento')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
-                  <div>{label('Días')}{value(String(event.dias))}</div>
-                </div>
-              </div>
+              <div className="bg-white px-4 py-3.5">{label('Fecha del evento')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Responsable')}{value(event.responsable || '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Dependencia')}{value(event.dependencia || '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Asistentes')}{value(String(event.asistentes))}</div>
+              <div className="bg-white px-4 py-3.5">{label('Días')}{value(String(event.dias))}</div>
               <div className="bg-white px-4 py-3.5">{label('Programa')}{value(event.programa || '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Instancia de participación')}{value(event.instanciaParticipacion || '-')}</div>
             </dl>
