@@ -40,6 +40,8 @@ export function EventCreatePage() {
         latitud: data.latitud || undefined,
         longitud: data.longitud || undefined,
         observaciones: data.observaciones ?? '',
+        programa: data.programa ?? '',
+        instanciaParticipacion: data.instanciaParticipacion ?? '',
       }
 
       const newEvent = await createEventApi(partial)

@@ -208,6 +208,8 @@ export interface Event {
   desembolsoId: string
   esquema: SchemaType
   estado: EventState
+  programa?: string
+  instanciaParticipacion?: string
   items: Item[]
   activo?: boolean
   eliminadoAt?: string
@@ -234,6 +236,8 @@ export interface EventInput {
   desembolsoId: string
   esquema: SchemaType
   estado?: EventState
+  programa?: string
+  instanciaParticipacion?: string
 }
 
 export interface AuditEntry {
@@ -310,6 +314,8 @@ export interface Event {
   desembolsoId: string
   esquema: SchemaType
   estado: EventState
+  programa?: string
+  instanciaParticipacion?: string
   items: Item[]
   asignadoA?: string
   soportes?: Soporte[]

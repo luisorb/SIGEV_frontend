@@ -18,7 +18,8 @@ import {
   Upload,
   Wallet,
 } from 'lucide-react'
-import { DEPENDENCIAS } from '../../../config/constants'
+import { DEPENDENCIAS, PROGRAMAS, INSTANCIAS_PARTICIPACION } from '../../../config/constants'
+import type { Programa } from '../../../config/constants'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event, Attachment } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
@@ -81,7 +82,7 @@ const STEPS = [
 type StepKey = (typeof STEPS)[number]['key']
 
 const STEP_FIELDS: Record<StepKey, (keyof EventFormValues)[]> = {
-  datos: ['numeroEvento', 'sufijo', 'responsable', 'dependencia', 'fechaEvento', 'asistentes', 'dias'],
+  datos: ['numeroEvento', 'sufijo', 'responsable', 'dependencia', 'fechaEvento', 'asistentes', 'dias', 'programa', 'instanciaParticipacion'],
   ubicacion: ['municipioId', 'vereda', 'latitud', 'longitud'],
   recursos: ['aliadoId', 'desembolsoId', 'esquema', 'observaciones'],
   adjunto: [],
@@ -221,7 +222,7 @@ export function EventForm({
   onSave,
   onCancel,
 }: EventFormProps) {
-  const { register, handleSubmit: submitForm, errors, isSubmitting, watchedValues, setValue, trigger } = useEventForm({
+  const { register, handleSubmit: submitForm, errors, isSubmitting, watchedValues, setValue, trigger, setError } = useEventForm({
     event,
     onSave: (data) => {
       const error = validateRequerimiento()
@@ -307,6 +308,18 @@ export function EventForm({
     try {
       const fields = STEP_FIELDS[STEPS[stepIndex].key]
       const valid = fields.length > 0 ? await trigger(fields as never) : true
+
+      if (valid && STEPS[stepIndex].key === 'datos') {
+        const programa = watchedValues.programa as Programa
+        if (programa && programa !== 'OTROS' && !watchedValues.instanciaParticipacion) {
+          setError('instanciaParticipacion', {
+            type: 'manual',
+            message: 'La instancia de participación es obligatoria',
+          })
+          return
+        }
+      }
+
       if (valid) {
         const next = Math.min(stepIndex + 1, STEPS.length - 1)
         setStepIndex(next)
@@ -330,6 +343,18 @@ export function EventForm({
         fieldsToValidate.push(...STEP_FIELDS[STEPS[i].key])
       }
       const valid = fieldsToValidate.length > 0 ? await trigger(fieldsToValidate as never) : true
+
+      if (valid && STEPS[stepIndex].key === 'datos') {
+        const programa = watchedValues.programa as Programa
+        if (programa && programa !== 'OTROS' && !watchedValues.instanciaParticipacion) {
+          setError('instanciaParticipacion', {
+            type: 'manual',
+            message: 'La instancia de participación es obligatoria',
+          })
+          return
+        }
+      }
+
       if (valid) {
         setStepIndex(target)
         if (target === STEPS.length - 1) armSubmit()
@@ -569,6 +594,60 @@ export function EventForm({
               className={inputBase}
               placeholder="0"
             />
+          </Field>
+          <Field
+            id="programa"
+            label="Programa"
+            required
+            hint="Programa al que pertenece el evento."
+            error={errors.programa?.message}
+          >
+            <select
+              id="programa"
+              {...register('programa')}
+              onChange={(e) => {
+                register('programa').onChange(e)
+                const selected = e.target.value as Programa
+                if (selected === 'OTROS' || !selected) {
+                  setValue('instanciaParticipacion', '', { shouldValidate: true })
+                } else {
+                  void trigger('instanciaParticipacion')
+                }
+              }}
+              className={field('programa')}
+            >
+              <option value="">Seleccionar programa</option>
+              {PROGRAMAS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </Field>
+          <Field
+            id="instanciaParticipacion"
+            label="Instancia de participación"
+            required={!!watchedValues.programa && watchedValues.programa !== 'OTROS'}
+            hint="Seleccione la instancia según el programa elegido."
+            error={errors.instanciaParticipacion?.message}
+          >
+            <select
+              id="instanciaParticipacion"
+              {...register('instanciaParticipacion')}
+              disabled={!watchedValues.programa || watchedValues.programa === 'OTROS'}
+              className={`${field('instanciaParticipacion')} ${!watchedValues.programa || watchedValues.programa === 'OTROS' ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+            >
+              <option value="">
+                {!watchedValues.programa
+                  ? 'Primero seleccione un programa'
+                  : watchedValues.programa === 'OTROS'
+                    ? 'No aplica para OTROS'
+                    : 'Seleccionar instancia'}
+              </option>
+              {watchedValues.programa &&
+                watchedValues.programa !== 'OTROS' &&
+                INSTANCIAS_PARTICIPACION[watchedValues.programa as keyof typeof INSTANCIAS_PARTICIPACION]?.map((i) => (
+                  <option key={i} value={i}>{i}</option>
+                ))}
+            </select>
           </Field>
         </StepCard>
       )}

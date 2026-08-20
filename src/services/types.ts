@@ -68,6 +68,8 @@ export interface CreateEventDto {
   disbursementId?: string
   startDate?: string
   items?: CreateItemDto[]
+  programa?: string
+  instanciaParticipacion?: string
 }
 
 export interface UpdateEventDto {
@@ -89,6 +91,8 @@ export interface UpdateEventDto {
   disbursementId?: string
   startDate?: string
   items?: CreateItemDto[]
+  programa?: string
+  instanciaParticipacion?: string
 }
 
 export type ApiEventStatus =

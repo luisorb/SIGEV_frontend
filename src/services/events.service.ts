@@ -95,6 +95,8 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     esquema: (data.schemaType ?? data.esquema ?? 'cotizacion') as SchemaType,
     municipalityCategory: String(data.municipalityCategory ?? ''),
     estado: mapApiStatus(String(data.status ?? data.estado ?? 'Abierto')),
+    programa: String(data.programa ?? ''),
+    instanciaParticipacion: String(data.instanciaParticipacion ?? ''),
     items: Array.isArray(data.items)
       ? (data.items as Record<string, unknown>[]).map(mapBackendItem)
       : [],
@@ -185,6 +187,8 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
     disbursementId: event.desembolsoId,
     startDate: event.fechaEvento || undefined,
     items: event.items?.length ? mapItemsToDto(event.items) : undefined,
+    programa: event.programa || undefined,
+    instanciaParticipacion: event.instanciaParticipacion || undefined,
   }
 }
 

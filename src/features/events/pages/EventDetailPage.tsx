@@ -51,6 +51,8 @@ export function EventDetailPage() {
         latitud: data.latitud || undefined,
         longitud: data.longitud || undefined,
         observaciones: data.observaciones ?? '',
+        programa: data.programa ?? '',
+        instanciaParticipacion: data.instanciaParticipacion ?? '',
       })
 
       if (file) {

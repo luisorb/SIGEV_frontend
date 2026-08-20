@@ -34,6 +34,8 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
           desembolsoId: event.desembolsoId,
           esquema: event.esquema,
           estado: event.estado,
+          programa: event.programa ?? '',
+          instanciaParticipacion: event.instanciaParticipacion ?? '',
         }
       : {
           numeroEvento: '',
@@ -52,6 +54,8 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
           desembolsoId: '',
           esquema: '' as EventFormValues['esquema'],
           estado: 'Abierto',
+          programa: '',
+          instanciaParticipacion: '',
         },
   })
 
@@ -62,6 +66,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
     setValue,
     control,
     trigger,
+    setError,
   } = form
 
   const watchedValues = useWatch({ control })
@@ -78,6 +83,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
     watchedValues,
     setValue,
     trigger,
+    setError,
     form,
   }
 }
