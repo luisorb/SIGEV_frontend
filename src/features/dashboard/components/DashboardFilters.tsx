@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { RotateCcw, SlidersHorizontal } from 'lucide-react'
 import type { DashboardFiltersState } from '../types'
 import type { Ally, Disbursement, Municipality } from '../../../types'
-import { EVENT_STATES } from '../../../config/constants'
+import { EVENT_STATES, PROGRAMAS, INSTANCIAS_PARTICIPACION } from '../../../config/constants'
+import type { Programa } from '../../../config/constants'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 
 interface DashboardFiltersProps {
@@ -38,16 +39,6 @@ export function DashboardFilters({
           <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
           Filtros
         </button>
-
-        {hasActiveFilters && (
-          <button
-            onClick={onReset}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Limpiar
-          </button>
-        )}
 
         {showFilters && (
         <>
@@ -134,6 +125,51 @@ export function DashboardFilters({
             placeholder="Todos"
           />
         </div>
+
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
+            Programa
+          </label>
+          <SearchableSelect
+            size="sm"
+            className="w-40"
+            options={PROGRAMAS.map((p) => ({ value: p, label: p }))}
+            value={filters.programa}
+            onChange={(v) => {
+              onFilterChange('programa', v)
+              if (v === 'OTROS' || !v) onFilterChange('instanciaParticipacion', '')
+            }}
+            placeholder="Todos"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
+            Instancia de participación
+          </label>
+          <SearchableSelect
+            size="sm"
+            className="w-56"
+            options={
+              filters.programa && filters.programa !== 'OTROS'
+                ? (INSTANCIAS_PARTICIPACION[filters.programa as keyof typeof INSTANCIAS_PARTICIPACION] ?? []).map((i) => ({ value: i, label: i }))
+                : []
+            }
+            value={filters.instanciaParticipacion}
+            onChange={(v) => onFilterChange('instanciaParticipacion', v)}
+            placeholder={!filters.programa ? 'Primero seleccione un programa' : filters.programa === 'OTROS' ? 'No aplica' : 'Todas'}
+          />
+        </div>
+
+        {hasActiveFilters && (
+          <button
+            onClick={onReset}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Limpiar
+          </button>
+        )}
         </>
       )}
     </div>

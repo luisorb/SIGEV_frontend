@@ -25,6 +25,8 @@ export function useDashboard(
     estado: '',
     municipioId: '',
     dependencia: '',
+    programa: '',
+    instanciaParticipacion: '',
   })
 
   const aliadosMap = useMemo(() => {
@@ -81,6 +83,12 @@ export function useDashboard(
     }
     if (filters.dependencia) {
       result = result.filter((e) => e.dependencia === filters.dependencia)
+    }
+    if (filters.programa) {
+      result = result.filter((e) => e.programa === filters.programa)
+    }
+    if (filters.instanciaParticipacion) {
+      result = result.filter((e) => e.instanciaParticipacion === filters.instanciaParticipacion)
     }
 
     return result
@@ -306,6 +314,8 @@ export function useDashboard(
       estado: '',
       municipioId: '',
       dependencia: '',
+      programa: '',
+      instanciaParticipacion: '',
     })
   }
 

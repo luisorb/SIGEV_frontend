@@ -8,6 +8,8 @@ export interface DashboardFiltersState {
   estado: string
   municipioId: string
   dependencia: string
+  programa: string
+  instanciaParticipacion: string
 }
 
 export interface DashboardMetrics {
