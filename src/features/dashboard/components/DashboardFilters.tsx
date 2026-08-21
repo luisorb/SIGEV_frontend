@@ -3,7 +3,6 @@ import { RotateCcw, SlidersHorizontal } from 'lucide-react'
 import type { DashboardFiltersState } from '../types'
 import type { Ally, Disbursement, Municipality } from '../../../types'
 import { EVENT_STATES, PROGRAMAS, INSTANCIAS_PARTICIPACION } from '../../../config/constants'
-import type { Programa } from '../../../config/constants'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 
 interface DashboardFiltersProps {
