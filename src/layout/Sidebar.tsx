@@ -24,17 +24,21 @@ interface NavItem {
   roles?: readonly string[]
 }
 
-const ALL_ROLES_EXCEPT_RESTRICTED = ['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta'] as const
+const ALL_ROLES_EXCEPT_RESTRICTED = ['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor'] as const
 
 const ROLES_WITH_PANEL = ['technical_admin', 'functional_admin', 'approver', 'operator', 'analista', 'supervisor', 'auditor', 'consulta'] as const
 
+const ALL_ROLES_EXCEPT_CONSULTA = ['technical_admin', 'functional_admin', 'approver', 'operator', 'solicitante', 'analista', 'supervisor', 'auditor'] as const
+
+const MAP_ROLES = ['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta'] as const
+
 const navItems: NavItem[] = [
   { label: 'Panel', to: '/', icon: LayoutDashboard, roles: ROLES_WITH_PANEL },
-  { label: 'Órdenes', to: '/ordenes', icon: ClipboardList },
-  { label: 'Ofertas Económicas', to: '/ofertas', icon: FileSpreadsheet },
+  { label: 'Órdenes', to: '/ordenes', icon: ClipboardList, roles: ALL_ROLES_EXCEPT_CONSULTA },
+  { label: 'Ofertas Económicas', to: '/ofertas', icon: FileSpreadsheet, roles: ALL_ROLES_EXCEPT_CONSULTA },
   { label: 'Matriz de Ejecución', to: '/matriz', icon: Table2, roles: ALL_ROLES_EXCEPT_RESTRICTED },
   { label: 'Tablero', to: '/tablero', icon: KanbanSquare, roles: ALL_ROLES_EXCEPT_RESTRICTED },
-  { label: 'Mapa', to: '/mapa', icon: Map, roles: ALL_ROLES_EXCEPT_RESTRICTED },
+  { label: 'Mapa', to: '/mapa', icon: Map, roles: MAP_ROLES },
   { label: 'Parámetros', to: '/parametros', icon: Settings, roles: ['functional_admin'] },
   { label: 'Usuarios', to: '/usuarios', icon: Users, roles: ['technical_admin'] },
   { label: 'Respaldo', to: '/respaldo', icon: DatabaseBackup, roles: ['technical_admin'] },

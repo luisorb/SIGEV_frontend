@@ -19,6 +19,8 @@ import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { RoleRoute } from '../features/auth/components/RoleRoute'
 import { useAuth } from '../features/auth/useAuth'
 
+const ROLES_EXCEPT_CONSULTA = ['technical_admin', 'functional_admin', 'approver', 'operator', 'solicitante', 'analista', 'supervisor', 'auditor'] as const
+
 function DashboardGuard() {
   const { user } = useAuth()
   if (user?.roleNames.includes('solicitante')) {
@@ -40,7 +42,14 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <DashboardGuard /> },
-          { path: 'ordenes', element: <EventsListPage /> },
+          {
+            path: 'ordenes',
+            element: (
+              <RoleRoute roles={ROLES_EXCEPT_CONSULTA}>
+                <EventsListPage />
+              </RoleRoute>
+            ),
+          },
           {
             path: 'ordenes/nueva',
             element: (
@@ -49,7 +58,14 @@ export const router = createBrowserRouter([
               </RoleRoute>
             ),
           },
-          { path: 'ordenes/:id', element: <EventViewPage /> },
+          {
+            path: 'ordenes/:id',
+            element: (
+              <RoleRoute roles={ROLES_EXCEPT_CONSULTA}>
+                <EventViewPage />
+              </RoleRoute>
+            ),
+          },
           {
             path: 'ordenes/:id/editar',
             element: (
@@ -58,10 +74,24 @@ export const router = createBrowserRouter([
               </RoleRoute>
             ),
           },
-          { path: 'ofertas', element: <OffersPage /> },
-          { path: 'ofertas/:id', element: <OfferViewPage /> },
-          { path: 'matriz', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta']}><MatrixPage /></RoleRoute> },
-          { path: 'tablero', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta']}><KanbanPage /></RoleRoute> },
+          {
+            path: 'ofertas',
+            element: (
+              <RoleRoute roles={ROLES_EXCEPT_CONSULTA}>
+                <OffersPage />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: 'ofertas/:id',
+            element: (
+              <RoleRoute roles={ROLES_EXCEPT_CONSULTA}>
+                <OfferViewPage />
+              </RoleRoute>
+            ),
+          },
+          { path: 'matriz', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor']}><MatrixPage /></RoleRoute> },
+          { path: 'tablero', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor']}><KanbanPage /></RoleRoute> },
           { path: 'mapa', element: <RoleRoute roles={['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta']}><MapPage /></RoleRoute> },
           {
             path: 'parametros',
