@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios'
+import { FileValidationError } from '../utils/fileValidation'
 
 interface ApiErrorPayload {
   message?: string | string[]
@@ -6,6 +7,7 @@ interface ApiErrorPayload {
 }
 
 export function getApiErrorMessage(error: unknown, fallback = 'Ocurrió un error inesperado'): string {
+  if (error instanceof FileValidationError) return error.message
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosError = error as AxiosError<ApiErrorPayload>
     const status = axiosError.response?.status

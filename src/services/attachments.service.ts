@@ -1,5 +1,7 @@
 import api from '../lib/api'
 import type { Attachment } from '../types'
+import { convertToWebp } from '../utils/imageConversion'
+import { assertFileSize } from '../utils/fileValidation'
 
 export async function downloadAttachmentApi(id: string): Promise<Blob> {
   const response = await api.get(`/api/v1/attachments/${id}`, {
@@ -19,8 +21,10 @@ export async function uploadAttachmentApi(
   file: File,
   quotationId?: string,
 ): Promise<Attachment> {
+  assertFileSize(file)
+  const uploadFile = await convertToWebp(file)
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('file', uploadFile)
   formData.append('category', category)
   if (quotationId) formData.append('quotationId', quotationId)
   const response = await api.post<Attachment>(
@@ -39,8 +43,10 @@ export async function uploadPaymentSupportApi(
   eventId: string,
   file: File,
 ): Promise<Attachment> {
+  assertFileSize(file)
+  const uploadFile = await convertToWebp(file)
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('file', uploadFile)
   const response = await api.post<Attachment>(
     `/api/v1/attachments/payment-support/${eventId}`,
     formData,

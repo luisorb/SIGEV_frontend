@@ -8,6 +8,7 @@ import { Modal } from '../../../layout/Modal'
 import { getApiErrorMessage } from '../../../lib/apiErrors'
 import { downloadAttachment, uploadPaymentSupportApi } from '../../../services/attachments.service'
 import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
+import { attachmentFileError } from '../../../utils/fileValidation'
 import type { PaymentMethod } from '../../../services/types'
 import type { AttachmentResponse } from '../../../services/payments.service'
 import type { Item } from '../../../types'
@@ -207,6 +208,8 @@ export function PaymentsSection({
       return `El monto excede el saldo disponible del recurso (saldo: ${formatCurrencyCO(disponible)})`
     }
     if (!supportFile) return 'Debe adjuntar el soporte documental del pago (obligatorio)'
+    const fileError = attachmentFileError(supportFile)
+    if (fileError) return fileError
     return null
   }
 
@@ -492,7 +495,21 @@ export function PaymentsSection({
                       type="file"
                       accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.doc,.docx,.mp4,.mov,.webm,.avi"
                       className="hidden"
-                      onChange={(e) => setSupportFile(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        const selected = e.target.files?.[0]
+                        if (!selected) {
+                          setSupportFile(null)
+                          return
+                        }
+                        const error = attachmentFileError(selected)
+                        if (error) {
+                          toast.showToast(error, 'error')
+                          e.target.value = ''
+                          setSupportFile(null)
+                          return
+                        }
+                        setSupportFile(selected)
+                      }}
                     />
                   </label>
                   {supportFile && (

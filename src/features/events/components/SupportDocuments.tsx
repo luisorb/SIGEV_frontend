@@ -3,7 +3,9 @@ import { Folder, FolderOpen, ChevronRight, FileText, Upload, Trash2, Lock, Downl
 import type { Soporte, TipoSoporte, Attachment, EventState } from '../../../types'
 import { SOPORTES_REQUERIDOS, SOPORTES_ESTATICOS } from '../../../types'
 import { formatDateCO } from '../../../utils/formatters'
+import { attachmentFileError } from '../../../utils/fileValidation'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { useToast } from '../../../components/ToastProvider'
 
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith('image/')) return { icon: Image, color: 'text-violet-500', bg: 'bg-violet-50' }
@@ -62,6 +64,7 @@ export function SupportDocuments({
   onDownload,
 }: SupportDocumentsProps) {
   const fileInputRef = useRef<{ [key: string]: HTMLInputElement | null }>({})
+  const toast = useToast()
   const [deleteTarget, setDeleteTarget] = useState<Attachment | null>(null)
   const [uploadingTipo, setUploadingTipo] = useState<TipoSoporte | null>(null)
   const [openFolder, setOpenFolder] = useState<TipoSoporte | null>(null)
@@ -114,9 +117,24 @@ export function SupportDocuments({
     )
   }
 
+  const filterValidFiles = useCallback((files: File[]): File[] => {
+    const valid: File[] = []
+    for (const file of files) {
+      const error = attachmentFileError(file)
+      if (error) toast.showToast(error, 'error')
+      else valid.push(file)
+    }
+    return valid
+  }, [toast])
+
   async function handleFileChange(tipo: TipoSoporte, e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    if (files.length === 0 || uploadingTipo) return
+    const files = filterValidFiles(Array.from(e.target.files ?? []))
+    if (files.length === 0 || uploadingTipo) {
+      if (fileInputRef.current[tipo]) {
+        fileInputRef.current[tipo]!.value = ''
+      }
+      return
+    }
     setUploadingTipo(tipo)
     try {
       for (const file of files) {
@@ -149,11 +167,11 @@ export function SupportDocuments({
     e.stopPropagation()
     setIsDragOver(false)
     if (uploadingTipo) return
-    const files = Array.from(e.dataTransfer.files)
-    if (files.length === 0) return
+    const validFiles = filterValidFiles(Array.from(e.dataTransfer.files))
+    if (validFiles.length === 0) return
     setUploadingTipo(tipo)
     try {
-      for (const file of files) {
+      for (const file of validFiles) {
         await onUpload(tipo, file)
       }
     } catch {
@@ -161,7 +179,7 @@ export function SupportDocuments({
     } finally {
       setUploadingTipo(null)
     }
-  }, [uploadingTipo, onUpload])
+  }, [uploadingTipo, onUpload, filterValidFiles])
 
   function getFolderDocs(tipo: TipoSoporte): { attachments: Attachment[]; soporte?: Soporte } {
     return { attachments: getBackendAttachments(tipo), soporte: getSoporte(tipo) }
