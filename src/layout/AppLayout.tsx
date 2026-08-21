@@ -3,10 +3,12 @@ import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Navbar } from './Navbar'
 import { ToastProvider } from '../components/ToastProvider'
+import { useNotificationsStream } from '../hooks/useNotifications'
 
 export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  useNotificationsStream()
 
   return (
     <ToastProvider>
