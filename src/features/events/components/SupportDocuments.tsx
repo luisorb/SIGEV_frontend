@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react'
-import { Folder, FolderOpen, ChevronRight, FileText, Upload, Trash2, Lock, Download, Loader2, X, Image, Sheet, FileUp } from 'lucide-react'
+import { Folder, FolderOpen, ChevronRight, FileText, Upload, Trash2, Lock, Download, Loader2, X, Image, Sheet, FileUp, Film } from 'lucide-react'
 import type { Soporte, TipoSoporte, Attachment, EventState } from '../../../types'
 import { SOPORTES_REQUERIDOS, SOPORTES_ESTATICOS } from '../../../types'
 import { formatDateCO } from '../../../utils/formatters'
@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith('image/')) return { icon: Image, color: 'text-violet-500', bg: 'bg-violet-50' }
+  if (mimeType.startsWith('video/')) return { icon: Film, color: 'text-blue-500', bg: 'bg-blue-50' }
   if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType === 'application/vnd.ms-excel')
     return { icon: Sheet, color: 'text-emerald-500', bg: 'bg-emerald-50' }
   return { icon: FileText, color: 'text-red-500', bg: 'bg-red-50' }
@@ -307,7 +308,7 @@ export function SupportDocuments({
                       ref={(el) => { fileInputRef.current[openFolder] = el }}
                       type="file"
                       multiple={isMultiDocument(openFolder)}
-                      accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                      accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx,.mp4,.mov,.webm,.avi"
                       className="hidden"
                       disabled={uploadingTipo === openFolder}
                       onChange={(e) => handleFileChange(openFolder, e)}
@@ -413,7 +414,7 @@ export function SupportDocuments({
                     ref={(el) => { fileInputRef.current[openFolder] = el }}
                     type="file"
                     multiple={isMultiDocument(openFolder)}
-                    accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                      accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx,.mp4,.mov,.webm,.avi"
                     className="hidden"
                     disabled={uploadingTipo === openFolder}
                     onChange={(e) => handleFileChange(openFolder, e)}
@@ -430,7 +431,7 @@ export function SupportDocuments({
                         {isDragOver ? 'Suelta los archivos aquí' : 'Arrastra archivos aquí o haz clic para agregar'}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {isMultiDocument(openFolder) ? 'Puedes seleccionar varios archivos' : 'Selecciona un archivo'} · PDF, JPG, PNG, XLSX, DOC
+                      {isMultiDocument(openFolder) ? 'Puedes seleccionar varios archivos' : 'Selecciona un archivo'} · PDF, JPG, PNG, XLSX, DOC, MP4
                       </p>
                     </>
                   )}

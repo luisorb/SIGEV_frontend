@@ -490,7 +490,7 @@ export function PaymentsSection({
                     )}
                     <input
                       type="file"
-                      accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.doc,.docx"
+                      accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.doc,.docx,.mp4,.mov,.webm,.avi"
                       className="hidden"
                       onChange={(e) => setSupportFile(e.target.files?.[0] ?? null)}
                     />
