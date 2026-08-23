@@ -2,7 +2,7 @@ import { useLocation, useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Home } from 'lucide-react'
 import { getEventApi } from '../services/events.service'
-import { getQuotationsApi, mapQuotationResponse } from '../services/quotations.service'
+import { getOfertaEconomicaApi, mapOfertaEconomicaToOffer } from '../services/offers.service'
 
 const routeLabels: Record<string, string> = {
   '/': 'Panel',
@@ -35,9 +35,12 @@ export function Breadcrumbs() {
     enabled: Boolean(orderId),
   })
 
-  const { data: quotations = [] } = useQuery({
-    queryKey: ['quotations'],
-    queryFn: async () => (await getQuotationsApi()).map(mapQuotationResponse),
+  // Misma clave que OfferViewPage: al visitar /ofertas/:id ambas comparten
+  // caché y solo se hace una petición (antes se descargaban TODAS las
+  // cotizaciones para mostrar un código, además con el id equivocado).
+  const { data: offer } = useQuery({
+    queryKey: ['offers', offerId],
+    queryFn: () => getOfertaEconomicaApi(offerId!).then(mapOfertaEconomicaToOffer),
     enabled: Boolean(offerId),
   })
 
@@ -51,11 +54,7 @@ export function Breadcrumbs() {
     }
     const offerSegment = segment.match(/^\/ofertas\/([^/]+)$/)
     if (offerSegment && offerSegment[1] !== 'nueva') {
-      const quotation = quotations.find((q) => q.id === offerSegment[1])
-      const code =
-        quotation &&
-        ((quotation as { codigo?: string }).codigo ?? (quotation as { code?: string }).code)
-      if (code) return code
+      if (offer && offer.id === offerSegment[1] && offer.codigo) return offer.codigo
       return offerSegment[1]
     }
     const lastPart = segment.split('/').pop() ?? ''

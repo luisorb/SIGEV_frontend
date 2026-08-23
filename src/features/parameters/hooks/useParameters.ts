@@ -1,8 +1,10 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { CalculationParams } from '../../../types'
 import { addAuditEntry } from '../../../lib/auditStore'
 import { getCurrentUser, DEFAULT_CALCULATION_PARAMS } from '../../../config/constants'
 import { getActiveParametersApi, getParameterVersionsApi, createParameterVersionApi } from '../../../services/parameters.service'
+import { ACTIVE_PARAMS_KEY } from '../../../hooks/useActiveCalculationParams'
 import type { ParametersResponse } from '../../../services/parameters.service'
 import type { ParamVersion } from '../types'
 
@@ -43,6 +45,7 @@ function paramsEqual(a: CalculationParams, b: CalculationParams) {
 }
 
 export function useParameters() {
+  const queryClient = useQueryClient()
   const [versions, setVersions] = useState<ParamVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -139,6 +142,8 @@ export function useParameters() {
       const created = await createParameterVersionApi(roundedParams)
       const mapped = mapResponseToParamVersion(created)
 
+      queryClient.invalidateQueries({ queryKey: ACTIVE_PARAMS_KEY })
+
       const updated = versions.map((v) => (v.activo ? { ...v, activo: false } : v))
       updated.push(mapped)
       setVersions(updated)
@@ -162,7 +167,7 @@ export function useParameters() {
     } finally {
       setSaving(false)
     }
-  }, [isDirty, aprobadoPor, editParams, versions, vigenciaInicio, vigenciaFin])
+  }, [isDirty, aprobadoPor, editParams, versions, vigenciaInicio, vigenciaFin, queryClient])
 
   function loadVersion(versionId: string) {
     const version = versions.find((v) => v.id === versionId)
