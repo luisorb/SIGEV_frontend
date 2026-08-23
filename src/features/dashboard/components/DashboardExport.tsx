@@ -193,6 +193,26 @@ async function captureElement(el: HTMLDivElement): Promise<CapturedImage> {
   return { dataUrl, width: img.width, height: img.height }
 }
 
+async function captureElementWithHeight(el: HTMLDivElement): Promise<CapturedImage> {
+  const target =
+    el.querySelector<HTMLElement>('.recharts-responsive-container') ??
+    el.querySelector<HTMLElement>('.recharts-wrapper') ??
+    el
+
+  const rect = target.getBoundingClientRect()
+  const desiredHeight = Math.round(Math.min(640, Math.max(340, rect.width * 0.5)))
+
+  const prevHeight = target.style.height
+  target.style.height = `${desiredHeight}px`
+  await new Promise((resolve) => setTimeout(resolve, 400))
+
+  try {
+    return await captureElement(el)
+  } finally {
+    target.style.height = prevHeight
+  }
+}
+
 function addImageToPDF(
   doc: jsPDF,
   captured: CapturedImage,
@@ -641,6 +661,10 @@ export function DashboardExport({
 
     const generatedAt = formatDateTimeCO(new Date())
 
+    const nowDate = new Date()
+    const currentMonthLabel = nowDate.toLocaleDateString('es-CO', { month: 'long' })
+    const currentPeriodLabel = `${currentMonthLabel.charAt(0).toUpperCase()}${currentMonthLabel.slice(1)} ${nowDate.getFullYear()}`
+
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     doc.setTextColor(...TEXT_FAINT)
@@ -737,21 +761,72 @@ export function DashboardExport({
       }, autoTable) + 10
     }
 
-    const chartEntries: [React.RefObject<HTMLDivElement | null>, string][] = [
-      [sectionRefs.eventosPorEstado, 'Eventos por estado'],
-      [sectionRefs.evolucionTemporal, 'Pagos del mes'],
-      [sectionRefs.coberturaTerritorial, 'Cobertura Territorial'],
+    async function addCoberturaChart(ref: React.RefObject<HTMLDivElement | null>, title: string) {
+      const drawUnavailable = () => {
+        y = ensureSpace(doc, y, pageHeight, 3)
+        y = drawSectionTitle(doc, title, y, pageWidth)
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(9)
+        doc.setTextColor(...TEXT_FAINT)
+        doc.text('Gráfica no disponible en esta exportación.', PAGE_MARGIN, y)
+        y += 10
+      }
+
+      if (!ref.current) {
+        drawUnavailable()
+        return
+      }
+
+      try {
+        const captured = await captureElement(ref.current)
+
+        const titleH = 8
+        const spacing = 8
+        const topMargin = 26
+        const bottomMargin = 22
+
+        const ratio = captured.height / captured.width
+        let imgW = contentWidth * 0.65
+        let imgH = ratio * imgW
+        const maxImgH = Math.max(30, pageHeight - topMargin - bottomMargin - titleH - spacing)
+        if (imgH > maxImgH) {
+          imgH = maxImgH
+          imgW = maxImgH / ratio
+        }
+
+        // Siempre en hoja exclusiva, sin compartir con el gráfico anterior
+        if (y > topMargin) {
+          doc.addPage()
+        }
+        y = topMargin
+
+        y = drawSectionTitle(doc, title, y, pageWidth)
+
+        const xOffset = PAGE_MARGIN + (contentWidth - imgW) / 2
+        doc.addImage(captured.dataUrl, 'PNG', xOffset, y, imgW, imgH)
+        y += imgH + spacing
+      } catch (err) {
+        console.error(`Error capturando "${title}":`, err)
+        drawUnavailable()
+      }
+    }
+
+    const chartEntries: { ref: React.RefObject<HTMLDivElement | null>; title: string; taller?: boolean }[] = [
+      { ref: sectionRefs.eventosPorEstado, title: 'Eventos por estado' },
+      { ref: sectionRefs.evolucionTemporal, title: `Pagos del mes \u00b7 ${currentPeriodLabel}`, taller: true },
     ]
 
-    for (const [ref, title] of chartEntries) {
-      if (ref.current) {
+    for (const entry of chartEntries) {
+      if (entry.ref.current) {
         try {
-          const captured = await captureElement(ref.current)
-          y = addImageToPDF(doc, captured, y, contentWidth, pageWidth, pageHeight, title)
+          const captured = entry.taller
+            ? await captureElementWithHeight(entry.ref.current)
+            : await captureElement(entry.ref.current)
+          y = addImageToPDF(doc, captured, y, contentWidth, pageWidth, pageHeight, entry.title)
         } catch (err) {
-          console.error(`Error capturando "${title}":`, err)
+          console.error(`Error capturando "${entry.title}":`, err)
           y = ensureSpace(doc, y, pageHeight, 3)
-          y = drawSectionTitle(doc, title, y, pageWidth)
+          y = drawSectionTitle(doc, entry.title, y, pageWidth)
           doc.setFont('helvetica', 'italic')
           doc.setFontSize(9)
           doc.setTextColor(...TEXT_FAINT)
@@ -760,6 +835,8 @@ export function DashboardExport({
         }
       }
     }
+
+    await addCoberturaChart(sectionRefs.coberturaTerritorial, 'Cobertura Territorial')
 
     const DONUT_COLORS: [number, number, number][] = [
       [244, 51, 64],
@@ -770,94 +847,141 @@ export function DashboardExport({
       [249, 115, 22],
     ]
 
-    function computeImageHeight(captured: CapturedImage): number {
-      const imgRatio = captured.height / captured.width
-      const imgHeight = imgRatio * contentWidth
-      const maxImgHeight = pageHeight - 40
-      return Math.min(imgHeight, maxImgHeight)
-    }
-
-    function computeLegendHeight(rows: ConsolidadoRow[]): number {
-      if (rows.length === 0) return 0
-      const rowHeight = 6
-      return Math.ceil(rows.length / 2) * rowHeight + 6
-    }
-
-    async function addDonutBlock(
-      ref: React.RefObject<HTMLDivElement | null>,
-      title: string,
-      rows: ConsolidadoRow[],
-    ) {
-      if (rows.length === 0) return
-      if (!ref.current) {
-        y = ensureSpace(doc, y, pageHeight, 3)
-        y = drawSectionTitle(doc, title, y, pageWidth)
-        return
+    function truncateText(text: string, maxWidth: number): string {
+      if (doc.getTextWidth(text) <= maxWidth) return text
+      let t = text
+      while (t.length > 1 && doc.getTextWidth(`${t}\u2026`) > maxWidth) {
+        t = t.slice(0, -1)
       }
-
-      try {
-        const captured = await captureElement(ref.current)
-        const imgH = computeImageHeight(captured)
-        const legendH = computeLegendHeight(rows)
-        const totalBlock = imgH + legendH + 18
-
-        y = ensureSpace(doc, y, pageHeight, totalBlock)
-        y = drawSectionTitle(doc, title, y, pageWidth)
-
-        const finalWidth = contentWidth
-        const finalHeight = imgH
-
-        const xOffset = PAGE_MARGIN
-        doc.addImage(captured.dataUrl, 'PNG', xOffset, y, finalWidth, finalHeight)
-        y += finalHeight + 4
-
-        drawDonutLegend(rows)
-      } catch (err) {
-        console.error(`Error capturando "${title}":`, err)
-        y = ensureSpace(doc, y, pageHeight, 3)
-        y = drawSectionTitle(doc, title, y, pageWidth)
-        doc.setFont('helvetica', 'italic')
-        doc.setFontSize(9)
-        doc.setTextColor(...TEXT_FAINT)
-        doc.text('Gráfica no disponible en esta exportación.', PAGE_MARGIN, y)
-        y += 10
-      }
+      return `${t}\u2026`
     }
 
-    function drawDonutLegend(rows: ConsolidadoRow[]) {
-      if (rows.length === 0) return
-      const colWidth = contentWidth / 2
-      const rowHeight = 6
-      const startY = y
+    function drawColumnLegend(rows: ConsolidadoRow[], xStart: number, colW: number, topY: number): number {
+      const rowHeight = 5.6
+      const pad = 4
 
       rows.forEach((row, i) => {
-        const col = i % 2
-        const rowIdx = Math.floor(i / 2)
-        const x = PAGE_MARGIN + col * colWidth
-        const cellY = startY + rowIdx * rowHeight
+        const cellY = topY + i * rowHeight
         const color = DONUT_COLORS[i % DONUT_COLORS.length]
 
         doc.setFillColor(...color)
-        doc.circle(x + 3, cellY + 2, 2, 'F')
-
-        doc.setFont('helvetica', 'normal')
-        doc.setFontSize(8)
-        doc.setTextColor(...TEXT_MUTED)
-        doc.text(row.nombre, x + 8, cellY + 2.8)
+        doc.circle(xStart + 2.6, cellY + 2, 1.9, 'F')
 
         doc.setFont('helvetica', 'bold')
-        doc.setFontSize(8)
-        doc.setTextColor(...TEXT_DARK)
+        doc.setFontSize(7.5)
         const valText = `${formatCurrencyCO(row.valorTotal)} (${formatPercentage(row.porcentaje)})`
-        doc.text(valText, x + 8 + doc.getTextWidth(row.nombre) + 3, cellY + 2.8)
+        const valWidth = doc.getTextWidth(valText)
+        doc.setTextColor(...TEXT_DARK)
+        doc.text(valText, xStart + colW - valWidth, cellY + 2.6)
+
+        const nameMax = Math.max(10, colW - pad - 6 - valWidth - 3)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7.5)
+        doc.setTextColor(...TEXT_MUTED)
+        doc.text(truncateText(row.nombre, nameMax), xStart + 6, cellY + 2.6)
       })
 
-      const totalRows = Math.ceil(rows.length / 2)
-      y = startY + totalRows * rowHeight + 6
+      return topY + rows.length * rowHeight
     }
 
-    await addDonutBlock(sectionRefs.consolidadoDesembolso, 'Pagos por recurso disponible', consolidadoDesembolso)
-    await addDonutBlock(sectionRefs.consolidadoAliado, 'Pagos por Aliado', consolidadoAliado)
+    interface DonutBlockSpec {
+      ref: React.RefObject<HTMLDivElement | null>
+      title: string
+      rows: ConsolidadoRow[]
+    }
+
+    async function addDonutsSideBySide(blocks: DonutBlockSpec[]) {
+      const candidates = blocks.filter((b) => b.rows.length > 0)
+      if (candidates.length === 0) return
+
+      const prepared: { title: string; rows: ConsolidadoRow[]; captured: CapturedImage }[] = []
+      const failed: string[] = []
+
+      for (const b of candidates) {
+        if (!b.ref.current) {
+          failed.push(b.title)
+          continue
+        }
+        try {
+          prepared.push({ title: b.title, rows: b.rows, captured: await captureElement(b.ref.current) })
+        } catch (err) {
+          console.error(`Error capturando "${b.title}":`, err)
+          failed.push(b.title)
+        }
+      }
+
+      if (prepared.length === 0) {
+        for (const title of failed) {
+          y = ensureSpace(doc, y, pageHeight, 3)
+          y = drawSectionTitle(doc, title, y, pageWidth)
+          doc.setFont('helvetica', 'italic')
+          doc.setFontSize(9)
+          doc.setTextColor(...TEXT_FAINT)
+          doc.text('Gráfica no disponible en esta exportación.', PAGE_MARGIN, y)
+          y += 10
+        }
+        return
+      }
+
+      const colGap = 10
+      const colWidth = (contentWidth - colGap * (prepared.length - 1)) / prepared.length
+
+      // Los donuts comparten una página exclusiva en el PDF
+      if (y > 26) {
+        doc.addPage()
+      }
+      y = 26
+
+      const titleH = 8
+      const legendMaxH = Math.max(...prepared.map((p) => p.rows.length)) * 5.6
+      const maxImgH = Math.max(30, pageHeight - 26 - 22 - titleH - 4 - legendMaxH - 10)
+
+      const layouts = prepared.map((p) => {
+        const ratio = p.captured.height / p.captured.width
+        let imgW = colWidth
+        let imgH = ratio * imgW
+        if (imgH > maxImgH) {
+          imgH = maxImgH
+          imgW = maxImgH / ratio
+        }
+        return { ...p, imgW, imgH, legendH: p.rows.length * 5.6 }
+      })
+
+      const baseY = y
+      const imgTop = baseY + titleH
+
+      layouts.forEach((l, i) => {
+        const xStart = PAGE_MARGIN + i * (colWidth + colGap)
+
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(10.5)
+        doc.setTextColor(...TEXT_DARK)
+        doc.text(l.title, xStart + l.imgW / 2, baseY + 5, { align: 'center' })
+
+        const xOffset = xStart + (colWidth - l.imgW) / 2
+        doc.addImage(l.captured.dataUrl, 'PNG', xOffset, imgTop, l.imgW, l.imgH)
+      })
+
+      y = imgTop + Math.max(...layouts.map((l) => l.imgH)) + 4
+      layouts.forEach((l, i) => {
+        const xStart = PAGE_MARGIN + i * (colWidth + colGap)
+        drawColumnLegend(l.rows, xStart, colWidth, y)
+      })
+      y += Math.max(...layouts.map((l) => l.legendH)) + 8
+
+      for (const title of failed) {
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(9)
+        doc.setTextColor(...TEXT_FAINT)
+        doc.text(`${title}: gr\u00e1fica no disponible en esta exportaci\u00f3n.`, PAGE_MARGIN, y)
+        y += 6
+      }
+    }
+
+    await addDonutsSideBySide([
+      { ref: sectionRefs.consolidadoDesembolso, title: 'Pagos por recurso disponible', rows: consolidadoDesembolso },
+      { ref: sectionRefs.consolidadoAliado, title: 'Pagos por Aliado', rows: consolidadoAliado },
+    ])
 
     if (consolidadoDesembolso.length > 0) {
       y = ensureSpace(doc, y, pageHeight, consolidadoDesembolso.length)

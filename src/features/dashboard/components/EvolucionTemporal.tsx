@@ -64,7 +64,7 @@ export function EvolucionTemporal({ rows }: EvolucionTemporalProps) {
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={rows} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -79,7 +79,7 @@ export function EvolucionTemporal({ rows }: EvolucionTemporalProps) {
                 tick={{ fontSize: 9, fill: '#94a3b8' }}
                 axisLine={false}
                 tickLine={false}
-                interval={rows.length > 15 ? 4 : rows.length > 7 ? 2 : 0}
+                interval={0}
               />
               <YAxis
                 tickFormatter={formatCurrencyCOCompact}
