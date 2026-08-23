@@ -1,5 +1,5 @@
 import { MapPin } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer, LabelList } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import type { CoberturaItem } from '../types'
 import { formatCurrencyCO, formatPercentage } from '../../../utils/formatters'
 
@@ -34,51 +34,6 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   )
 }
 
-function CustomBarShape(props: Record<string, unknown>) {
-  const { x, y, width, height, index } = props as {
-    x: number; y: number; width: number; height: number; index: number
-  }
-  const radius = 4
-  const color = COLORS[(index as number) % COLORS.length]
-
-  if (!width || !height) return null
-
-  return (
-    <g>
-      <defs>
-        <linearGradient id={`barGrad-${index}`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor={color} stopOpacity={0.7} />
-          <stop offset="100%" stopColor={color} stopOpacity={1} />
-        </linearGradient>
-      </defs>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={`url(#barGrad-${index})`}
-        rx={0}
-        ry={0}
-      />
-      <rect
-        x={x + width - radius}
-        y={y}
-        width={radius}
-        height={height}
-        fill={`url(#barGrad-${index})`}
-      />
-      <path
-        d={`M ${x + width - radius} ${y} Q ${x + width} ${y} ${x + width} ${y + radius}`}
-        fill={color}
-      />
-      <path
-        d={`M ${x + width - radius} ${y + height} Q ${x + width} ${y + height} ${x + width} ${y + height - radius}`}
-        fill={color}
-      />
-    </g>
-  )
-}
-
 export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
   const data = rows.map((r) => ({
     name: r.municipio,
@@ -88,8 +43,6 @@ export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
     valorTotal: r.valorTotal,
     porcentaje: r.porcentaje,
   }))
-
-  const maxValue = Math.max(...data.map((d) => d.valorTotal), 0)
 
   return (
     <div className="bg-white rounded-xl border border-slate-200">
@@ -104,48 +57,25 @@ export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
         </div>
       ) : (
         <div className="p-5">
-          <ResponsiveContainer width="100%" height={Math.max(rows.length * 44, 120)}>
-            <BarChart
-              data={data}
-              layout="vertical"
-              margin={{ top: 2, right: 60, left: 0, bottom: 2 }}
-              barCategoryGap="20%"
-            >
-              <XAxis
-                type="number"
-                hide
-                domain={[0, maxValue * 1.15]}
-              />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={110}
-                tick={{ fontSize: 11, fill: '#475569', fontWeight: 500 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: 'rgba(99, 102, 241, 0.04)' }}
-              />
-              <Bar
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <Tooltip content={<CustomTooltip />} />
+              <Pie
+                data={data}
                 dataKey="valorTotal"
-                shape={<CustomBarShape />}
-                barSize={24}
-                radius={[0, 4, 4, 0]}
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius="68%"
+                paddingAngle={2}
+                stroke="#ffffff"
+                strokeWidth={2}
               >
                 {data.map((_, index) => (
-                  <Cell key={`cell-${index}`} />
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
-                <LabelList
-                  dataKey="porcentaje"
-                  position="right"
-                  formatter={(v) => formatPercentage(Number(v))}
-                  style={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
-                  offset={8}
-                />
-              </Bar>
-            </BarChart>
+              </Pie>
+            </PieChart>
           </ResponsiveContainer>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-3">
             {rows.map((row, i) => (

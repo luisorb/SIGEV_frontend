@@ -193,16 +193,18 @@ async function captureElement(el: HTMLDivElement): Promise<CapturedImage> {
   return { dataUrl, width: img.width, height: img.height }
 }
 
-async function captureElementWithHeight(el: HTMLDivElement): Promise<CapturedImage> {
+async function captureElementWithHeight(el: HTMLDivElement, forcedWidth?: number, forcedHeight?: number): Promise<CapturedImage> {
   const target =
     el.querySelector<HTMLElement>('.recharts-responsive-container') ??
     el.querySelector<HTMLElement>('.recharts-wrapper') ??
     el
 
   const rect = target.getBoundingClientRect()
-  const desiredHeight = Math.round(Math.min(640, Math.max(340, rect.width * 0.5)))
+  const desiredHeight = forcedHeight ?? Math.round(Math.min(640, Math.max(340, rect.width * 0.5)))
 
   const prevHeight = target.style.height
+  const prevWidth = target.style.width
+  if (forcedWidth) target.style.width = `${forcedWidth}px`
   target.style.height = `${desiredHeight}px`
   await new Promise((resolve) => setTimeout(resolve, 400))
 
@@ -210,6 +212,7 @@ async function captureElementWithHeight(el: HTMLDivElement): Promise<CapturedIma
     return await captureElement(el)
   } finally {
     target.style.height = prevHeight
+    if (forcedWidth) target.style.width = prevWidth
   }
 }
 
@@ -761,7 +764,22 @@ export function DashboardExport({
       }, autoTable) + 10
     }
 
-    async function addCoberturaChart(ref: React.RefObject<HTMLDivElement | null>, title: string) {
+    const COBERTURA_COLORS: [number, number, number][] = [
+      [244, 51, 64],
+      [34, 197, 94],
+      [59, 130, 246],
+      [234, 179, 8],
+      [249, 115, 22],
+      [139, 92, 246],
+      [20, 184, 166],
+      [236, 72, 153],
+    ]
+
+    async function addCoberturaChart(
+      ref: React.RefObject<HTMLDivElement | null>,
+      title: string,
+      rows: CoberturaItem[],
+    ) {
       const drawUnavailable = () => {
         y = ensureSpace(doc, y, pageHeight, 3)
         y = drawSectionTitle(doc, title, y, pageWidth)
@@ -778,15 +796,19 @@ export function DashboardExport({
       }
 
       try {
-        const captured = await captureElement(ref.current)
+        const captured = await captureElementWithHeight(ref.current, 480, 400)
 
         const titleH = 8
         const spacing = 8
         const topMargin = 26
         const bottomMargin = 22
+        const legendRowH = 6
+        const gap = 8
+        const legendW = Math.min(85, contentWidth * 0.32)
+        const chartW = contentWidth - legendW - gap
 
         const ratio = captured.height / captured.width
-        let imgW = contentWidth * 0.65
+        let imgW = chartW
         let imgH = ratio * imgW
         const maxImgH = Math.max(30, pageHeight - topMargin - bottomMargin - titleH - spacing)
         if (imgH > maxImgH) {
@@ -802,9 +824,42 @@ export function DashboardExport({
 
         y = drawSectionTitle(doc, title, y, pageWidth)
 
-        const xOffset = PAGE_MARGIN + (contentWidth - imgW) / 2
-        doc.addImage(captured.dataUrl, 'PNG', xOffset, y, imgW, imgH)
-        y += imgH + spacing
+        const contentTop = y
+
+        // Leyenda a la izquierda: un elemento por fila, porcentaje junto al nombre
+        let legendBottom = contentTop
+        if (rows.length > 0) {
+          rows.forEach((row, i) => {
+            const cellY = contentTop + i * legendRowH
+            const color = COBERTURA_COLORS[i % COBERTURA_COLORS.length]
+
+            doc.setFillColor(...color)
+            doc.circle(PAGE_MARGIN + 2.6, cellY + 2, 1.9, 'F')
+
+            doc.setFont('helvetica', 'bold')
+            doc.setFontSize(8)
+            const valText = formatPercentage(row.porcentaje)
+            const valWidth = doc.getTextWidth(valText)
+
+            const nameMax = Math.max(12, legendW - 10 - valWidth - 3)
+            doc.setFont('helvetica', 'normal')
+            doc.setTextColor(...TEXT_MUTED)
+            const nameText = truncateText(row.municipio, nameMax)
+            doc.text(nameText, PAGE_MARGIN + 6, cellY + 2.6)
+
+            doc.setFont('helvetica', 'bold')
+            doc.setFontSize(8)
+            doc.setTextColor(...TEXT_DARK)
+            doc.text(valText, PAGE_MARGIN + 6 + doc.getTextWidth(nameText) + 3, cellY + 2.6)
+          })
+          legendBottom = contentTop + rows.length * legendRowH
+        }
+
+        // Gráfico a la derecha
+        const imgX = PAGE_MARGIN + legendW + gap + (chartW - imgW) / 2
+        doc.addImage(captured.dataUrl, 'PNG', imgX, contentTop, imgW, imgH)
+
+        y = Math.max(contentTop + imgH, legendBottom) + spacing
       } catch (err) {
         console.error(`Error capturando "${title}":`, err)
         drawUnavailable()
@@ -836,7 +891,7 @@ export function DashboardExport({
       }
     }
 
-    await addCoberturaChart(sectionRefs.coberturaTerritorial, 'Cobertura Territorial')
+    await addCoberturaChart(sectionRefs.coberturaTerritorial, 'Cobertura Territorial', coberturaTerritorial)
 
     const DONUT_COLORS: [number, number, number][] = [
       [244, 51, 64],
