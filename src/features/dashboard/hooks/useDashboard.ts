@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { Event, Ally, Disbursement, Municipality, EventState } from '../../../types'
-import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow, CoberturaItem, EventoIncompleto, EstadoRow, TendenciaMes, ComposicionTotal } from '../types'
-import { getEventEconomics } from '../../../utils/eventEconomics'
+import type { PaymentResponse } from '../../../services/payments.service'
+import type { DashboardFiltersState, DashboardMetrics, ConsolidadoRow, CoberturaItem, EventoIncompleto, EstadoRow, TendenciaMes } from '../types'
 import { EVENT_STATES } from '../../../config/constants'
 
 const ESTADOS_EN_EJECUCION: EventState[] = ['En ejecución', 'Ejecutado', 'Cerrado', 'Legalizado']
@@ -11,11 +11,25 @@ function isEventoAprobadoOEnEjecucion(event: Event): boolean {
   return ESTADOS_EN_EJECUCION.includes(event.estado)
 }
 
+export function isPagoValido(payment: PaymentResponse): boolean {
+  return payment.status !== 'Anulado'
+}
+
+export function buildPagadoPorEvento(payments: PaymentResponse[]): Map<string, number> {
+  const map = new Map<string, number>()
+  for (const payment of payments) {
+    if (!isPagoValido(payment)) continue
+    map.set(payment.eventId, (map.get(payment.eventId) ?? 0) + Number(payment.amount))
+  }
+  return map
+}
+
 export function useDashboard(
   events: Event[],
   aliados: Ally[],
   desembolsos: Disbursement[],
-  municipios: Municipality[]
+  municipios: Municipality[],
+  pagos: PaymentResponse[] = [],
 ) {
   const [filters, setFilters] = useState<DashboardFiltersState>({
     periodoInicio: '',
@@ -94,28 +108,27 @@ export function useDashboard(
     return result
   }, [ejecucionEvents, filters])
 
-  const metrics = useMemo<DashboardMetrics>(() => {
-    let valorTotalEjecucion = 0
-    let baseMasImpuestos = 0
-    let feeAcumulado = 0
-    let impuestosAcumulados = 0
+  const filteredEventIds = useMemo(() => new Set(filteredEvents.map((e) => e.id)), [filteredEvents])
 
-    for (const event of filteredEvents) {
-      const e = getEventEconomics(event)
-      valorTotalEjecucion += e.total
-      baseMasImpuestos += e.base + e.iva + e.impuestoConsumo
-      feeAcumulado += e.feeTarifado + e.feeTerceros + e.ivaFee
-      impuestosAcumulados += e.iva + e.impuestoConsumo + e.ivaFee
+  const pagosFiltrados = useMemo(
+    () => pagos.filter((p) => isPagoValido(p) && filteredEventIds.has(p.eventId)),
+    [pagos, filteredEventIds],
+  )
+
+  const pagadoPorEvento = useMemo(() => buildPagadoPorEvento(pagos), [pagos])
+
+  const metrics = useMemo<DashboardMetrics>(() => {
+    let valorTotalEjecutado = 0
+
+    for (const pago of pagosFiltrados) {
+      valorTotalEjecutado += Number(pago.amount)
     }
 
     return {
-      valorTotalEjecucion,
-      numeroEventos: filteredEvents.length,
-      baseMasImpuestos,
-      feeAcumulado,
-      impuestosAcumulados,
+      valorTotalEjecutado,
+      numeroPagos: pagosFiltrados.length,
     }
-  }, [filteredEvents])
+  }, [pagosFiltrados])
 
   const consolidadoDesembolso = useMemo<ConsolidadoRow[]>(() => {
     const groups: Record<string, ConsolidadoRow> = {}
@@ -127,14 +140,11 @@ export function useDashboard(
           nombre: desembolsosMap[event.desembolsoId] || event.desembolsoId,
           cantidadEventos: 0,
           valorTotal: 0,
-          feeTotal: 0,
           porcentaje: 0,
         }
       }
       groups[event.desembolsoId].cantidadEventos++
-      const e = getEventEconomics(event)
-      groups[event.desembolsoId].valorTotal += e.total
-      groups[event.desembolsoId].feeTotal += e.feeTarifado + e.feeTerceros + e.ivaFee
+      groups[event.desembolsoId].valorTotal += pagadoPorEvento.get(event.id) ?? 0
     }
 
     const total = Object.values(groups).reduce((s, g) => s + g.valorTotal, 0)
@@ -144,7 +154,7 @@ export function useDashboard(
     }
     rows.sort((a, b) => b.valorTotal - a.valorTotal)
     return rows
-  }, [filteredEvents, desembolsosMap])
+  }, [filteredEvents, desembolsosMap, pagadoPorEvento])
 
   const consolidadoAliado = useMemo<ConsolidadoRow[]>(() => {
     const groups: Record<string, ConsolidadoRow> = {}
@@ -156,14 +166,11 @@ export function useDashboard(
           nombre: aliadosMap[event.aliadoId] || event.aliadoId,
           cantidadEventos: 0,
           valorTotal: 0,
-          feeTotal: 0,
           porcentaje: 0,
         }
       }
       groups[event.aliadoId].cantidadEventos++
-      const e = getEventEconomics(event)
-      groups[event.aliadoId].valorTotal += e.total
-      groups[event.aliadoId].feeTotal += e.feeTarifado + e.feeTerceros + e.ivaFee
+      groups[event.aliadoId].valorTotal += pagadoPorEvento.get(event.id) ?? 0
     }
 
     const total = Object.values(groups).reduce((s, g) => s + g.valorTotal, 0)
@@ -173,7 +180,7 @@ export function useDashboard(
     }
     rows.sort((a, b) => b.valorTotal - a.valorTotal)
     return rows
-  }, [filteredEvents, aliadosMap])
+  }, [filteredEvents, aliadosMap, pagadoPorEvento])
 
   const coberturaTerritorial = useMemo<CoberturaItem[]>(() => {
     const groups: Record<string, { cantidadEventos: number; valorTotal: number }> = {}
@@ -183,7 +190,7 @@ export function useDashboard(
         groups[event.municipioId] = { cantidadEventos: 0, valorTotal: 0 }
       }
       groups[event.municipioId].cantidadEventos++
-      groups[event.municipioId].valorTotal += getEventEconomics(event).total
+      groups[event.municipioId].valorTotal += pagadoPorEvento.get(event.id) ?? 0
     }
 
     const totalValor = Object.values(groups).reduce((s, g) => s + g.valorTotal, 0)
@@ -200,7 +207,7 @@ export function useDashboard(
     })
     rows.sort((a, b) => b.valorTotal - a.valorTotal)
     return rows
-  }, [filteredEvents, municipiosMap])
+  }, [filteredEvents, municipiosMap, pagadoPorEvento])
 
   const eventosIncompletos = useMemo<EventoIncompleto[]>(() => {
     const result: EventoIncompleto[] = []
@@ -234,7 +241,7 @@ export function useDashboard(
         }
       }
       groups[event.estado].cantidadEventos++
-      groups[event.estado].valorTotal += getEventEconomics(event).total
+      groups[event.estado].valorTotal += pagadoPorEvento.get(event.id) ?? 0
     }
 
     const rows = EVENT_STATES.map((estado) => groups[estado] ?? {
@@ -243,7 +250,7 @@ export function useDashboard(
       valorTotal: 0,
     })
     return rows
-  }, [filteredEvents])
+  }, [filteredEvents, pagadoPorEvento])
 
   const tendenciaMensual = useMemo<TendenciaMes[]>(() => {
     const now = new Date()
@@ -263,7 +270,7 @@ export function useDashboard(
       const day = d.getDate()
       const current = groups.get(day) ?? { cantidadEventos: 0, valorTotal: 0 }
       current.cantidadEventos++
-      current.valorTotal += getEventEconomics(event).total
+      current.valorTotal += pagadoPorEvento.get(event.id) ?? 0
       groups.set(day, current)
     }
 
@@ -282,24 +289,7 @@ export function useDashboard(
       })
     }
     return result
-  }, [filteredEvents])
-
-  const composicionTotal = useMemo<ComposicionTotal>(() => {
-    let base = 0
-    let impuestos = 0
-    let fee = 0
-    let ivaFee = 0
-
-    for (const event of filteredEvents) {
-      const e = getEventEconomics(event)
-      base += e.base
-      impuestos += e.iva + e.impuestoConsumo
-      fee += e.feeTarifado + e.feeTerceros
-      ivaFee += e.ivaFee
-    }
-
-    return { base, impuestos, fee, ivaFee, total: base + impuestos + fee + ivaFee }
-  }, [filteredEvents])
+  }, [filteredEvents, pagadoPorEvento])
 
   function updateFilter(key: keyof DashboardFiltersState, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -334,7 +324,6 @@ export function useDashboard(
     eventosIncompletos,
     seguimientoPorEstado,
     tendenciaMensual,
-    composicionTotal,
     aliadosMap,
     desembolsosMap,
     municipiosMap,

@@ -27,7 +27,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
     <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 text-xs space-y-1">
       <p className="font-semibold text-slate-900">{d.municipio}</p>
       <p className="text-slate-500">{d.departamento}</p>
-      <p className="text-slate-600">Valor: {formatCurrencyCO(d.valorTotal)}</p>
+      <p className="text-slate-600">Pagado: {formatCurrencyCO(d.valorTotal)}</p>
       <p className="text-slate-600">Eventos: {d.cantidadEventos}</p>
       <p className="text-slate-600">Participacion: {formatPercentage(d.porcentaje)}</p>
     </div>
@@ -96,7 +96,7 @@ export function CoberturaTerritorial({ rows }: CoberturaTerritorialProps) {
       <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-200">
         <MapPin className="w-5 h-5 text-slate-500" />
         <h3 className="text-sm font-semibold text-slate-900">Cobertura Territorial</h3>
-        <span className="text-xs text-slate-500 ml-auto">{rows.length} municipio(s)</span>
+        <span className="text-xs text-slate-500 ml-auto">Valores pagados &middot; {rows.length} municipio(s)</span>
       </div>
       {rows.length === 0 ? (
         <div className="px-5 py-8 text-center text-sm text-slate-400">

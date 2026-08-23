@@ -13,11 +13,8 @@ export interface DashboardFiltersState {
 }
 
 export interface DashboardMetrics {
-  valorTotalEjecucion: number
-  numeroEventos: number
-  baseMasImpuestos: number
-  feeAcumulado: number
-  impuestosAcumulados: number
+  valorTotalEjecutado: number
+  numeroPagos: number
 }
 
 export interface ConsolidadoRow {
@@ -25,7 +22,6 @@ export interface ConsolidadoRow {
   nombre: string
   cantidadEventos: number
   valorTotal: number
-  feeTotal: number
   porcentaje: number
 }
 
@@ -60,18 +56,9 @@ export interface TendenciaMes {
   valorTotal: number
 }
 
-export interface ComposicionTotal {
-  base: number
-  impuestos: number
-  fee: number
-  ivaFee: number
-  total: number
-}
-
 export interface DashboardSectionRefs {
   eventosIncompletos: React.RefObject<HTMLDivElement | null>
   eventosPorEstado: React.RefObject<HTMLDivElement | null>
-  composicionTotal: React.RefObject<HTMLDivElement | null>
   consolidadoDesembolso: React.RefObject<HTMLDivElement | null>
   consolidadoAliado: React.RefObject<HTMLDivElement | null>
   evolucionTemporal: React.RefObject<HTMLDivElement | null>

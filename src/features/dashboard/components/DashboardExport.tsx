@@ -9,10 +9,10 @@ import type {
   DashboardSectionRefs,
   EstadoRow,
   TendenciaMes,
-  ComposicionTotal,
 } from '../types'
-import { formatCurrencyCO, formatDateCO, formatDateTimeCO, formatPercentage } from '../../../utils/formatters'
-import { getEventEconomics } from '../../../utils/eventEconomics'
+import { formatCurrencyCO, formatNumberCO, formatDateCO, formatDateTimeCO, formatPercentage } from '../../../utils/formatters'
+import { buildPagadoPorEvento } from '../hooks/useDashboard'
+import type { PaymentResponse } from '../../../services/payments.service'
 import type { jsPDF } from 'jspdf'
 import type { CellInput, Styles, UserOptions } from 'jspdf-autotable'
 import type { WorkBook, WorkSheet } from 'xlsx'
@@ -22,6 +22,7 @@ interface DashboardExportProps {
   aliados: Ally[]
   desembolsos: Disbursement[]
   municipios: Municipality[]
+  pagos?: PaymentResponse[]
   metrics: DashboardMetrics
   consolidadoDesembolso: ConsolidadoRow[]
   consolidadoAliado: ConsolidadoRow[]
@@ -34,7 +35,6 @@ interface DashboardExportProps {
   totalEnEjecucion: number
   seguimientoPorEstado: EstadoRow[]
   tendenciaMensual: TendenciaMes[]
-  composicionTotal: ComposicionTotal
 }
 
 const PAGE_MARGIN = 14
@@ -360,6 +360,7 @@ export function DashboardExport({
   aliados,
   desembolsos,
   municipios,
+  pagos = [],
   metrics,
   consolidadoDesembolso,
   consolidadoAliado,
@@ -372,12 +373,12 @@ export function DashboardExport({
   totalEnEjecucion,
   seguimientoPorEstado,
   tendenciaMensual,
-  composicionTotal,
 }: DashboardExportProps) {
   async function handleExportXLSX() {
     const { utils, writeFile } = await import('xlsx')
 
     const maps = buildMaps(aliados, desembolsos, municipios)
+    const pagadoPorEvento = buildPagadoPorEvento(pagos)
     const generatedAt = formatDateTimeCO(new Date())
     const filterRows = hasActiveFilters ? buildFilterRows(filters, maps) : undefined
 
@@ -389,7 +390,7 @@ export function DashboardExport({
         name: 'Resumen',
         title: 'Panel de Control · SIGEV',
         meta: [
-          `Reporte de ejecución de eventos · ${metrics.numeroEventos} evento(s) en ejecución`,
+          `Reporte de pagos · ${metrics.numeroPagos} pago(s)`,
           `Generado: ${generatedAt}`,
         ],
         columns: [
@@ -397,10 +398,8 @@ export function DashboardExport({
           { header: 'Valor', wch: 26, fmt: 'currency' },
         ],
         rows: [
-          ['Valor Total Ejecución', metrics.valorTotalEjecucion],
-          ['Base + Impuestos', metrics.baseMasImpuestos],
-          ['FEE Técnico Administrativo', metrics.feeAcumulado],
-          ['Impuestos Acumulados', metrics.impuestosAcumulados],
+          ['Valor Total Ejecutado (pagos)', metrics.valorTotalEjecutado],
+          ['Número de pagos', metrics.numeroPagos],
         ],
         filters: filterRows,
       }),
@@ -438,7 +437,7 @@ export function DashboardExport({
           columns: [
             { header: 'Estado', wch: 18 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
-            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+            { header: 'Valor Pagado', wch: 20, fmt: 'currency' },
             { header: 'Participación', wch: 14, fmt: 'percent' },
           ],
           rows: (() => {
@@ -465,28 +464,6 @@ export function DashboardExport({
       )
     }
 
-    utils.book_append_sheet(
-      wb,
-      buildSheet(utils, {
-        name: 'Composición',
-        title: 'Composición del Total Ejecutado',
-        columns: [
-          { header: 'Componente', wch: 28 },
-          { header: 'Origen', wch: 24 },
-          { header: 'Valor', wch: 20, fmt: 'currency' },
-          { header: 'Participación', wch: 14, fmt: 'percent' },
-        ],
-        rows: [
-          ['Base', 'Cantidad × Valor unitario', composicionTotal.base, composicionTotal.total > 0 ? composicionTotal.base / composicionTotal.total : 0],
-          ['Impuestos', 'IVA + INC', composicionTotal.impuestos, composicionTotal.total > 0 ? composicionTotal.impuestos / composicionTotal.total : 0],
-          ['FEE Técnico Adm.', 'Tarifado + Terceros', composicionTotal.fee, composicionTotal.total > 0 ? composicionTotal.fee / composicionTotal.total : 0],
-          ['IVA del FEE', 'IVA sobre el FEE', composicionTotal.ivaFee, composicionTotal.total > 0 ? composicionTotal.ivaFee / composicionTotal.total : 0],
-        ],
-        foot: ['Total', '', composicionTotal.total, 1],
-      }),
-      'Composición',
-    )
-
     if (tendenciaMensual.length > 0) {
       utils.book_append_sheet(
         wb,
@@ -496,7 +473,7 @@ export function DashboardExport({
           columns: [
             { header: 'Período', wch: 16 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
-            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+            { header: 'Valor Pagado', wch: 20, fmt: 'currency' },
           ],
           rows: tendenciaMensual.map((row) => [
             row.label ?? row.mes,
@@ -519,26 +496,23 @@ export function DashboardExport({
         wb,
         buildSheet(utils, {
           name: 'Por recurso disponible',
-          title: '1. Ejecución por recurso disponible',
+          title: '1. Pagos por recurso disponible',
           columns: [
             { header: 'Recurso disponible', wch: 30 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
-            { header: 'Valor Total', wch: 20, fmt: 'currency' },
-            { header: 'FEE Total', wch: 18, fmt: 'currency' },
+            { header: 'Valor Pagado', wch: 20, fmt: 'currency' },
             { header: 'Participación', wch: 14, fmt: 'percent' },
           ],
           rows: consolidadoDesembolso.map((row) => [
             row.nombre,
             row.cantidadEventos,
             row.valorTotal,
-            row.feeTotal,
             row.porcentaje,
           ]),
           foot: [
             'Total',
             consolidadoDesembolso.reduce((s, r) => s + r.cantidadEventos, 0),
             consolidadoDesembolso.reduce((s, r) => s + r.valorTotal, 0),
-            consolidadoDesembolso.reduce((s, r) => s + r.feeTotal, 0),
             1,
           ],
           autofilter: true,
@@ -552,26 +526,23 @@ export function DashboardExport({
         wb,
         buildSheet(utils, {
           name: 'Por Aliado',
-          title: '2. Ejecución por Aliado',
+          title: '2. Pagos por Aliado',
           columns: [
             { header: 'Aliado', wch: 30 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
-            { header: 'Valor Total', wch: 20, fmt: 'currency' },
-            { header: 'FEE Total', wch: 18, fmt: 'currency' },
+            { header: 'Valor Pagado', wch: 20, fmt: 'currency' },
             { header: 'Participación', wch: 14, fmt: 'percent' },
           ],
           rows: consolidadoAliado.map((row) => [
             row.nombre,
             row.cantidadEventos,
             row.valorTotal,
-            row.feeTotal,
             row.porcentaje,
           ]),
           foot: [
             'Total',
             consolidadoAliado.reduce((s, r) => s + r.cantidadEventos, 0),
             consolidadoAliado.reduce((s, r) => s + r.valorTotal, 0),
-            consolidadoAliado.reduce((s, r) => s + r.feeTotal, 0),
             1,
           ],
           autofilter: true,
@@ -590,7 +561,7 @@ export function DashboardExport({
             { header: 'Municipio', wch: 24 },
             { header: 'Departamento', wch: 22 },
             { header: 'Eventos', wch: 10, fmt: 'number' },
-            { header: 'Valor Total', wch: 20, fmt: 'currency' },
+            { header: 'Valor Pagado', wch: 20, fmt: 'currency' },
             { header: 'Participación', wch: 14, fmt: 'percent' },
           ],
           rows: coberturaTerritorial.map((row) => [
@@ -614,7 +585,6 @@ export function DashboardExport({
     }
 
     const detailRows = events.map((event) => {
-      const total = getEventEconomics(event).total
       return [
         `${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''}`,
         event.responsable ?? '-',
@@ -623,18 +593,18 @@ export function DashboardExport({
         maps.desembolsos[event.desembolsoId] || event.desembolsoId,
         maps.municipios[event.municipioId] || event.municipioId,
         event.items.length,
-        total,
+        pagadoPorEvento.get(event.id) ?? 0,
       ]
     })
 
     const totalItems = events.reduce((s, e) => s + e.items.length, 0)
-    const totalValor = events.reduce((s, e) => s + getEventEconomics(e).total, 0)
+    const totalPagado = events.reduce((s, e) => s + (pagadoPorEvento.get(e.id) ?? 0), 0)
 
     utils.book_append_sheet(
       wb,
       buildSheet(utils, {
         name: 'Detalle de Eventos',
-        title: '4. Detalle de Eventos',
+        title: '3. Detalle de Eventos',
         columns: [
           { header: 'Evento', wch: 18 },
           { header: 'Responsable', wch: 20 },
@@ -643,10 +613,10 @@ export function DashboardExport({
           { header: 'Recurso disponible', wch: 22 },
           { header: 'Municipio', wch: 18 },
           { header: 'Ítems', wch: 8, fmt: 'number' },
-          { header: 'Total', wch: 18, fmt: 'currency' },
+          { header: 'Pagado', wch: 18, fmt: 'currency' },
         ],
         rows: detailRows,
-        foot: ['Total', null, null, null, null, null, totalItems, totalValor],
+        foot: ['Total', null, null, null, null, null, totalItems, totalPagado],
         footSpan: 6,
         autofilter: true,
       }),
@@ -667,6 +637,7 @@ export function DashboardExport({
 
     const maps = buildMaps(aliados, desembolsos, municipios)
     const { aliados: aliadosMap, desembolsos: desembolsosMap, municipios: municipiosMap } = maps
+    const pagadoPorEvento = buildPagadoPorEvento(pagos)
 
     const generatedAt = formatDateTimeCO(new Date())
 
@@ -685,7 +656,7 @@ export function DashboardExport({
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     doc.setTextColor(...TEXT_MUTED)
-    doc.text('Reporte de ejecución de eventos', PAGE_MARGIN, 36)
+    doc.text('Reporte de pagos', PAGE_MARGIN, 36)
 
     doc.setFontSize(9)
     doc.setTextColor(...TEXT_FAINT)
@@ -703,10 +674,8 @@ export function DashboardExport({
     y = drawSectionTitle(doc, 'Resumen de indicadores', y, pageWidth)
 
     const kpis = [
-      { label: 'Valor total ejecución', value: formatCurrencyCO(metrics.valorTotalEjecucion) },
-      { label: 'Base + impuestos', value: formatCurrencyCO(metrics.baseMasImpuestos) },
-      { label: 'FEE técnico administrativo', value: formatCurrencyCO(metrics.feeAcumulado) },
-      { label: 'Impuestos acumulados', value: formatCurrencyCO(metrics.impuestosAcumulados) },
+      { label: 'Valor total ejecutado (pagos)', value: formatCurrencyCO(metrics.valorTotalEjecutado) },
+      { label: 'Número de pagos', value: formatNumberCO(metrics.numeroPagos) },
     ]
 
     const summaryTop = y
@@ -770,8 +739,7 @@ export function DashboardExport({
 
     const chartEntries: [React.RefObject<HTMLDivElement | null>, string][] = [
       [sectionRefs.eventosPorEstado, 'Eventos por estado'],
-      [sectionRefs.composicionTotal, 'Composición del total ejecutado'],
-      [sectionRefs.evolucionTemporal, 'Actividad mensual'],
+      [sectionRefs.evolucionTemporal, 'Pagos del mes'],
       [sectionRefs.coberturaTerritorial, 'Cobertura Territorial'],
     ]
 
@@ -888,20 +856,19 @@ export function DashboardExport({
       y = startY + totalRows * rowHeight + 6
     }
 
-    await addDonutBlock(sectionRefs.consolidadoDesembolso, 'Ejecución por recurso disponible', consolidadoDesembolso)
-    await addDonutBlock(sectionRefs.consolidadoAliado, 'Ejecución por Aliado', consolidadoAliado)
+    await addDonutBlock(sectionRefs.consolidadoDesembolso, 'Pagos por recurso disponible', consolidadoDesembolso)
+    await addDonutBlock(sectionRefs.consolidadoAliado, 'Pagos por Aliado', consolidadoAliado)
 
     if (consolidadoDesembolso.length > 0) {
       y = ensureSpace(doc, y, pageHeight, consolidadoDesembolso.length)
-      y = drawSectionTitle(doc, '1. Ejecución por recurso disponible (tabla)', y, pageWidth)
+      y = drawSectionTitle(doc, '1. Pagos por recurso disponible (tabla)', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
-        head: ['Recurso disponible', 'Eventos', 'Valor Total', 'FEE Total', 'Participación'],
+        head: ['Recurso disponible', 'Eventos', 'Valor Pagado', 'Participación'],
         body: consolidadoDesembolso.map((row) => [
           row.nombre,
           row.cantidadEventos,
           formatCurrencyCO(row.valorTotal),
-          formatCurrencyCO(row.feeTotal),
           formatPercentage(row.porcentaje),
         ]),
         columnStyles: { 0: { fontStyle: 'bold' } },
@@ -910,15 +877,14 @@ export function DashboardExport({
 
     if (consolidadoAliado.length > 0) {
       y = ensureSpace(doc, y, pageHeight, consolidadoAliado.length)
-      y = drawSectionTitle(doc, '2. Ejecución por Aliado (tabla)', y, pageWidth)
+      y = drawSectionTitle(doc, '2. Pagos por Aliado (tabla)', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
-        head: ['Aliado', 'Eventos', 'Valor Total', 'FEE Total', 'Participación'],
+        head: ['Aliado', 'Eventos', 'Valor Pagado', 'Participación'],
         body: consolidadoAliado.map((row) => [
           row.nombre,
           row.cantidadEventos,
           formatCurrencyCO(row.valorTotal),
-          formatCurrencyCO(row.feeTotal),
           formatPercentage(row.porcentaje),
         ]),
         columnStyles: { 0: { fontStyle: 'bold' } },
@@ -930,7 +896,7 @@ export function DashboardExport({
       y = drawSectionTitle(doc, '3. Cobertura Territorial (tabla)', y, pageWidth)
       y = renderTable(doc, {
         startY: y,
-        head: ['Municipio', 'Departamento', 'Eventos', 'Valor Total', 'Participación'],
+        head: ['Municipio', 'Departamento', 'Eventos', 'Valor Pagado', 'Participación'],
         body: coberturaTerritorial.map((row) => [
           row.municipio,
           row.departamento || '-',
@@ -952,7 +918,6 @@ export function DashboardExport({
       doc.text('No hay eventos para el período y filtros seleccionados.', PAGE_MARGIN, y)
     } else {
       const detailBody = events.map((event) => {
-        const total = getEventEconomics(event).total
         return [
           `${event.numeroEvento}${event.sufijo ? `-${event.sufijo}` : ''}`,
           event.responsable ?? '-',
@@ -961,28 +926,28 @@ export function DashboardExport({
           desembolsosMap[event.desembolsoId] || event.desembolsoId,
           municipiosMap[event.municipioId] || event.municipioId,
           event.items.length,
-          formatCurrencyCO(total),
+          formatCurrencyCO(pagadoPorEvento.get(event.id) ?? 0),
         ]
       })
 
       const totalItems = events.reduce((s, e) => s + e.items.length, 0)
-      const totalValor = events.reduce((s, e) => s + getEventEconomics(e).total, 0)
+      const totalPagadoDetalle = events.reduce((s, e) => s + (pagadoPorEvento.get(e.id) ?? 0), 0)
 
       renderTable(doc, {
         startY: y,
-        head: ['Evento', 'Responsable', 'Estado', 'Aliado', 'Recurso disponible', 'Municipio', 'Ítems', 'Total'],
+        head: ['Evento', 'Responsable', 'Estado', 'Aliado', 'Recurso disponible', 'Municipio', 'Ítems', 'Pagado'],
         body: detailBody,
         foot: [
           [
             { content: 'Total', colSpan: 6, styles: { halign: 'left' } },
             totalItems,
-            formatCurrencyCO(totalValor),
+            formatCurrencyCO(totalPagadoDetalle),
           ],
         ],
         fontSize: 8,
         columnStyles: {
           0: { cellWidth: 32 },
-          1: { cellWidth: 34 },
+          1: { cellWidth: 36 },
           2: { cellWidth: 26 },
           3: { cellWidth: 42 },
           4: { cellWidth: 42 },

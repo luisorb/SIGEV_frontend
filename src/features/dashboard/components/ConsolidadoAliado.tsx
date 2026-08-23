@@ -21,9 +21,8 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 text-xs space-y-1">
       <p className="font-semibold text-slate-900">{d.nombre}</p>
-      <p className="text-slate-600">Valor: {formatCurrencyCO(d.valorTotal)}</p>
+      <p className="text-slate-600">Pagado: {formatCurrencyCO(d.valorTotal)}</p>
       <p className="text-slate-600">Eventos: {d.cantidadEventos}</p>
-      <p className="text-slate-600">FEE: {formatCurrencyCO(d.feeTotal)}</p>
       <p className="text-slate-600">Participación: {formatPercentage(d.porcentaje)}</p>
     </div>
   )
@@ -37,7 +36,7 @@ export function ConsolidadoAliado({ rows }: ConsolidadoAliadoProps) {
     <div className="bg-white rounded-xl border border-slate-200">
       <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-200">
         <Building2 className="w-5 h-5 text-slate-500" />
-        <h3 className="text-sm font-semibold text-slate-900">Ejecución por Aliado</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Pagos por Aliado</h3>
       </div>
       {rows.length === 0 ? (
         <div className="px-5 py-8 text-center text-sm text-slate-400">
@@ -83,8 +82,8 @@ export function ConsolidadoAliado({ rows }: ConsolidadoAliadoProps) {
                   <p className="text-lg font-bold text-slate-900 tabular-nums leading-tight">
                     {formatCurrencyCOCompact(total)}
                   </p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
-                    Total ejecutado
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5 leading-snug max-w-[92px] mx-auto">
+                    Total ejecutado (pagos)
                   </p>
                 </div>
               </div>

@@ -26,7 +26,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
       </div>
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-red-700" />
-        <span className="text-slate-600">Valor: <span className="font-medium text-slate-900">{formatCurrencyCO(d.valorTotal)}</span></span>
+        <span className="text-slate-600">Pagado: <span className="font-medium text-slate-900">{formatCurrencyCO(d.valorTotal)}</span></span>
       </div>
     </div>
   )
@@ -60,7 +60,7 @@ export function EvolucionTemporal({ rows }: EvolucionTemporalProps) {
             <div className="w-px h-8 bg-slate-200" />
             <div>
               <p className="text-2xl font-bold text-slate-900 tabular-nums">{formatCurrencyCOCompact(totalValor)}</p>
-              <p className="text-[10px] text-slate-400 uppercase tracking-wide">Valor total</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wide">Pagado</p>
             </div>
           </div>
 
@@ -103,7 +103,7 @@ export function EvolucionTemporal({ rows }: EvolucionTemporalProps) {
           <div className="flex items-center justify-center gap-6 mt-3 text-xs">
             <span className="flex items-center gap-1.5 text-slate-600">
               <span className="w-2.5 h-2.5 rounded-[3px] bg-red-500" />
-              Valor por d&iacute;a
+              Pagado por d&iacute;a
             </span>
             <span className="flex items-center gap-1.5 text-slate-600">
               <span className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: '#e2e8f0' }} />

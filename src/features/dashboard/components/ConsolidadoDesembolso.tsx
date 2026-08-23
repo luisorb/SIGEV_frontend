@@ -2,13 +2,11 @@ import { useState } from 'react'
 import { Banknote } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { ConsolidadoRow } from '../types'
-import type { PaymentSummaryRow } from '../../../services/payments.service'
 import { formatCurrencyCO, formatCurrencyCOCompact, formatPercentage } from '../../../utils/formatters'
 const COLORS = ['#f43340', '#3b82f6', '#22c55e', '#eab308', '#8b5cf6', '#f97316']
 
 interface ConsolidadoDesembolsoProps {
   rows: ConsolidadoRow[]
-  paymentSummary?: PaymentSummaryRow[]
 }
 
 interface TooltipPayloadItem {
@@ -22,15 +20,14 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 text-xs space-y-1">
       <p className="font-semibold text-slate-900">{d.nombre}</p>
-      <p className="text-slate-600">Valor: {formatCurrencyCO(d.valorTotal)}</p>
+      <p className="text-slate-600">Pagado: {formatCurrencyCO(d.valorTotal)}</p>
       <p className="text-slate-600">Eventos: {d.cantidadEventos}</p>
-      <p className="text-slate-600">FEE: {formatCurrencyCO(d.feeTotal)}</p>
       <p className="text-slate-600">Participación: {formatPercentage(d.porcentaje)}</p>
     </div>
   )
 }
 
-export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: ConsolidadoDesembolsoProps) {
+export function ConsolidadoDesembolso({ rows }: ConsolidadoDesembolsoProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const total = rows.reduce((sum, r) => sum + r.valorTotal, 0)
 
@@ -38,7 +35,7 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
     <div className="bg-white rounded-xl border border-slate-200">
       <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-200">
         <Banknote className="w-5 h-5 text-slate-500" />
-        <h3 className="text-sm font-semibold text-slate-900">Ejecución por recurso disponible</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Pagos por recurso disponible</h3>
       </div>
       {rows.length === 0 ? (
         <div className="px-5 py-8 text-center text-sm text-slate-400">
@@ -84,8 +81,8 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
                   <p className="text-lg font-bold text-slate-900 tabular-nums leading-tight">
                     {formatCurrencyCOCompact(total)}
                   </p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
-                    Total ejecutado
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5 leading-snug max-w-[92px] mx-auto">
+                    Total ejecutado (pagos)
                   </p>
                 </div>
               </div>
@@ -104,41 +101,6 @@ export function ConsolidadoDesembolso({ rows, paymentSummary = [] }: Consolidado
               </div>
             ))}
           </div>
-
-          {paymentSummary.length > 0 && (
-            <div className="mt-5 border-t border-slate-100 pt-4 space-y-4">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Ejecución financiera por recurso disponible
-              </p>
-              {paymentSummary.map((row) => {
-                const pctEjecucion = row.porcentajeEjecucion ?? row.percentage * 100
-                return (
-                  <div key={row.disbursementId} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600 font-medium">{row.name}</span>
-                      <span className="text-slate-500 tabular-nums">
-                        {formatCurrencyCO(row.paid)} de {formatCurrencyCO(row.amount)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{
-                            width: `${Math.min(100, Math.max(0, pctEjecucion))}%`,
-                            backgroundColor: pctEjecucion > 100 ? '#dc2626' : '#22c55e',
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-700 w-12 text-right tabular-nums">
-                        {formatPercentage(Math.min(1, pctEjecucion / 100))}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
         </div>
       )}
     </div>

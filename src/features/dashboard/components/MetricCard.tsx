@@ -29,7 +29,7 @@ export function MetricCard({
           <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider leading-tight block">
             {label}
           </span>
-          <p className={`text-xl font-bold tracking-tight mt-1.5 tabular-nums ${
+          <p className={`text-lg font-bold tracking-tight mt-1.5 tabular-nums ${
             value < 0 ? 'text-red-600' : 'text-slate-900'
           }`}>
             {formatted}

@@ -7,16 +7,16 @@ import { RecentOrders } from '../components/RecentOrders'
 import { ConsolidadoDesembolso } from '../components/ConsolidadoDesembolso'
 import { ConsolidadoAliado } from '../components/ConsolidadoAliado'
 import { CoberturaTerritorial } from '../components/CoberturaTerritorial'
+import { EjecucionFinanciera } from '../components/EjecucionFinanciera'
 import { EventosIncompletos } from '../components/EventosIncompletos'
 import { EventosPorEstado } from '../components/EventosPorEstado'
-import { ComposicionTotal } from '../components/ComposicionTotal'
 import { EvolucionTemporal } from '../components/EvolucionTemporal'
 import { useQuery } from '@tanstack/react-query'
 import { getEventsApi } from '../../../services/events.service'
 import { useAllies } from '../../../hooks/useAllies'
 import { useDisbursements } from '../../../hooks/useDisbursements'
 import { useMunicipalities } from '../../../hooks/useMunicipalities'
-import { usePaymentsSummary } from '../../../hooks/usePayments'
+import { usePaymentsSummary, usePayments } from '../../../hooks/usePayments'
 import type { DashboardSectionRefs } from '../types'
 
 export function DashboardPage() {
@@ -25,10 +25,10 @@ export function DashboardPage() {
   const { data: desembolsos = [] } = useDisbursements({ all: true })
   const { data: municipios = [] } = useMunicipalities()
   const { data: paymentSummary = [] } = usePaymentsSummary()
+  const { data: pagos = [] } = usePayments()
 
   const refEventosIncompletos = useRef<HTMLDivElement>(null)
   const refEventosPorEstado = useRef<HTMLDivElement>(null)
-  const refComposicionTotal = useRef<HTMLDivElement>(null)
   const refConsolidadoDesembolso = useRef<HTMLDivElement>(null)
   const refConsolidadoAliado = useRef<HTMLDivElement>(null)
   const refEvolucionTemporal = useRef<HTMLDivElement>(null)
@@ -38,7 +38,6 @@ export function DashboardPage() {
   const sectionRefs: DashboardSectionRefs = {
     eventosIncompletos: refEventosIncompletos,
     eventosPorEstado: refEventosPorEstado,
-    composicionTotal: refComposicionTotal,
     consolidadoDesembolso: refConsolidadoDesembolso,
     consolidadoAliado: refConsolidadoAliado,
     evolucionTemporal: refEvolucionTemporal,
@@ -58,11 +57,10 @@ export function DashboardPage() {
     eventosIncompletos,
     seguimientoPorEstado,
     tendenciaMensual,
-    composicionTotal,
     filteredEvents,
     totalRegistrados,
     totalEnEjecucion,
-  } = useDashboard(events, aliados, desembolsos, municipios)
+  } = useDashboard(events, aliados, desembolsos, municipios, pagos)
 
   if (isLoading) {
     return (
@@ -86,6 +84,7 @@ export function DashboardPage() {
           aliados={aliados}
           desembolsos={desembolsos}
           municipios={municipios}
+          pagos={pagos}
           metrics={metrics}
           consolidadoDesembolso={consolidadoDesembolso}
           consolidadoAliado={consolidadoAliado}
@@ -98,7 +97,6 @@ export function DashboardPage() {
           totalEnEjecucion={totalEnEjecucion}
           seguimientoPorEstado={seguimientoPorEstado}
           tendenciaMensual={tendenciaMensual}
-          composicionTotal={composicionTotal}
         />
       </div>
 
@@ -123,12 +121,9 @@ export function DashboardPage() {
           <div ref={refEventosPorEstado}>
             <EventosPorEstado rows={seguimientoPorEstado} />
           </div>
-          <div ref={refComposicionTotal}>
-            <ComposicionTotal data={composicionTotal} />
-          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div ref={refConsolidadoDesembolso}>
-              <ConsolidadoDesembolso rows={consolidadoDesembolso} paymentSummary={paymentSummary} />
+              <ConsolidadoDesembolso rows={consolidadoDesembolso} />
             </div>
             <div ref={refConsolidadoAliado}>
               <ConsolidadoAliado rows={consolidadoAliado} />
@@ -149,6 +144,7 @@ export function DashboardPage() {
           <div ref={refCoberturaTerritorial}>
             <CoberturaTerritorial rows={coberturaTerritorial} />
           </div>
+          <EjecucionFinanciera paymentSummary={paymentSummary} />
         </div>
       </div>
     </div>
