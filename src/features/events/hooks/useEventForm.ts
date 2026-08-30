@@ -9,7 +9,7 @@ type EventFormValues = z.infer<typeof eventSchema>
 
 interface UseEventFormOptions {
   event?: Event
-  onSave: (data: EventFormValues, file?: File | null) => void
+  onSave: (data: EventFormValues, file?: File | null) => void | Promise<void>
 }
 
 export function useEventForm({ event, onSave }: UseEventFormOptions) {
@@ -72,7 +72,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
   const watchedValues = useWatch({ control })
 
   const submit = handleSubmit((data: EventFormValues) => {
-    onSave(data)
+    return onSave(data)
   })
 
   return {

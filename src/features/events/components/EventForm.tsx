@@ -17,6 +17,7 @@ import {
   Plus,
   Upload,
   Wallet,
+  Loader2,
 } from 'lucide-react'
 import { DEPENDENCIAS, PROGRAMAS, INSTANCIAS_PARTICIPACION } from '../../../config/constants'
 import type { Programa } from '../../../config/constants'
@@ -36,7 +37,7 @@ interface EventFormProps {
   desembolsos: Disbursement[]
   municipios: Municipality[]
   events: Event[]
-  onSave: (data: EventFormValues, file?: File | null) => void
+  onSave: (data: EventFormValues, file?: File | null) => void | Promise<void>
   onCancel: () => void
 }
 
@@ -228,7 +229,7 @@ export function EventForm({
       const error = validateRequerimiento()
       setRequerimientoError(error)
       if (error) return
-      onSave(data, requerimientoFile)
+      return onSave(data, requerimientoFile)
     },
   })
 
@@ -241,6 +242,7 @@ export function EventForm({
   const [dragging, setDragging] = useState(false)
   const formTopRef = useRef<HTMLFormElement>(null)
   const navigatingRef = useRef(false)
+  const submittingRef = useRef(false)
 
   useEffect(() => {
     formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -1076,9 +1078,18 @@ export function EventForm({
             <button
               type="button"
               disabled={!submitArmed || isSubmitting}
-              onClick={() => void submitForm()}
+              onClick={() => {
+                if (submittingRef.current) return
+                submittingRef.current = true
+                Promise.resolve(submitForm())
+                  .catch(() => {})
+                  .finally(() => {
+                    submittingRef.current = false
+                  })
+              }}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-150"
             >
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               <Check className="w-4 h-4" />
               {event ? 'Guardar Cambios' : 'Crear Orden'}
             </button>
