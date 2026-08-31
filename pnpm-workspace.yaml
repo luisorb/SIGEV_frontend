@@ -4,3 +4,4 @@ onlyBuiltDependencies:
   - core-js
 allowBuilds:
   core-js: true
+includeWorkspaceRoot: true
