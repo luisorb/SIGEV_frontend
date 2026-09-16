@@ -505,9 +505,9 @@ export function EventForm({
           </Field>
           <Field
             id="sufijo"
-            label="Sufijo"
+            label="Alcance"
             optional
-            hint="Ej: A, B, C. Úsalo cuando un mismo evento se divide en varias órdenes."
+            hint="Ej: A, B, C. Indica el alcance cuando un mismo evento se divide en varias órdenes."
           >
             <input
               id="sufijo"

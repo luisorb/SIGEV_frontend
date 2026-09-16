@@ -51,7 +51,7 @@ export function exportOfferToExcel(offer: Offer, options: OfferExportOptions = {
     ['Identificación de la oferta'],
     ['Código', offer.codigo],
     ['Número de evento', numSufijo.numero],
-    ['Sufijo', numSufijo.sufijo],
+    ['Alcance', numSufijo.sufijo],
     ['Cliente', cliente],
     ['Estado', offer.eventoEstado || offer.estado],
     ['Fecha', offer.fechaEjecucion ?? ''],

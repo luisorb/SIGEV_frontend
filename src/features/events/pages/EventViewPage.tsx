@@ -601,7 +601,7 @@ export function EventViewPage() {
             </div>
             <dl className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-slate-100 rounded-xl overflow-hidden">
               <div className="bg-white px-4 py-3.5">{label('Número')}{value(event.numeroEvento)}</div>
-              <div className="bg-white px-4 py-3.5">{label('Sufijo')}{value(event.sufijo || '-')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Alcance')}{value(event.sufijo || '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Fecha del evento')}{value(event.fechaEvento ? formatDateCO(event.fechaEvento) : '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Responsable')}{value(event.responsable || '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Dependencia')}{value(event.dependencia || '-')}</div>

@@ -207,14 +207,14 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | **RF-ORD-005** | Listar órdenes con evento, responsable, municipio, fecha, aliado, recurso disponible, esquema, número de ítems y total. | Observado | Alta | La información mostrada coincide con el detalle del evento. |
 | **RF-ORD-006** | Permitir buscar, filtrar y ordenar órdenes. | Producción | Alta | La consulta responde en tiempos aceptables y conserva filtros. |
 | **RF-ORD-007** | Permitir eliminar una orden mediante confirmación. | Observado | Media | La eliminación respeta permisos y deja registro de auditoría. |
-| **RF-ORD-008** | Evitar duplicados mediante una llave funcional configurable. | Producción | Alta | El sistema alerta coincidencias de evento, sufijo y contexto contractual. |
+| **RF-ORD-008** | Evitar duplicados mediante una llave funcional configurable. | Producción | Alta | El sistema alerta coincidencias de evento, alcance y contexto contractual. |
 | **RF-ORD-009** | Manejar borrador, importado, validado y otros estados internos de captura. | Producción | Media | El estado interno se diferencia del estado operativo del evento. |
 
 ### 6.3 Detalle del Evento e Ítems
 
 | Código | Requisito | Origen | Prioridad | Criterio de Aceptación |
 | :--- | :--- | :--- | :--- | :--- |
-| **RF-DET-001** | Registrar número de evento, sufijo, asistentes y días. | Observado | Alta | Los campos se guardan y se muestran al volver a abrir la orden. |
+| **RF-DET-001** | Registrar número de evento, alcance, asistentes y días. | Observado | Alta | Los campos se guardan y se muestran al volver a abrir la orden. |
 | **RF-DET-002** | Registrar responsable, dependencia y fecha del evento. | Observado | Alta | Los datos quedan disponibles en consultas y reportes. |
 | **RF-DET-003** | Registrar departamento, municipio y vereda. | Observado | Alta | La ubicación alimenta el módulo de mapa y los filtros territoriales. |
 | **RF-DET-004** | Asignar aliado y recurso disponible. | Observado | Alta | Los consolidados se actualizan de forma inmediata. |
@@ -329,7 +329,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | Campo o Proceso | Validación |
 | :--- | :--- |
 | **Evento** | Número obligatorio y formato definido. Validación de posible duplicado. |
-| **Sufijo** | Opcional. Deberá participar en la llave funcional cuando exista. |
+| **Alcance** | Opcional. Deberá participar en la llave funcional cuando exista. |
 | **Responsable** | Obligatorio para eventos en validación o estados posteriores. |
 | **Ubicación** | Municipio obligatorio cuando el evento tenga ejecución territorial. |
 | **Recurso disponible** | Obligatorio antes de aprobar la oferta o consolidar ejecución. |
@@ -350,7 +350,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 | :--- | :--- | :--- |
 | **Usuario** | Identidad que accede a la solución. | Identificador, nombre, correo, estado, último acceso. |
 | **Rol** | Conjunto de permisos. | Identificador, nombre, descripción, estado. |
-| **Evento u orden** | Registro central del proceso. | Número, sufijo, responsable, dependencia, ubicación, fecha, asistentes, días, aliado, recurso disponible, estado, esquema, observaciones. |
+| **Evento u orden** | Registro central del proceso. | Número, alcance, responsable, dependencia, ubicación, fecha, asistentes, días, aliado, recurso disponible, estado, esquema, observaciones. |
 | **Ítem** | Requerimiento económico asociado al evento. | Descripción, cantidad, valor unitario, categoría tributaria, tasa, aliado, valores calculados. |
 | **Aliado** | Operador o tercero asignable. | Nombre, código, color, estado, vigencia. |
 | **Recurso disponible** | Agrupador presupuestal o contractual. | Código, nombre, vigencia, valor de referencia, estado. |
@@ -387,7 +387,7 @@ La primera versión deberá concentrarse en la gestión de eventos, ítems, cál
 
 ### 9.1 Creación Manual de un Evento
 1. El usuario selecciona **Nueva orden**.
-2. Registra número de evento, sufijo, responsable, municipio, fecha, aliado, recurso disponible y esquema.
+2. Registra número de evento, alcance, responsable, municipio, fecha, aliado, recurso disponible y esquema.
 3. El sistema valida campos mínimos y posibles duplicados.
 4. El sistema crea el evento en estado de captura y abre el detalle.
 5. El usuario completa datos e incorpora ítems.
@@ -467,7 +467,7 @@ El prototipo reconoce hojas asociadas a `FOR-EV-ADMO-01` y `FOR-EC-ADMO-02`, ade
 * **Variaciones:** Diferencias entre versiones de cálculo o cambios relevantes.
 
 ### 11.1 Filtros Comunes
-Rango de fechas del evento y de registro, número de evento/sufijo, responsable/dependencia, ubicación (departamento, municipio, vereda), aliado, recurso disponible, estado, esquema de presentación y clasificación tributaria.
+Rango de fechas del evento y de registro, número de evento/alcance, responsable/dependencia, ubicación (departamento, municipio, vereda), aliado, recurso disponible, estado, esquema de presentación y clasificación tributaria.
 
 ### 11.2 Reglas de Reporte
 * Cada reporte deberá mostrar fecha de corte, filtros aplicados y usuario generador.
@@ -604,7 +604,7 @@ Rango de fechas del evento y de registro, número de evento/sufijo, responsable/
 | **Base del FEE tarifado** | Definir si el porcentaje se aplica sobre la base sin impuestos o sobre el total sin retenciones. | Crítica |
 | **Retenciones** | Definir si la herramienta solo muestra valores sin retenciones o debe calcular retenciones adicionales. | Alta |
 | **Esquemas de presentación** | Documentar las diferencias exactas entre cotización y detalle. | Alta |
-| **Llave del evento** | Definir combinación única de número, sufijo, contrato, vigencia o dependencia. | Alta |
+| **Llave del evento** | Definir combinación única de número, alcance, contrato, vigencia o dependencia. | Alta |
 | **Flujo de estados** | Confirmar transiciones permitidas, responsables, devoluciones y requisitos por estado. | Alta |
 | **Recursos disponibles** | Definir catálogo, vigencia, topes, valores contratados y reglas de agotamiento. | Alta |
 | **Aliados** | Definir si la asignación puede hacerse por evento, por ítem o mediante distribución porcentual. | Alta |
