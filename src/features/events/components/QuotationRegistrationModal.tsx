@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
   X, FileUp, Save, Loader2, Receipt, FileText, Download, CheckCircle2, AlertCircle, FileCheck2, AlertTriangle,
 } from 'lucide-react'
@@ -29,8 +29,10 @@ const taxCategoryLabels: Record<TaxCategory, string> = {
   Reembolso: 'Reembolso',
 }
 
-function quotationItemKey(item: { descripcion: string; cantidad: number; tariffId?: string }): string {
-  return item.tariffId ? `t:${item.tariffId}|${item.cantidad}` : `d:${item.descripcion}|${item.cantidad}`
+function quotationItemKeys(item: { descripcion: string; cantidad: number; tariffId?: string }): string[] {
+  const keys = [`d:${item.descripcion}|${item.cantidad}`]
+  if (item.tariffId) keys.unshift(`t:${item.tariffId}|${item.cantidad}`)
+  return keys
 }
 
 const MAX_SOPORTE_MB = 10
@@ -94,14 +96,15 @@ export function QuotationRegistrationModal({
     }
     const quotationItemsByKey = new Map<string, OfferItem>()
     for (const qi of editingOffer.items) {
-      const key = quotationItemKey(qi)
-      if (!quotationItemsByKey.has(key)) quotationItemsByKey.set(key, qi)
+      for (const key of quotationItemKeys(qi)) {
+        if (!quotationItemsByKey.has(key)) quotationItemsByKey.set(key, qi)
+      }
     }
     return event.items.map((it) => {
-      const key = it.tariffId
-        ? `t:${it.tariffId}|${it.cantidad}`
-        : `d:${it.nombre || it.descripcion}|${it.cantidad}`
-      const quoteItem = quotationItemsByKey.get(key)
+      const quoteItem = it.tariffId
+        ? quotationItemsByKey.get(`t:${it.tariffId}|${it.cantidad}`) ??
+          quotationItemsByKey.get(`d:${it.nombre || it.descripcion}|${it.cantidad}`)
+        : quotationItemsByKey.get(`d:${it.nombre || it.descripcion}|${it.cantidad}`)
       return {
         eventItemId: it.id,
         nombre: it.nombre ?? '',
@@ -158,7 +161,18 @@ export function QuotationRegistrationModal({
       }),
     )
       .then((prices) => {
-        if (active) setTariffPrices(Object.fromEntries(prices))
+        if (!active) return
+        const priceMap = Object.fromEntries(prices)
+        setTariffPrices(priceMap)
+        setItems((prev) =>
+          prev.map((it) => {
+            if (!it.isTariffed || !it.tariffId) return it
+            if (isEditing && it.selected) return it
+            const price = priceMap[it.tariffId]
+            if (price === undefined) return it
+            return { ...it, valorUnitario: price }
+          }),
+        )
       })
       .catch(() => {
         if (active) setTariffPrices({})
@@ -181,11 +195,23 @@ export function QuotationRegistrationModal({
   const selectedCount = items.filter((it) => it.selected).length
   const allSelected = items.length > 0 && items.every((it) => it.selected)
 
+  function tariffCap(it: QuotationItemForm): number | undefined {
+    if (!it.isTariffed || !it.tariffId) return undefined
+    return tariffPrices[it.tariffId]
+  }
+
+  const resolvedUnitValue = useCallback(
+    function resolvedUnitValue(it: QuotationItemForm): number {
+      const cap = tariffCap(it)
+      if (cap === undefined) return it.valorUnitario || 0
+      return Math.min(it.valorUnitario, cap)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tariffPrices],
+  )
+
   function effectiveUnitValue(it: QuotationItemForm): number {
-    if (it.isTariffed) {
-      return it.tariffId ? tariffPrices[it.tariffId] ?? 0 : 0
-    }
-    return it.valorUnitario || 0
+    return resolvedUnitValue(it)
   }
 
   function rowError(it: QuotationItemForm): string | null {
@@ -195,23 +221,27 @@ export function QuotationRegistrationModal({
     return null
   }
 
+  function handleUnitValueChange(it: QuotationItemForm, raw: string) {
+    const parsed = Number(raw)
+    let value = Number.isFinite(parsed) ? parsed : 0
+    const cap = tariffCap(it)
+    if (cap !== undefined) value = Math.min(value, cap)
+    updateItem(it.eventItemId, { valorUnitario: value })
+  }
+
   const selectedItems = useMemo(() => items.filter((it) => it.selected), [items])
 
   const summary = useMemo(() => {
     const inputs: ItemInput[] = selectedItems.map((it) => ({
       descripcion: it.nombre || it.descripcion,
       cantidad: it.cantidad,
-      valorUnitario: it.isTariffed
-        ? it.tariffId
-          ? tariffPrices[it.tariffId] ?? 0
-          : 0
-        : it.valorUnitario || 0,
+      valorUnitario: resolvedUnitValue(it),
       categoriaTributaria: it.categoriaTributaria,
       isTariffed: it.isTariffed,
       ...(it.tariffId ? { tariffId: it.tariffId } : {}),
     }))
     return calculateEventSummary(inputs, params)
-  }, [selectedItems, tariffPrices, params])
+  }, [selectedItems, resolvedUnitValue, params])
 
   const pendingTariffValues = selectedItems.some(
     (it) => it.isTariffed && it.tariffId && tariffPrices[it.tariffId] === undefined,
@@ -246,6 +276,10 @@ export function QuotationRegistrationModal({
         }
         return `Ingrese el valor unitario negociado del ítem "${label}"`
       }
+      const cap = tariffCap(it)
+      if (cap !== undefined && it.valorUnitario > cap) {
+        return `El valor unitario del ítem "${label}" supera el valor del tarifario (${formatCurrencyCO(cap)}). No puede ser mayor.`
+      }
     }
     if (valorReferencia > 0 && cotizacionTotal > valorReferencia + 0.009) {
       return `El valor total de la cotización (${formatCurrencyCO(cotizacionTotal)}) excede el valor del recurso disponible (${formatCurrencyCO(valorReferencia)}). Reduzca los valores o ítems de la cotización.`
@@ -266,7 +300,7 @@ export function QuotationRegistrationModal({
         itemId: it.eventItemId,
         descripcion: it.nombre || it.descripcion,
         cantidad: it.cantidad,
-        valorUnitario: it.isTariffed ? 0 : it.valorUnitario,
+        valorUnitario: resolvedUnitValue(it),
         categoriaTributaria: it.categoriaTributaria,
         isTariffed: it.isTariffed,
         ...(it.isTariffed
@@ -486,19 +520,25 @@ export function QuotationRegistrationModal({
                                   <input
                                     type="number"
                                     min={0}
-                                    value={resolvedPrice ?? ''}
-                                    readOnly
-                                    disabled
+                                    max={resolvedPrice !== undefined ? resolvedPrice : undefined}
+                                    step={0.01}
+                                    value={it.valorUnitario || ''}
+                                    disabled={resolvedPrice === undefined}
                                     placeholder="Según tarifario"
-                                    className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm font-mono text-right bg-slate-50 text-slate-600 placeholder:text-slate-400 pr-8"
+                                    onChange={(e) => handleUnitValueChange(it, e.target.value)}
+                                    className={`w-full px-2.5 py-1.5 border rounded-md text-sm font-mono text-right pr-8 focus:ring-2 focus:ring-primary/50 focus:border-transparent ${
+                                      resolvedPrice === undefined
+                                        ? 'border-slate-200 bg-slate-50 text-slate-600 placeholder:text-slate-400'
+                                        : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400'
+                                    }`}
                                   />
                                   {priceLoading && (
                                     <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />
                                   )}
                                 </div>
                                 {resolvedPrice !== undefined && (
-                                  <p className="text-[10px] font-mono text-emerald-700 mt-0.5">
-                                    Cat. {event.municipalityCategory || 'del municipio'}
+                                  <p className="text-[10px] font-mono text-slate-500 mt-0.5">
+                                    Máx. {formatCurrencyCO(resolvedPrice)} · Cat. {event.municipalityCategory || 'del municipio'}
                                   </p>
                                 )}
                               </div>
@@ -558,13 +598,14 @@ export function QuotationRegistrationModal({
                 <>
                   Marque en la columna «Aplica» los ítems que harán parte de esta cotización. Los que ya estaban
                   incluidos vienen marcados; al guardar, solo los marcados quedan en la cotización. El valor unitario de
-                  los servicios tarifados se recalcula según la categoría DIVIPOLA del municipio.
+                  los servicios tarifados inicia con el valor del tarifario según la categoría DIVIPOLA del municipio y
+                  puede ajustarse sin superarlo.
                 </>
               ) : (
                 <>
                   Marque en la columna «Aplica» los ítems que harán parte de esta cotización (mínimo uno). Los ítems se
-                  heredan de la orden (carpeta de requerimientos) y el valor unitario de los servicios tarifados se calcula
-                  según la categoría DIVIPOLA del municipio al guardar.
+                  heredan de la orden (carpeta de requerimientos). El valor unitario de los servicios tarifados inicia
+                  con el valor del tarifario según la categoría DIVIPOLA del municipio y puede ajustarse sin superarlo.
                 </>
               )}
             </p>
