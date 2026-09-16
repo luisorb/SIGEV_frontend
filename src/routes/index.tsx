@@ -1,6 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '../layout/AppLayout'
-import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
 import { EventsListPage } from '../features/events/pages/EventsListPage'
 import { EventCreatePage } from '../features/events/pages/EventCreatePage'
 import { EventViewPage } from '../features/events/pages/EventViewPage'
@@ -17,17 +16,9 @@ import { AuditPage } from '../pages/AuditPage'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { RoleRoute } from '../features/auth/components/RoleRoute'
-import { useAuth } from '../features/auth/useAuth'
+import { DashboardGuard } from './DashboardGuard'
 
 const ROLES_EXCEPT_CONSULTA = ['technical_admin', 'functional_admin', 'approver', 'operator', 'solicitante', 'analista', 'supervisor', 'auditor'] as const
-
-function DashboardGuard() {
-  const { user } = useAuth()
-  if (user?.roleNames.includes('solicitante')) {
-    return <Navigate to="/ordenes" replace />
-  }
-  return <DashboardPage />
-}
 
 export const router = createBrowserRouter([
   {

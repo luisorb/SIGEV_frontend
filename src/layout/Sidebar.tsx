@@ -26,7 +26,7 @@ interface NavItem {
 
 const ALL_ROLES_EXCEPT_RESTRICTED = ['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor'] as const
 
-const ROLES_WITH_PANEL = ['technical_admin', 'functional_admin', 'approver', 'operator', 'analista', 'supervisor', 'auditor', 'consulta'] as const
+const ROLES_WITH_PANEL = ['technical_admin', 'functional_admin', 'approver', 'analista', 'supervisor', 'auditor', 'consulta'] as const
 
 const ALL_ROLES_EXCEPT_CONSULTA = ['technical_admin', 'functional_admin', 'approver', 'operator', 'solicitante', 'analista', 'supervisor', 'auditor'] as const
 
