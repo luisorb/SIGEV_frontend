@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { QuotationList } from './QuotationList'
 import { useQuotations } from '../../offers/hooks/useQuotations'
 import { getOfertaEconomicaByEventApi, mapOfertaEconomicaToOffer } from '../../../services/offers.service'
-import { uploadAttachmentApi } from '../../../services/attachments.service'
 import { useRolePermissions } from '../../auth/useRolePermissions'
 import { useToast } from '../../../components/ToastProvider'
 import { addAuditEntry } from '../../../lib/auditStore'
@@ -59,11 +58,8 @@ export function QuotationsModal({ event, isOpen, onClose }: QuotationsModalProps
     }
   }
 
-  async function handleSelectOffer(offerId: string, file?: File, itemIds?: string[]) {
+  async function handleSelectOffer(offerId: string, itemIds?: string[]) {
     try {
-      if (file) {
-        await uploadAttachmentApi(event.id, 'Comunicado de aprobación', file)
-      }
       const quotation = await selectQuotation(offerId, itemIds)
       await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       addAuditEntry({

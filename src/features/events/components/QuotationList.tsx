@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef } from 'react'
-import { FileSpreadsheet, Plus, BadgeCheck, ClipboardCheck, Download, FileUp, X, Eye, Pencil } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { FileSpreadsheet, Plus, BadgeCheck, ClipboardCheck, Download, X, Eye, Pencil } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Offer } from '../../offers/types'
 import { formatCurrencyCO, formatDateCO } from '../../../utils/formatters'
@@ -15,24 +15,12 @@ import { getCurrentUser } from '../../../config/constants'
 import { useToast } from '../../../components/ToastProvider'
 import { useAuth } from '../../auth/useAuth'
 
-const MAX_APROBACION_MB = 10
-const MAX_APROBACION_BYTES = MAX_APROBACION_MB * 1024 * 1024
-
-function getApprovalFileError(file: File): string | null {
-  const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')
-  if (!isPdf) return 'El comunicado de aprobación debe ser un archivo PDF'
-  if (file.size > MAX_APROBACION_BYTES) {
-    return `El documento PDF no puede superar los ${MAX_APROBACION_MB} MB`
-  }
-  return null
-}
-
 interface QuotationListProps {
   eventoId: string
   event: Event
   offers: Offer[]
   selectedOfferId?: string
-  onSelectOffer?: (offerId: string, file?: File, itemIds?: string[]) => void
+  onSelectOffer?: (offerId: string, itemIds?: string[]) => void
   onValidateOffer?: (offerId: string) => void
   readOnly?: boolean
   canSelectQuotation?: boolean
@@ -58,9 +46,6 @@ export function QuotationList({
   const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
   const [confirmOffer, setConfirmOffer] = useState<Offer | null>(null)
   const [validateOffer, setValidateOffer] = useState<Offer | null>(null)
-  const [approvalFile, setApprovalFile] = useState<File | null>(null)
-  const [approvalFileError, setApprovalFileError] = useState<string | null>(null)
-  const approvalInputRef = useRef<HTMLInputElement | null>(null)
 
   const eventOffers = useMemo(
     () => offers.filter((o) => o.eventoId === eventoId).sort((a, b) => a.total - b.total),
@@ -264,11 +249,7 @@ export function QuotationList({
                         )}
                         {!oferta && canApprove && (
                           <button
-                            onClick={() => {
-                              setApprovalFile(null)
-                              setApprovalFileError(null)
-                              setConfirmOffer(offer)
-                            }}
+                            onClick={() => setConfirmOffer(offer)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition-colors"
                             title="Aprobar cotización definitiva (2do Aprobador)"
                           >
@@ -332,11 +313,7 @@ export function QuotationList({
                 </p>
               </div>
               <button
-                onClick={() => {
-                  setConfirmOffer(null)
-                  setApprovalFile(null)
-                  setApprovalFileError(null)
-                }}
+                onClick={() => setConfirmOffer(null)}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
                 aria-label="Cerrar"
               >
@@ -344,65 +321,19 @@ export function QuotationList({
               </button>
             </div>
 
-            <div className="mt-5">
-              <p className="text-sm font-medium text-slate-700">
-                Comunicado de aprobación <span className="text-red-500">*</span>
-              </p>
-              <input
-                ref={approvalInputRef}
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={(e) => {
-                  const selected = e.target.files?.[0] ?? null
-                  setApprovalFile(selected)
-                  setApprovalFileError(selected ? getApprovalFileError(selected) : null)
-                  e.target.value = ''
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => approvalInputRef.current?.click()}
-                className="mt-1.5 w-full flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 hover:border-slate-400 transition-colors text-left"
-              >
-                <FileUp className="w-5 h-5 text-slate-400 shrink-0" />
-                <span className="flex-1 min-w-0 text-sm truncate">
-                  {approvalFile ? (
-                    <span className="font-mono text-slate-900">{approvalFile.name}</span>
-                  ) : (
-                    <span className="text-slate-400">Seleccione el comunicado oficial de aprobación</span>
-                  )}
-                </span>
-              </button>
-              <p className="text-xs text-slate-400 mt-1.5">
-                Documento obligatorio (PDF, máximo {MAX_APROBACION_MB} MB) que respalda la aprobación de la cotización.
-              </p>
-              {approvalFileError && (
-                <p className="text-xs text-red-500 mt-1.5">{approvalFileError}</p>
-              )}
-            </div>
-
             <div className="flex justify-end gap-3 mt-6">
               <button
-                onClick={() => {
-                  setConfirmOffer(null)
-                  setApprovalFile(null)
-                  setApprovalFileError(null)
-                }}
+                onClick={() => setConfirmOffer(null)}
                 className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => {
-                  if (approvalFileError || !approvalFile) return
-                  onSelectOffer?.(confirmOffer.id, approvalFile)
+                  onSelectOffer?.(confirmOffer.id)
                   setConfirmOffer(null)
-                  setApprovalFile(null)
-                  setApprovalFileError(null)
                 }}
-                disabled={!approvalFile || !!approvalFileError}
-                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
               >
                 Aprobar cotización definitiva
               </button>
@@ -423,7 +354,7 @@ export function QuotationList({
                   La cotización <strong>{validateOffer.codigo}</strong> por{' '}
                   <strong>{formatCurrencyCO(validateOffer.total)}</strong> quedará marcada como{' '}
                   <strong>Validada</strong>. Un segundo Aprobador, distinto de usted, deberá ejecutar la aprobación
-                  definitiva con el comunicado de aprobación.
+                  definitiva.
                 </p>
               </div>
               <button

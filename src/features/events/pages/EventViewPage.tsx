@@ -317,12 +317,9 @@ export function EventViewPage() {
     }
   }
 
-  async function handleSelectOffer(offerId: string, file?: File, itemIds?: string[]) {
+  async function handleSelectOffer(offerId: string, itemIds?: string[]) {
     if (!event) return
     try {
-      if (file) {
-        await uploadAttachmentApi(event.id, 'Comunicado de aprobación', file)
-      }
       const quotation = await selectQuotation(offerId, itemIds)
       await queryClient.invalidateQueries({ queryKey: ['event', event.id] })
       addAuditEntry({
