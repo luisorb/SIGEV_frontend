@@ -36,6 +36,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
           estado: event.estado,
           programa: event.programa ?? '',
           instanciaParticipacion: event.instanciaParticipacion ?? '',
+          tipoEvento: event.tipoEvento ?? '',
         }
       : {
           numeroEvento: '',
@@ -56,6 +57,7 @@ export function useEventForm({ event, onSave }: UseEventFormOptions) {
           estado: 'Abierto',
           programa: '',
           instanciaParticipacion: '',
+          tipoEvento: '',
         },
   })
 

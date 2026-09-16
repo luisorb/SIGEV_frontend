@@ -210,6 +210,7 @@ export interface Event {
   estado: EventState
   programa?: string
   instanciaParticipacion?: string
+  tipoEvento?: string
   items: Item[]
   activo?: boolean
   eliminadoAt?: string
@@ -238,6 +239,7 @@ export interface EventInput {
   estado?: EventState
   programa?: string
   instanciaParticipacion?: string
+  tipoEvento?: string
 }
 
 export interface AuditEntry {
@@ -316,6 +318,7 @@ export interface Event {
   estado: EventState
   programa?: string
   instanciaParticipacion?: string
+  tipoEvento?: string
   items: Item[]
   asignadoA?: string
   soportes?: Soporte[]

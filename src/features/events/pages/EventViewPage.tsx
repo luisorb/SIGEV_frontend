@@ -608,6 +608,7 @@ export function EventViewPage() {
               <div className="bg-white px-4 py-3.5">{label('Asistentes')}{value(String(event.asistentes))}</div>
               <div className="bg-white px-4 py-3.5">{label('Días')}{value(String(event.dias))}</div>
               <div className="bg-white px-4 py-3.5">{label('Programa')}{value(event.programa || '-')}</div>
+              <div className="bg-white px-4 py-3.5">{label('Evento')}{value(event.tipoEvento || '-')}</div>
               <div className="bg-white px-4 py-3.5">{label('Instancia de participación')}{value(event.instanciaParticipacion || '-')}</div>
             </dl>
           </section>

@@ -53,6 +53,7 @@ export function EventDetailPage() {
         observaciones: data.observaciones ?? '',
         programa: data.programa ?? '',
         instanciaParticipacion: data.instanciaParticipacion ?? '',
+        tipoEvento: data.tipoEvento ?? '',
       })
 
       if (file) {

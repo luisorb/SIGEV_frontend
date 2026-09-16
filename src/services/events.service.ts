@@ -97,6 +97,7 @@ function mapBackendEvent(data: Record<string, unknown>): Event {
     estado: mapApiStatus(String(data.status ?? data.estado ?? 'Abierto')),
     programa: String(data.programa ?? ''),
     instanciaParticipacion: String(data.instanciaParticipacion ?? ''),
+    tipoEvento: String(data.tipoEvento ?? ''),
     items: Array.isArray(data.items)
       ? (data.items as Record<string, unknown>[]).map(mapBackendItem)
       : [],
@@ -189,6 +190,7 @@ function mapToCreateDto(event: Partial<Event>): CreateEventDto {
     items: event.items?.length ? mapItemsToDto(event.items) : undefined,
     programa: event.programa || undefined,
     instanciaParticipacion: event.instanciaParticipacion || undefined,
+    tipoEvento: event.tipoEvento || undefined,
   }
 }
 

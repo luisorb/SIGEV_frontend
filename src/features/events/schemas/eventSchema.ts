@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { EVENT_STATES, EVENT_SCHEMAS, INSTANCIAS_PARTICIPACION } from '../../../config/constants'
-import type { Programa } from '../../../config/constants'
+import { EVENT_STATES, EVENT_SCHEMAS } from '../../../config/constants'
 
 export const eventSchema = z.object({
   numeroEvento: z
@@ -69,25 +68,10 @@ export const eventSchema = z.object({
     .min(1, 'El programa es obligatorio'),
   instanciaParticipacion: z
     .string()
-    .default(''),
-}).superRefine((data, ctx) => {
-  const programa = data.programa as Programa
-  if (programa && programa !== 'OTROS') {
-    const allowed = INSTANCIAS_PARTICIPACION[programa]
-    if (!data.instanciaParticipacion) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'La instancia de participación es obligatoria',
-        path: ['instanciaParticipacion'],
-      })
-    } else if (allowed && !(allowed as readonly string[]).includes(data.instanciaParticipacion)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Seleccione una instancia de participación válida para el programa seleccionado',
-        path: ['instanciaParticipacion'],
-      })
-    }
-  }
+    .min(1, 'La instancia de participación es obligatorio'),
+  tipoEvento: z
+    .string()
+    .min(1, 'El evento es obligatorio'),
 })
 
 export type EventFormValues = z.infer<typeof eventSchema>

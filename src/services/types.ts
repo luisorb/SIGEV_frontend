@@ -70,6 +70,7 @@ export interface CreateEventDto {
   items?: CreateItemDto[]
   programa?: string
   instanciaParticipacion?: string
+  tipoEvento?: string
 }
 
 export interface UpdateEventDto {
@@ -93,6 +94,7 @@ export interface UpdateEventDto {
   items?: CreateItemDto[]
   programa?: string
   instanciaParticipacion?: string
+  tipoEvento?: string
 }
 
 export type ApiEventStatus =

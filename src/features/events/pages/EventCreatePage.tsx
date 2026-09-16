@@ -42,6 +42,7 @@ export function EventCreatePage() {
         observaciones: data.observaciones ?? '',
         programa: data.programa ?? '',
         instanciaParticipacion: data.instanciaParticipacion ?? '',
+        tipoEvento: data.tipoEvento ?? '',
       }
 
       const newEvent = await createEventApi(partial)
