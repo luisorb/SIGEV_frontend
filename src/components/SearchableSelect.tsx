@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 
 export interface SearchableSelectOption {
@@ -20,6 +20,8 @@ interface SearchableSelectProps {
 }
 
 const MAX_VISIBLE_OPTIONS = 100
+const MAX_DROP_HEIGHT = 288
+const VIEWPORT_GAP = 8
 
 function normalize(value: string): string {
   return value
@@ -45,6 +47,19 @@ export function SearchableSelect({
   const [editing, setEditing] = useState(false)
   const [query, setQuery] = useState('')
   const [highlight, setHighlight] = useState(0)
+  const [dropPos, setDropPos] = useState({ up: false, maxHeight: MAX_DROP_HEIGHT })
+
+  useLayoutEffect(() => {
+    if (!open) return
+    const el = containerRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_GAP
+    const spaceAbove = rect.top - VIEWPORT_GAP
+    const up = spaceBelow < 160 && spaceAbove > spaceBelow
+    const avail = up ? spaceAbove : spaceBelow
+    setDropPos({ up, maxHeight: Math.max(80, Math.min(MAX_DROP_HEIGHT, avail)) })
+  }, [open])
 
   const selected = useMemo(
     () => options.find((o) => o.value === value) ?? null,
@@ -199,7 +214,11 @@ export function SearchableSelect({
       {open && (
         <ul
           role="listbox"
-          className="absolute z-30 mt-1 w-full max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg py-1"
+          className={[
+            'absolute z-30 w-full overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg py-1',
+            dropPos.up ? 'bottom-full mb-1' : 'mt-1',
+          ].join(' ')}
+          style={{ maxHeight: dropPos.maxHeight }}
         >
           {visible.map((option, index) => {
             const active = index === highlight

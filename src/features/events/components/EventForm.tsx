@@ -19,7 +19,7 @@ import {
   Wallet,
   Loader2,
 } from 'lucide-react'
-import { DEPENDENCIAS, PROGRAMAS, TIPOS_EVENTO, INSTANCIAS_CONSEJOS } from '../../../config/constants'
+import { DEPENDENCIAS, PROGRAMAS, INSTANCIAS_CONSEJOS } from '../../../config/constants'
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event, Attachment } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
@@ -140,8 +140,8 @@ interface StepCardProps {
 
 function StepCard({ icon: Icon, title, subtitle, notice, children }: StepCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-[slideInUp_250ms_ease-out] motion-reduce:animate-none">
-      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+    <div className="bg-white rounded-xl border border-slate-200 animate-[slideInUp_250ms_ease-out] motion-reduce:animate-none">
+      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3 rounded-t-xl">
         <span className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
           <Icon className="w-4 h-4" />
         </span>
@@ -247,14 +247,14 @@ export function EventForm({
   const navigatingRef = useRef(false)
   const submittingRef = useRef(false)
 
-  const { data: catalogoEventos = [], isLoading: catalogoLoading, error: catalogoError } = useEventCatalogs({ all: false })
+  const { data: catalogoEventos = [], isLoading: catalogoLoading } = useEventCatalogs({ all: false })
 
   const tipoEventoOptions = useMemo(() => {
-    let names = catalogoError ? [...TIPOS_EVENTO] : catalogoEventos.map((e) => e.nombre)
+    let names = catalogoEventos.map((e) => e.nombre)
     const current = watchedValues.tipoEvento
     if (current && !names.includes(current)) names = [current, ...names]
     return names
-  }, [catalogoEventos, catalogoError, watchedValues.tipoEvento])
+  }, [catalogoEventos, watchedValues.tipoEvento])
 
   useEffect(() => {
     formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -613,16 +613,15 @@ export function EventForm({
             error={errors.tipoEvento?.message}
           >
             <div className="flex items-start gap-2">
-              <select
-                id="tipoEvento"
-                {...register('tipoEvento')}
-                className={field('tipoEvento')}
-              >
-                <option value="">Seleccionar evento</option>
-                {tipoEventoOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                className="flex-1"
+                options={tipoEventoOptions.map((t) => ({ value: t, label: t }))}
+                value={watchedValues.tipoEvento ?? ''}
+                onChange={(v) => setValue('tipoEvento', v, { shouldValidate: true })}
+                placeholder="Buscar evento..."
+                error={!!errors.tipoEvento?.message}
+                disabled={catalogoLoading}
+              />
               <button
                 type="button"
                 onClick={() => { setCatalogModalOpen(true); setCatalogModalSeq((s) => s + 1) }}
