@@ -192,6 +192,15 @@ export interface UpdateDisbursementDto {
   isActive?: boolean
 }
 
+export interface CreateEventCatalogDto {
+  name: string
+}
+
+export interface UpdateEventCatalogDto {
+  name?: string
+  isActive?: boolean
+}
+
 export interface GenerateReportDto {
   format: 'pdf' | 'xlsx'
   type: 'offer' | 'matrix'

@@ -10,6 +10,7 @@ import { MatrixPage } from '../features/matrix/pages/MatrixPage'
 import { KanbanPage } from '../features/kanban/pages/KanbanPage'
 import { MapPage } from '../features/map/pages/MapPage'
 import { ParametersPage } from '../features/parameters/pages/ParametersPage'
+import { EventosPage } from '../features/event-catalogs/pages/EventosPage'
 import { AdminUsersPage } from '../pages/AdminUsersPage'
 import { BackupPage } from '../pages/BackupPage'
 import { AuditPage } from '../pages/AuditPage'
@@ -89,6 +90,14 @@ export const router = createBrowserRouter([
             element: (
               <RoleRoute roles={['functional_admin']}>
                 <ParametersPage />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: 'eventos',
+            element: (
+              <RoleRoute roles={['operator']}>
+                <EventosPage />
               </RoleRoute>
             ),
           },

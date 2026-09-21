@@ -86,6 +86,13 @@ export interface Disbursement {
   activo: boolean
 }
 
+export interface EventCatalog {
+  id: string
+  nombre: string
+  creadoPor: string
+  activo: boolean
+}
+
 export interface Municipality {
   id: string
   nombre: string

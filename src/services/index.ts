@@ -78,3 +78,10 @@ export {
   createParameterVersionApi,
 } from './parameters.service'
 export type { ParametersResponse } from './parameters.service'
+
+export {
+  getEventCatalogsApi,
+  createEventCatalogApi,
+  updateEventCatalogApi,
+} from './event-catalogs.service'
+export type { EventCatalogResponse } from './event-catalogs.service'
