@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent, KeyboardEvent, ReactNode } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -23,10 +23,12 @@ import { DEPENDENCIAS, PROGRAMAS, TIPOS_EVENTO, INSTANCIAS_CONSEJOS } from '../.
 import type { EventFormValues } from '../schemas/eventSchema'
 import type { Ally, Disbursement, Municipality, Event, Attachment } from '../../../types'
 import { useEventForm } from '../hooks/useEventForm'
+import { useEventCatalogs } from '../../../hooks/useEventCatalogs'
 import { checkDuplicateEventNumber } from '../utils/duplicateCheck'
 import { LocationPicker } from './LocationPicker'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 import { AllyFormModal } from '../../../components/AllyFormModal'
+import { EventCatalogModal } from '../../event-catalogs/components/EventCatalogModal'
 import { downloadAttachment } from '../../../services/attachments.service'
 import { formatDateCO } from '../../../utils/formatters'
 
@@ -237,11 +239,22 @@ export function EventForm({
   const [requerimientoFile, setRequerimientoFile] = useState<File | null>(null)
   const [requerimientoError, setRequerimientoError] = useState<string | null>(null)
   const [allyModalOpen, setAllyModalOpen] = useState(false)
+  const [catalogModalOpen, setCatalogModalOpen] = useState(false)
+  const [catalogModalSeq, setCatalogModalSeq] = useState(0)
   const [submitArmed, setSubmitArmed] = useState(false)
   const [dragging, setDragging] = useState(false)
   const formTopRef = useRef<HTMLFormElement>(null)
   const navigatingRef = useRef(false)
   const submittingRef = useRef(false)
+
+  const { data: catalogoEventos = [], isLoading: catalogoLoading, error: catalogoError } = useEventCatalogs({ all: false })
+
+  const tipoEventoOptions = useMemo(() => {
+    let names = catalogoError ? [...TIPOS_EVENTO] : catalogoEventos.map((e) => e.nombre)
+    const current = watchedValues.tipoEvento
+    if (current && !names.includes(current)) names = [current, ...names]
+    return names
+  }, [catalogoEventos, catalogoError, watchedValues.tipoEvento])
 
   useEffect(() => {
     formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -599,16 +612,30 @@ export function EventForm({
             hint="Tipo de evento que se realizará."
             error={errors.tipoEvento?.message}
           >
-            <select
-              id="tipoEvento"
-              {...register('tipoEvento')}
-              className={field('tipoEvento')}
-            >
-              <option value="">Seleccionar evento</option>
-              {TIPOS_EVENTO.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            <div className="flex items-start gap-2">
+              <select
+                id="tipoEvento"
+                {...register('tipoEvento')}
+                className={field('tipoEvento')}
+              >
+                <option value="">Seleccionar evento</option>
+                {tipoEventoOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => { setCatalogModalOpen(true); setCatalogModalSeq((s) => s + 1) }}
+                title="Agregar nuevo evento"
+                aria-label="Agregar nuevo evento"
+                className="inline-flex items-center justify-center w-11 h-[42px] shrink-0 text-white bg-primary rounded-lg hover:bg-primary-dark active:scale-[0.98] transition-all duration-150"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
+            {catalogoLoading && (
+              <p className="text-xs text-slate-400">Cargando catálogo de eventos...</p>
+            )}
           </Field>
           <Field
             id="instanciaParticipacion"
@@ -1093,6 +1120,15 @@ export function EventForm({
         onClose={() => setAllyModalOpen(false)}
         onSaved={handleAllySaved}
         showEstado={false}
+      />
+
+      <EventCatalogModal
+        key={catalogModalSeq}
+        open={catalogModalOpen}
+        editing={null}
+        eventos={catalogoEventos}
+        onClose={() => setCatalogModalOpen(false)}
+        onCreated={(name) => setValue('tipoEvento', name, { shouldValidate: true })}
       />
     </form>
   )
