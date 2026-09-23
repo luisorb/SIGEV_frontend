@@ -526,20 +526,28 @@ export function AdminUsersPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-700">Roles <span className="text-red-400 ml-0.5">*</span></label>
-                {!!editingUser && editingUser.roles.includes(OPERATOR_ROLE) ? (
+                {!!editingUser && [OPERATOR_ROLE, ADMIN_ROLE].some((r) => editingUser.roles.includes(r)) ? (
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${roleColors[OPERATOR_ROLE]}`}>
-                        <Shield className="w-4 h-4" />
-                        {roleLabel(OPERATOR_ROLE)}
-                      </span>
-                      <img
-                        src={PUBBLICA_LOGO}
-                        alt={`Logo ${OPERATOR_DOCUMENT}`}
-                        className="h-10 object-contain"
-                      />
+                    <div className="flex flex-wrap items-center gap-2">
+                      {editingUser.roles.map((r) => (
+                        <span key={r} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${roleColors[r] || 'bg-slate-100 text-slate-700'}`}>
+                          {adminRoles.includes(r) ? <ShieldCheck className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                          {roleLabel(r)}
+                        </span>
+                      ))}
+                      {editingUser.roles.includes(OPERATOR_ROLE) && (
+                        <img
+                          src={PUBBLICA_LOGO}
+                          alt={`Logo ${OPERATOR_DOCUMENT}`}
+                          className="h-10 object-contain"
+                        />
+                      )}
                     </div>
-                    <p className="text-sm text-slate-500 mt-1.5">El rol Operador está reservado para el usuario {OPERATOR_DOCUMENT} y no puede modificarse.</p>
+                    <p className="text-sm text-slate-500 mt-1.5">
+                      {editingUser.roles.includes(ADMIN_ROLE)
+                        ? 'El Administrador Técnico no puede modificar su rol bajo ningún concepto.'
+                        : `El rol Operador está reservado para el usuario ${OPERATOR_DOCUMENT} y no puede modificarse.`}
+                    </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
